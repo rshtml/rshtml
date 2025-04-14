@@ -1,0 +1,27 @@
+# Rust/Cargo
+**/target/
+**/debug/
+**/release/
+**/*.rs.bk
+
+# Build artifacts
+*.d
+*.o
+*.so
+*.rlib
+*.a
+*.exe
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+*.log
+
+# Dependency directories
+/node_modules/
+.cargo/

@@ -1,0 +1,106 @@
+1: ---------
+
+@<rust-code>
+
+---------
+example:
+@myVar // This means interpolate the variable.
+
+@let x = myfunc();
+
+
+
+2: ---------
+
+@<rust-code> { <html-code> or @<can-be-all-syntax-againt-recursive> }
+
+---------
+example:
+@if i < 5 {
+    <p>heyyy</p>
+}
+
+
+
+3: ---------
+
+@<rust-code> { <html-code> or @<can-be-all-syntax-againt-recursive> } 
+<rust-code> { <html-code> or @<can-be-all-syntax-againt-recursive> }
+... <the above line may repeat>
+
+---------
+example:
+@if i < 5 {
+    <p>heyyy</p>
+} else if i > 5 {
+    <p>oyy</p>
+
+    @if i % 2 == 0 {
+        <p> oyy oyy oyy </p>
+    } else {
+        <p>oyyyyyy</p>
+    } 
+
+} else {
+    <p>ayyy</p>
+}
+
+example 2:
+@for i in 0..10 {
+    <li>@i</li>
+}
+
+
+
+4: ---------
+
+@{ <rust-code> }
+
+---------
+example:
+@ {
+    let x = 5;
+
+    let hold = x*x;
+
+    println!("{}", hold);
+}
+
+example 2:
+@{
+    let result = match x {
+        1 => "1",
+        2 => "2"
+    };
+}
+
+
+
+GENERAL EXAMPLE:
+<h2>My Template</h2>
+ @if myVar {
+     <h1>My Variable is True</h1>
+ }
+   
+<ul>
+    @for i in 0..5 {
+        <li>Item @i </li>
+    }
+</ul>
+
+
+EXPTECTED OUTPUT:
+content.push_str("<h2>My Template</h2>");
+
+if myVar {
+   content.push_str("<h1>My Variable is True</h1>")
+}
+   
+content.push_str("<ul>")
+
+
+for i in 0..5 {
+    content.push_str(format!("<li>Item {i} </li>"))
+}
+    
+content.push_str("</ul>")

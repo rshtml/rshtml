@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taggy Template</title>
+</head>
+
+<body>
+    @if myVar {
+    <h1>My Variable is True</h1>
+    }
+
+    <ul>
+        @for i in items {
+        <li>Item @i </li>
+        }
+    </ul>
+
+    @if myVar2 {
+    <div>
+        <h2>My Variable 2 is True</h2>
+        <ul>
+            @for item in items {
+            @if item % 2 == 0 {
+            <li>Even Item @item
+            <li>
+                }
+                }
+        </ul>
+    </div>
+    }
+</body>
+
+</html>

@@ -1,0 +1,38 @@
+WHITESPACE = _{ " " | "\t" | "\r" | NEWLINE}
+NEWLINE = _{ "\n" }
+
+template = { SOI ~ (comment_block | block | text)* ~ EOI }
+inner_template = { (comment_block | block | inner_text)* }
+
+rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+
+text = @{ ( "@@" | (!("@") ~ ANY) )+ }
+inner_text = @{ 
+( "@@" | "@{" | "@}" | (!("@" | "}") ~ ANY) )+ 
+}
+
+block = !{
+    "@" ~ (rust_block | rust_expr | rust_expr_simple)
+}
+
+rust_expr = {
+    WHITESPACE* ~ !("@") ~ rust_expr_head ~  WHITESPACE* ~ "{" ~ inner_template ~ "}"
+}
+
+rust_expr_head = @{ ((! ("{" | "@")) ~ ANY)* }
+
+rust_expr_simple = @{
+    ! ( WHITESPACE* ~ "{" )
+    ~ rust_identifier
+    ~ rust_simple_follow_char*
+}
+
+rust_simple_follow_char = _{
+    "." | ":" | "(" | ")" | "?" | ASCII_ALPHANUMERIC | "_"
+}
+
+rust_block = @{ WHITESPACE* ~ "{" ~ ((!"}") ~ ANY)* ~ "}" }
+
+comment_block = { "@*" ~ comment_content ~ "*@" }
+
+comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
