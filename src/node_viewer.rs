@@ -39,7 +39,7 @@ pub fn view_node(node: &Node, indent_level: usize) {
             );
         }
         Node::RustExpr { clauses } => {
-            println!("{}block > rust_expr_complex", prefix);
+            println!("{}block > rust_expr", prefix);
             let child_indent = "  ".repeat(indent_level + 1);
             let child_prefix = format!("{}- ", child_indent);
             for (head, body) in clauses {
