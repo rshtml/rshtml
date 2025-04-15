@@ -7,9 +7,9 @@ inner_template = { (comment_block | block | inner_text)* }
 rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
 
-text = @{ ( "@@}" | "@@" | "@@{" | (!("@") ~ ANY) )+ }
+text = @{ ( "@@}" | "@@{" | "@@" |  (!("@") ~ ANY) )+ }
 inner_text = @{ 
-( "@@}" | "@@" | "@@{" | (!("@" | "}") ~ ANY) )+ 
+( "@@}" | "@@{" | "@@" | (!("@" | "}") ~ ANY) )+ 
 }
 
 block = !{
