@@ -38,18 +38,20 @@ pub fn view_node(node: &Node, indent_level: usize) {
                 content.escape_debug()
             );
         }
-        Node::RustExpr { head, body } => {
-            println!("{}block > rust_expr", prefix);
+        Node::RustExpr { clauses } => {
+            println!("{}block > rust_expr_complex", prefix);
             let child_indent = "  ".repeat(indent_level + 1);
             let child_prefix = format!("{}- ", child_indent);
-            println!(
-                "{}rust_expr_head: \"{}\"",
-                child_prefix,
-                head.escape_debug()
-            );
-            println!("{}inner_template", child_prefix);
-            for child in body {
-                view_node(child, indent_level + 2);
+            for (head, body) in clauses {
+                println!(
+                    "{}rust_expr_head: \"{}\"",
+                    child_prefix,
+                    head.escape_debug()
+                );
+                println!("{}inner_template", child_prefix);
+                for child in body {
+                    view_node(child, indent_level + 2); // Indent further for nodes inside the clause body
+                }
             }
         }
     }
