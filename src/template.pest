@@ -34,11 +34,9 @@ rust_expr = {
 }
 
 rust_expr_head = @{
-    (("if" | ("else" ~ WHITESPACE+ ~ "if") | "for" | "while" | "match") ~ WHITESPACE+ ~ (!("{" | "@" | "}") ~ ANY)+)
+    (("if" | ("else" ~ WHITESPACE+ ~ "if") | "for" | "while") ~ WHITESPACE+ ~ (!("{" | "@" | "}") ~ ANY)+)
   | ("else")
 }
-
-// TODO match expression must be customized
 
 chain_segment = {
     ("." | "?.") ~ rust_identifier
@@ -64,7 +62,7 @@ expression_boundary = _{
 // --- Simple Rust Expressions (@identifier...) ---
 
 rust_expr_simple = @{
-    !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "match" | "else")) ~ rust_identifier ~ (&(!expression_boundary) ~ chain_segment)*
+    !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "else")) ~ rust_identifier ~ (&(!expression_boundary) ~ chain_segment)*
 }
 
 
@@ -76,3 +74,20 @@ rust_block_content = _{
     ( "{" ~ rust_block_content* ~ "}" )
   | ( (!"}") ~ ANY )
 }
+
+
+// --- Parenthesized Rust Expressions (@(expressions)) ---
+
+rust_expr_paren = @{
+    "(" ~ (nested_expression | (!(")") ~ ANY))* ~ ")"
+}
+
+nested_expression = _{
+    ( "(" ~ (nested_expression | (!(")") ~ ANY))* ~ ")" )
+  | ( "[" ~ (nested_expression | (!("]") ~ ANY))* ~ "]" )
+  | ( "{" ~ (nested_expression | (!("}") ~ ANY))*   ~ "}" )
+}
+
+// TODO: Add html tags support for rust blocks ex: @{ if true { <div> } }
+// TODO: Add @: support for rust blocks for single line texts
+// TODO: Add <text>text</text> support for rust blocks for multiline texts

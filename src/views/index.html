@@ -9,6 +9,8 @@
 
 <body>
 
+    @(chrono::Utc::now() - chrono::Duration::days(7))
+
     @{
         let x = || {
             let y = 5;
