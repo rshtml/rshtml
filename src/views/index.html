@@ -8,6 +8,16 @@
 </head>
 
 <body>
+
+    @{
+        let x = || {
+            let y = 5;
+            y + 1
+        };
+
+        println!("Hello, world! x = {}", x());
+    }
+
     @if myVar {
     <h1>My Variable is True</h1>
     }

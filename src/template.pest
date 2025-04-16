@@ -1,19 +1,32 @@
+// /* --- Utility & Lexical Rules ---
+
 WHITESPACE = _{ " " | "\t" | "\r" | NEWLINE}
+rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+
+
+// --- Core Template Rules ---
 
 template = { SOI ~ (comment_block | block | text)* ~ EOI }
 inner_template = { (comment_block | block | inner_text)* }
 
-rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
+// --- Text and Comment Rules ---
 
 text = @{ ( "@@}" | "@@{" | "@@" |  (!("@") ~ ANY) )+ }
-inner_text = @{ 
-( "@@}" | "@@{" | "@@" | (!("@" | "}") ~ ANY) )+ 
-}
+inner_text = @{ ( "@@}" | "@@{" | "@@" | (!("@" | "}") ~ ANY) )+ }
+
+comment_block = { "@*" ~ comment_content ~ "*@" }
+comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
+
+
+// --- Block Types ---
 
 block = !{
     "@" ~ (rust_block | rust_expr | rust_expr_simple)
 }
+
+
+// --- Rust Expression Blocks (@if, @for, etc.) ---
 
 rust_expr = {
     WHITESPACE* ~ !("@") ~ 
@@ -24,6 +37,8 @@ rust_expr_head = @{
     (("if" | ("else" ~ WHITESPACE+ ~ "if") | "for" | "while" | "match") ~ WHITESPACE+ ~ (!("{" | "@" | "}") ~ ANY)+)
   | ("else")
 }
+
+// TODO match expression must be customized
 
 chain_segment = {
     ("." | "?.") ~ rust_identifier
@@ -45,25 +60,19 @@ expression_boundary = _{
   | NEWLINE
 }
 
+
+// --- Simple Rust Expressions (@identifier...) ---
+
 rust_expr_simple = @{
     !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "match" | "else")) ~ rust_identifier ~ (&(!expression_boundary) ~ chain_segment)*
 }
 
-// rust_expr_simple = @{
-//     ! ( WHITESPACE* ~ ("{" | "if" | "for" | "while" | "match") )
-//     ~ rust_identifier
-//     ~ rust_simple_follow_char*
-//     ~ ";"?
-// }
-//
-// rust_simple_follow_char = _{
-//     "." | ":" | "(" | ")" | "[" | "]" | "?" | "," | "\"" | " " | ASCII_ALPHANUMERIC | "_"
-//     | "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "!" | "<" | ">" | "=" | "{" | "}"
-// }
 
-rust_block = @{ WHITESPACE* ~ "{" ~ ((!"}") ~ ANY)* ~ "}" }
+// --- Rust Code Blocks (@{ ... }) ---
 
-comment_block = { "@*" ~ comment_content ~ "*@" }
+rust_block = @{ WHITESPACE* ~ "{" ~ rust_block_content* ~ "}" }
 
-comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
-
+rust_block_content = _{
+    ( "{" ~ rust_block_content* ~ "}" )
+  | ( (!"}") ~ ANY )
+}
