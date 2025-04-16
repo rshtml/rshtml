@@ -38,6 +38,13 @@ pub fn view_node(node: &Node, indent_level: usize) {
                 content.escape_debug()
             );
         }
+        Node::RustExprParen(content) => {
+            println!(
+                "{}block > rust_expr_paren: \"{}\"",
+                prefix,
+                content.escape_debug()
+            );
+        }
         Node::RustExpr { clauses } => {
             println!("{}block > rust_expr", prefix);
             let child_indent = "  ".repeat(indent_level + 1);

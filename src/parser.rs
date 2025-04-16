@@ -14,6 +14,7 @@ pub enum Node {
     Comment(String),        // comment content
     RustBlock(String),      // @{ ... } block content (with trim)
     RustExprSimple(String), // @expr ... (simple expression)
+    RustExprParen(String),
     RustExpr {
         // @if ...  { ... } else { ... } / @for ... { ... }
         clauses: Vec<(String, Vec<Node>)>,
@@ -82,6 +83,17 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
             Ok(Node::RustBlock(code_content))
         }
         Rule::rust_expr_simple => Ok(Node::RustExprSimple(pair.as_str().to_string())),
+        Rule::rust_expr_paren => {
+            // let full_paren_str = pair.as_str();
+            // // Extract content within the parentheses, removing the leading '@(' and trailing ')'
+            // let content = full_paren_str
+            //     .trim_start_matches('@')
+            //     .trim_start_matches('(')
+            //     .trim_end_matches(')')
+            //     .trim()
+            //     .to_string();
+            Ok(Node::RustExprParen(pair.as_str().to_string()))
+        }
         Rule::rust_expr => {
             let mut inner_pairs = pair.into_inner().peekable();
             let mut clauses: Vec<(String, Vec<Node>)> = Vec::new();

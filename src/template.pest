@@ -22,7 +22,7 @@ comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
 // --- Block Types ---
 
 block = !{
-    "@" ~ (rust_block | rust_expr | rust_expr_simple)
+    "@" ~ (rust_block | rust_expr | rust_expr_simple | rust_expr_parenthesized)
 }
 
 
@@ -78,8 +78,12 @@ rust_block_content = _{
 
 // --- Parenthesized Rust Expressions (@(expressions)) ---
 
+rust_expr_parenthesized = _{
+    "(" ~ rust_expr_paren ~ ")"
+}
+
 rust_expr_paren = @{
-    "(" ~ (nested_expression | (!(")") ~ ANY))* ~ ")"
+	(nested_expression | (!(")") ~ ANY))*
 }
 
 nested_expression = _{
