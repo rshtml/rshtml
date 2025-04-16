@@ -1,5 +1,4 @@
 WHITESPACE = _{ " " | "\t" | "\r" | NEWLINE}
-NEWLINE = _{ "\n" }
 
 template = { SOI ~ (comment_block | block | text)* ~ EOI }
 inner_template = { (comment_block | block | inner_text)* }
@@ -21,21 +20,50 @@ rust_expr = {
     (rust_expr_head ~  WHITESPACE* ~ "{" ~ inner_template ~ "}")+
 }
 
-rust_expr_head = @{ ((! ("{" | "@" | "}")) ~ ANY)* }
+rust_expr_head = @{
+    (("if" | ("else" ~ WHITESPACE+ ~ "if") | "for" | "while" | "match") ~ WHITESPACE+ ~ (!("{" | "@" | "}") ~ ANY)+)
+  | ("else")
+}
+
+chain_segment = {
+    ("." | "?.") ~ rust_identifier
+  | "::" ~ rust_identifier
+  | ("?"? ~ "(" ~ balanced_parens* ~ ")")
+  | ("?"? ~ "[" ~ balanced_brackets* ~ "]")
+  | ("::" ~ "<" ~ balanced_generics* ~ ">")
+  | "?"
+}
+
+balanced_parens   = { &(!(")" | expression_boundary)) ~ ("(" ~ balanced_parens* ~ ")" | !(NEWLINE) ~ ANY) }
+balanced_brackets = { &(!("]" | expression_boundary)) ~ ("[" ~ balanced_brackets* ~ "]" | !(NEWLINE) ~ ANY) }
+balanced_generics = { &(!(">" | expression_boundary)) ~ ("<" ~ balanced_generics* ~ ">" | !(NEWLINE) ~ ANY) }
+
+expression_boundary = _{
+    ("<" ~ ("/" | ASCII_ALPHA))
+  | "@"
+  | "{"
+  | NEWLINE
+}
 
 rust_expr_simple = @{
-    ! ( WHITESPACE* ~ "{" )
-    ~ rust_identifier
-    ~ rust_simple_follow_char*
-    ~ ";"?
+    !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "match" | "else")) ~ rust_identifier ~ (&(!expression_boundary) ~ chain_segment)*
 }
 
-rust_simple_follow_char = _{
-    "." | ":" | "(" | ")" | "?" | ASCII_ALPHANUMERIC | "_"
-}
+// rust_expr_simple = @{
+//     ! ( WHITESPACE* ~ ("{" | "if" | "for" | "while" | "match") )
+//     ~ rust_identifier
+//     ~ rust_simple_follow_char*
+//     ~ ";"?
+// }
+//
+// rust_simple_follow_char = _{
+//     "." | ":" | "(" | ")" | "[" | "]" | "?" | "," | "\"" | " " | ASCII_ALPHANUMERIC | "_"
+//     | "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" | "!" | "<" | ">" | "=" | "{" | "}"
+// }
 
 rust_block = @{ WHITESPACE* ~ "{" ~ ((!"}") ~ ANY)* ~ "}" }
 
 comment_block = { "@*" ~ comment_content ~ "*@" }
 
 comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
+
