@@ -1,6 +1,6 @@
-# Taggy
+# RsHtml
 
-Taggy is a lightweight and flexible template engine for Rust, designed to seamlessly integrate Rust code within HTML templates. It allows developers to write dynamic templates with embedded Rust expressions and logic, making it easier to generate HTML content programmatically.
+RsHtml is a lightweight and flexible template engine for Rust, designed to seamlessly integrate Rust code within HTML templates. It allows developers to write dynamic templates with embedded Rust expressions and logic, making it easier to generate HTML content programmatically.
 
 ## Features
 
@@ -13,7 +13,7 @@ Taggy is a lightweight and flexible template engine for Rust, designed to seamle
 
 ### Basic Example
 ```html
-<h1>Welcome to Taggy</h1>
+<h1>Welcome to RsHtml</h1>
 
 @if is_logged_in {
     <p>Hello, @username!</p>
@@ -44,11 +44,11 @@ Taggy is a lightweight and flexible template engine for Rust, designed to seamle
 
 ## Installation
 
-To use Taggy in your Rust project, add it as a dependency in your `Cargo.toml`:
+To use RsHtml in your Rust project, add it as a dependency in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-taggy = { path = "path/to/taggy" }
+rshtml = { path = "path/to/rshtml" }
 ```
 
 ## Usage
@@ -59,7 +59,7 @@ taggy = { path = "path/to/taggy" }
 
 ### Example
 ```rust
-use taggy::{parse_template, view_node};
+use rshtml::{parse_template, view_node};
 
 fn main() {
     let template = r#"
@@ -91,4 +91,4 @@ This project is licensed under the MIT License.
 
 ## Contributing
 
-Contributions are welcome! Feel free to open issues or submit pull requests to improve Taggy.
+Contributions are welcome! Feel free to open issues or submit pull requests to improve RsHtml.

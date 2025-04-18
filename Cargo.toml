@@ -1,5 +1,5 @@
 [package]
-name = "rhtml"
+name = "rshtml"
 version = "0.1.0"
 edition = "2024"
 
