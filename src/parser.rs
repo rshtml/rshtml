@@ -15,13 +15,13 @@ pub enum RustBlockContent {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node {
-    Template(Vec<Node>),    // main template, contains child nodes
-    Text(String),           // plain text content (@@ -> @)
-    InnerText(String),      // text inside a block (@@ -> @, @{ -> {, @} -> })
-    Comment(String),        // comment content
+    Template(Vec<Node>), // main template, contains child nodes
+    Text(String),        // plain text content (@@ -> @)
+    InnerText(String),   // text inside a block (@@ -> @, @{ -> {, @} -> })
+    Comment(String),     // comment content
     //RustBlock(String),      // @{ ... } block content (with trim)
     RustBlock(Vec<RustBlockContent>), // @{ ... } block content (with trim)
-    RustExprSimple(String), // @expr ... (simple expression)
+    RustExprSimple(String),           // @expr ... (simple expression)
     RustExprParen(String),
     RustExpr {
         // @if ...  { ... } else { ... } / @for ... { ... }
@@ -269,12 +269,17 @@ fn build_rust_block_contents(pairs: Pairs<Rule>) -> Result<Vec<RustBlockContent>
 }
 
 /// takes an input string and parses it into an AST.
-pub fn parse_template(input: &str) -> Result<Node, String> {
+pub fn parse_template(input: &str) -> Result<(Pairs<Rule>, Node), String> {
     match TemplateParser::parse(Rule::template, input) {
         Ok(mut pairs) => {
+            let pairs_cloned = pairs.clone();
+
             if let Some(template_pair) = pairs.next() {
                 if template_pair.as_rule() == Rule::template {
-                    build_ast_node(template_pair)
+                    match build_ast_node(template_pair) {
+                        Ok(ast) => Ok((pairs_cloned, ast)),
+                        Err(e) => Err(format!("Error building AST from template: {}", e)),
+                    }
                 } else {
                     Err(format!(
                         "Internal Error: Expected top-level rule to be 'template', found {:?}",
