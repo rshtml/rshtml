@@ -1,4 +1,4 @@
-// /* --- Utility & Lexical Rules ---
+// --- Utility & Lexical Rules ---
 
 WHITESPACE = _{ " " | "\t" | "\r" | NEWLINE}
 rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
@@ -29,33 +29,12 @@ block = !{
 // --- Rust Expression Blocks (@if, @for, etc.) ---
 
 rust_expr = {
-    WHITESPACE* ~ !("@") ~ 
     (rust_expr_head ~  WHITESPACE* ~ "{" ~ inner_template ~ "}")+
 }
 
 rust_expr_head = @{
     (("if" | ("else" ~ WHITESPACE+ ~ "if") | "for" | "while") ~ WHITESPACE+ ~ (!("{" | "@" | "}") ~ ANY)+)
   | ("else")
-}
-
-chain_segment = {
-    ("." | "?.") ~ rust_identifier
-  | "::" ~ rust_identifier
-  | ("?"? ~ "(" ~ balanced_parens* ~ ")")
-  | ("?"? ~ "[" ~ balanced_brackets* ~ "]")
-  | ("::" ~ "<" ~ balanced_generics* ~ ">")
-  | "?"
-}
-
-balanced_parens   = { &(!(")" | expression_boundary)) ~ ("(" ~ balanced_parens* ~ ")" | !(NEWLINE) ~ ANY) }
-balanced_brackets = { &(!("]" | expression_boundary)) ~ ("[" ~ balanced_brackets* ~ "]" | !(NEWLINE) ~ ANY) }
-balanced_generics = { &(!(">" | expression_boundary)) ~ ("<" ~ balanced_generics* ~ ">" | !(NEWLINE) ~ ANY) }
-
-expression_boundary = _{
-    ("<" ~ ("/" | ASCII_ALPHA))
-  | "@"
-  | "{"
-  | NEWLINE
 }
 
 
@@ -66,13 +45,46 @@ rust_expr_simple = @{
 }
 
 
+chain_segment = {
+    ("." | "?.") ~ rust_identifier
+  | "::" ~ rust_identifier
+  | ("?"? ~ "(" ~ nested_content* ~ ")")
+  | ("?"? ~ "[" ~ nested_content* ~ "]")
+  | ("::" ~ "<" ~ nested_content* ~ ">")
+  | "?"
+}
+
+nested_content = _{
+    ("(" ~ nested_content* ~ ")")
+  | ("[" ~ nested_content* ~ "]")
+  | ("<" ~ nested_content* ~ ">")
+  | ("{" ~ nested_content* ~ "}")
+  | (!((")" | "]" | ">" | "}") | expression_boundary) ~ ANY)
+}
+
+expression_boundary = _{
+    ("<" ~ ("/" | ASCII_ALPHA))
+  | "@"
+  | "{"
+  | NEWLINE
+}
+
 // --- Rust Code Blocks (@{ ... }) ---
 
 rust_block = @{ WHITESPACE* ~ "{" ~ rust_block_content* ~ "}" }
 
 rust_block_content = _{
-    ( "{" ~ rust_block_content* ~ "}" )
-  | ( (!"}") ~ ANY )
+    text_line_directive
+    |    ( "{" ~ rust_block_content* ~ "}" )
+    | ( (!"}") ~ ANY )
+}
+
+text_line_directive = _{
+    "@:" ~ text_line
+}
+
+text_line = @{
+    ( !(NEWLINE) ~ ANY )*
 }
 
 
@@ -92,7 +104,10 @@ nested_expression = _{
   | ( "{" ~ (nested_expression | (!("}") ~ ANY))*   ~ "}" )
 }
 
-// TODO: re-evaluate escape sequences for { and }, probably not needed.
-// TODO: Add html tags support for rust blocks ex: @{ if true { <div> } }
-// TODO: Add @: support for rust blocks for single line texts
-// TODO: Add <text>text</text> support for rust blocks for multiline texts
+
+
+// TODO 1: Add @: support for rust blocks for single line texts
+// TODO 2: Add <text>text</text> support for rust blocks for multiline texts
+// TODO 3: Add html tags support for rust blocks ex: @{ if true { <div> } }
+
+// TODO 4: Add support for html blocks and extends and layout system, maybe import templates

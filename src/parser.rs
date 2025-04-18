@@ -8,7 +8,7 @@ pub struct TemplateParser;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node {
-    Template(Vec<Node>),    //main template, contains child nodes
+    Template(Vec<Node>),    // main template, contains child nodes
     Text(String),           // plain text content (@@ -> @)
     InnerText(String),      // text inside a block (@@ -> @, @{ -> {, @} -> })
     Comment(String),        // comment content
@@ -18,7 +18,7 @@ pub enum Node {
     RustExpr {
         // @if ...  { ... } else { ... } / @for ... { ... }
         clauses: Vec<(String, Vec<Node>)>,
-        //head: String,    // if myVar / for i in items (with trim)
+        //head: String, // if myVar / for i in items (with trim)
         //body: Vec<Node>, // inner nodes (inner_template)
     },
 }
@@ -46,15 +46,19 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
             Ok(Node::Template(children))
         }
         Rule::text => {
-            let processed_text = pair.as_str().replace("@@", "@");
+            let processed_text = pair
+                .as_str()
+                .replace("@@", "@")
+                .replace("@@{", "{")
+                .replace("@@}", "}");
             Ok(Node::Text(processed_text))
         }
         Rule::inner_text => {
             let processed_text = pair
                 .as_str()
                 .replace("@@", "@")
-                .replace("@{", "{")
-                .replace("@}", "}");
+                .replace("@@{", "{")
+                .replace("@@}", "}");
             Ok(Node::InnerText(processed_text))
         }
         Rule::comment_block => {
@@ -83,17 +87,7 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
             Ok(Node::RustBlock(code_content))
         }
         Rule::rust_expr_simple => Ok(Node::RustExprSimple(pair.as_str().to_string())),
-        Rule::rust_expr_paren => {
-            // let full_paren_str = pair.as_str();
-            // // Extract content within the parentheses, removing the leading '@(' and trailing ')'
-            // let content = full_paren_str
-            //     .trim_start_matches('@')
-            //     .trim_start_matches('(')
-            //     .trim_end_matches(')')
-            //     .trim()
-            //     .to_string();
-            Ok(Node::RustExprParen(pair.as_str().to_string()))
-        }
+        Rule::rust_expr_paren => Ok(Node::RustExprParen(pair.as_str().to_string())),
         Rule::rust_expr => {
             let mut inner_pairs = pair.into_inner().peekable();
             let mut clauses: Vec<(String, Vec<Node>)> = Vec::new();
@@ -101,13 +95,13 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
             // Loop through all head-body pairs captured by the (...)+ structure in pest
             while inner_pairs.peek().is_some() {
                 // Skip any leading whitespace captured before the head
-                while let Some(p) = inner_pairs.peek() {
-                    if p.as_rule() == Rule::WHITESPACE {
-                        inner_pairs.next(); // Consume whitespace
-                    } else {
-                        break;
-                    }
-                }
+                // while let Some(p) = inner_pairs.peek() {
+                //     if p.as_rule() == Rule::WHITESPACE {
+                //         inner_pairs.next(); // Consume whitespace
+                //     } else {
+                //         break;
+                //     }
+                // }
 
                 // Expect a head (e.g., "if condition", "else if condition", "else", "for item in items")
                 let head_pair = inner_pairs
