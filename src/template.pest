@@ -1,16 +1,18 @@
-// --- Utility & Lexical Rules ---
+// region --- Utility & Lexical Rules ---
 
 WHITESPACE = _{ " " | "\t" | "\r" | NEWLINE}
 rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
+// endregion
 
-// --- Core Template Rules ---
+// region --- Core Template Rules ---
 
 template = { SOI ~ (comment_block | block | text)* ~ EOI }
 inner_template = { (comment_block | block | inner_text)* }
 
+// endregion
 
-// --- Text and Comment Rules ---
+// region --- Text and Comment Rules ---
 
 text = @{ ( "@@}" | "@@{" | "@@" |  (!("@") ~ ANY) )+ }
 inner_text = @{ ( "@@}" | "@@{" | "@@" | (!("@" | "}") ~ ANY) )+ }
@@ -18,15 +20,17 @@ inner_text = @{ ( "@@}" | "@@{" | "@@" | (!("@" | "}") ~ ANY) )+ }
 comment_block = { "@*" ~ comment_content ~ "*@" }
 comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
 
+// endregion
 
-// --- Block Types ---
+// region --- Block Types ---
 
 block = !{
     "@" ~ (rust_block | rust_expr | rust_expr_simple | rust_expr_parenthesized)
 }
 
+// endregion
 
-// --- Rust Expression Blocks (@if, @for, etc.) ---
+// region --- Rust Expression Blocks (@if, @for, etc.) ---
 
 rust_expr = {
     (rust_expr_head ~  WHITESPACE* ~ "{" ~ inner_template ~ "}")+
@@ -37,8 +41,9 @@ rust_expr_head = @{
   | ("else")
 }
 
+// endregion
 
-// --- Simple Rust Expressions (@identifier...) ---
+// region --- Simple Rust Expressions (@identifier...) ---
 
 rust_expr_simple = @{
     !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "else")) ~ rust_identifier ~ (&(!expression_boundary) ~ chain_segment)*
@@ -69,7 +74,9 @@ expression_boundary = _{
   | NEWLINE
 }
 
-// --- Rust Code Blocks (@{ ... }) ---
+//endregion
+
+// region --- Rust Code Blocks (@{ ... }) ---
 
 rust_block = @{ WHITESPACE* ~ "{" ~ rust_block_content* ~ "}" }
 
@@ -87,8 +94,9 @@ text_line = @{
     ( !(NEWLINE) ~ ANY )*
 }
 
+// endregion
 
-// --- Parenthesized Rust Expressions (@(expressions)) ---
+// region --- Parenthesized Rust Expressions (@(expressions)) ---
 
 rust_expr_parenthesized = _{
     "(" ~ rust_expr_paren ~ ")"
@@ -104,9 +112,9 @@ nested_expression = _{
   | ( "{" ~ (nested_expression | (!("}") ~ ANY))*   ~ "}" )
 }
 
+// endregion
 
 
-// TODO 1: Add @: support for rust blocks for single line texts
 // TODO 2: Add <text>text</text> support for rust blocks for multiline texts
 // TODO 3: Add html tags support for rust blocks ex: @{ if true { <div> } }
 
