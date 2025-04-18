@@ -78,12 +78,30 @@ expression_boundary = _{
 
 // region --- Rust Code Blocks (@{ ... }) ---
 
-rust_block = @{ WHITESPACE* ~ "{" ~ rust_block_content* ~ "}" }
+// rust_block = @{ WHITESPACE* ~ "{" ~ rust_block_content* ~ "}" }
+//
+// rust_block_content = _{
+//     text_line_directive
+//     |    ( "{" ~ rust_block_content* ~ "}" )
+//     | ( (!"}") ~ ANY )
+// }
+
+rust_block = {
+    WHITESPACE* ~ "{" ~ rust_block_content* ~ "}"
+}
 
 rust_block_content = _{
-    text_line_directive
-    |    ( "{" ~ rust_block_content* ~ "}" )
-    | ( (!"}") ~ ANY )
+    text_line_directive |
+    nested_block  |
+    rust_code
+}
+
+nested_block = {
+    "{" ~ rust_block_content* ~ "}"
+}
+
+rust_code = @{
+    ( !( "@:" | "{" | "}") ~ ANY )+
 }
 
 text_line_directive = _{
@@ -119,3 +137,27 @@ nested_expression = _{
 // TODO 3: Add html tags support for rust blocks ex: @{ if true { <div> } }
 
 // TODO 4: Add support for html blocks and extends and layout system, maybe import templates
+/*
+    @extends('layouts.app')
+
+    @section('title', 'Page Title')
+
+    @section('sidebar')
+        <p>This is appended to the master sidebar.</p>
+    @end
+
+    @section('content')
+        <p>This is my body content.</p>
+
+         <div class="pull-right">
+                @include('default-navigation')
+         </div>
+    @end
+
+    maybe ToJavascript
+
+    maybe
+    @client
+
+    @end
+*/

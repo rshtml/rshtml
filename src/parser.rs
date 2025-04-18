@@ -7,12 +7,20 @@ use pest_derive::Parser;
 pub struct TemplateParser;
 
 #[derive(Debug, PartialEq, Clone)]
+pub enum RustBlockContent {
+    Code(String),
+    TextLine(String),
+    NestedBlock(Vec<RustBlockContent>),
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum Node {
     Template(Vec<Node>),    // main template, contains child nodes
     Text(String),           // plain text content (@@ -> @)
     InnerText(String),      // text inside a block (@@ -> @, @{ -> {, @} -> })
     Comment(String),        // comment content
-    RustBlock(String),      // @{ ... } block content (with trim)
+    //RustBlock(String),      // @{ ... } block content (with trim)
+    RustBlock(Vec<RustBlockContent>), // @{ ... } block content (with trim)
     RustExprSimple(String), // @expr ... (simple expression)
     RustExprParen(String),
     RustExpr {
@@ -76,15 +84,19 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
                 Err("Internal Error: Empty block encountered".to_string())
             }
         }
+        // Rule::rust_block => {
+        //     let full_block_str = pair.as_str();
+        //     let code_content = full_block_str
+        //         .trim_start_matches('@')
+        //         .trim_start_matches('{')
+        //         .trim_end_matches('}')
+        //         .trim()
+        //         .to_string();
+        //     Ok(Node::RustBlock(code_content))
+        // }
         Rule::rust_block => {
-            let full_block_str = pair.as_str();
-            let code_content = full_block_str
-                .trim_start_matches('@')
-                .trim_start_matches('{')
-                .trim_end_matches('}')
-                .trim()
-                .to_string();
-            Ok(Node::RustBlock(code_content))
+            let contents = build_rust_block_contents(pair.into_inner())?;
+            Ok(Node::RustBlock(contents))
         }
         Rule::rust_expr_simple => Ok(Node::RustExprSimple(pair.as_str().to_string())),
         Rule::rust_expr_paren => Ok(Node::RustExprParen(pair.as_str().to_string())),
@@ -229,6 +241,31 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
             rule
         )),
     }
+}
+
+fn build_rust_block_contents(pairs: Pairs<Rule>) -> Result<Vec<RustBlockContent>, String> {
+    let mut content_parts = Vec::new();
+    for inner_pair in pairs {
+        match inner_pair.as_rule() {
+            Rule::text_line => {
+                content_parts.push(RustBlockContent::TextLine(inner_pair.as_str().to_string()));
+            }
+            Rule::rust_code => {
+                content_parts.push(RustBlockContent::Code(inner_pair.as_str().to_string()));
+            }
+            Rule::nested_block => {
+                let nested_contents = build_rust_block_contents(inner_pair.into_inner())?;
+                content_parts.push(RustBlockContent::NestedBlock(nested_contents));
+            }
+            rule => {
+                return Err(format!(
+                    "Internal Error: Unexpected rule {:?} inside rust block content",
+                    rule
+                ));
+            }
+        }
+    }
+    Ok(content_parts)
 }
 
 /// takes an input string and parses it into an AST.

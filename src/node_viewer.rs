@@ -1,4 +1,4 @@
-use crate::parser::Node;
+use crate::parser::{Node, RustBlockContent};
 
 pub fn view_node(node: &Node, indent_level: usize) {
     let indent = "  ".repeat(indent_level);
@@ -24,12 +24,19 @@ pub fn view_node(node: &Node, indent_level: usize) {
                 content.escape_debug()
             );
         }
-        Node::RustBlock(content) => {
-            println!(
-                "{}block > rust_block: \"{}\"",
-                prefix,
-                content.escape_debug()
-            );
+        // Node::RustBlock(content) => {
+        //     println!(
+        //         "{}block > rust_block: \"{}\"",
+        //         prefix,
+        //         content.escape_debug()
+        //     );
+        // }
+        Node::RustBlock(contents) => {
+            println!("{}block > rust_block", prefix);
+            
+            for content_part in contents {
+                view_rust_block_content(content_part, indent_level + 1);
+            }
         }
         Node::RustExprSimple(content) => {
             println!(
@@ -59,6 +66,26 @@ pub fn view_node(node: &Node, indent_level: usize) {
                 for child in body {
                     view_node(child, indent_level + 2); // Indent further for nodes inside the clause body
                 }
+            }
+        }
+    }
+}
+
+fn view_rust_block_content(content: &RustBlockContent, indent_level: usize) {
+    let indent = "  ".repeat(indent_level);
+    let prefix = format!("{}- ", indent);
+
+    match content {
+        RustBlockContent::Code(code_str) => {
+            println!("{}rust_code: \"{}\"", prefix, code_str.escape_debug());
+        }
+        RustBlockContent::TextLine(text_str) => {
+            println!("{}text_line: \"{}\"", prefix, text_str.escape_debug());
+        }
+        RustBlockContent::NestedBlock(nested_contents) => {
+            println!("{}nested_block", prefix);
+            for nested_content in nested_contents {
+                view_rust_block_content(nested_content, indent_level + 1);
             }
         }
     }
