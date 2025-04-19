@@ -19,12 +19,15 @@
     @{
         let x = || {
             let y = 5;
+            let z = MyStruct{i: 5, s: "hello@gmail.com"};
             y + 1
         };
 
         @: this is just text } also text { line
 
         println!("Hello, world! x = {}", x());
+
+
     }
 
     @if myVar {
