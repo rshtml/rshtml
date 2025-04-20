@@ -3,7 +3,7 @@ use pest::iterators::{Pair, Pairs};
 use pest_derive::Parser;
 
 #[derive(Parser)]
-#[grammar = "template.pest"]
+#[grammar = "rshtml.pest"]
 pub struct TemplateParser;
 
 #[derive(Debug, PartialEq, Clone)]
