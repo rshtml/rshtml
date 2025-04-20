@@ -115,6 +115,24 @@ rust_code = @{
 //     )+
 // }
 
+// Rust code block with string support, to prevent nested blocks in strings from assuming curly braces
+// rust_code = @{
+//     (
+//         _string_literal |
+//         !( "@:" | "{" | "}" | "\"" | "r\"" ) ~ ANY
+//     )+
+// }
+//
+// _normal_string_char = _{ escaped_char | (!("\"" | "\\") ~ ANY) }
+// escaped_char = _{ "\\" ~ ANY }
+// _normal_string = _{ "\"" ~ _normal_string_char* ~ "\"" }
+//
+// _raw_string = _{
+//     ("r\"" ~ ( !"\"" ~ ANY )* ~ "\"") |
+//     ("r#\"" ~ ( !"\"#" ~ ANY )* ~ "\"#")
+// }
+// _string_literal = _{ _normal_string | _raw_string }
+
 
 text_line_directive = _{
     "@:" ~ text_line
