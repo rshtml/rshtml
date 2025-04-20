@@ -105,6 +105,17 @@ rust_code = @{
     ( !( "@:" | "{" | "}") ~ ANY )+
 }
 
+// Rust code block with string support, to prevent nested blocks in strings from assuming curly braces
+// rust_code = @{
+// 	(
+//     ( "\"" ~ ( ("\\" ~ ANY) | (!("\"" | "\\") ~ ANY) )* ~ "\"" ) |
+//     ( "r\"" ~ ( !"\"" ~ ANY )* ~ "\"" ) |
+//     ( "r#\"" ~ ( !"\"#" ~ ANY )* ~ "\"#" ) |
+//     !( "@:" | "{" | "}" | "\"" | "r\"" ) ~ ANY
+//     )+
+// }
+
+
 text_line_directive = _{
     "@:" ~ text_line
 }
@@ -161,11 +172,10 @@ nested_expression = _{
 
 
 
-// TODO 1: Add html tags support for rust blocks ex: @{ if true { <div> } }
-// TODO 2: Add <text>text</text> support for rust blocks for multiline texts
-// TODO 3: Add double quotes support knowledge for rust blocks ex: println!("{}", x); it is not a nested block just a string
+// TODO 1: Add <text>text</text> support for rust blocks for multiline texts
+// TODO 2: Add double quotes support knowledge for rust blocks ex: println!("{}", x); it is not a nested block just a string
 
-// TODO 4: Add support for html blocks and extends and layout system, maybe import templates
+// TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
     @extends('layouts.app')
 
