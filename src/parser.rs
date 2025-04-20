@@ -11,6 +11,7 @@ pub enum RustBlockContent {
     Code(String),
     TextLine(String),
     NestedBlock(Vec<RustBlockContent>),
+    HtmlElement(String)
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -256,6 +257,9 @@ fn build_rust_block_contents(pairs: Pairs<Rule>) -> Result<Vec<RustBlockContent>
             Rule::nested_block => {
                 let nested_contents = build_rust_block_contents(inner_pair.into_inner())?;
                 content_parts.push(RustBlockContent::NestedBlock(nested_contents));
+            }
+            Rule::html_element => {
+                content_parts.push(RustBlockContent::HtmlElement(inner_pair.as_str().to_string()));
             }
             rule => {
                 return Err(format!(

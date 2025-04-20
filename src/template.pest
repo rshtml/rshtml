@@ -91,6 +91,7 @@ rust_block = {
 }
 
 rust_block_content = _{
+    html_element |
     text_line_directive |
     nested_block  |
     rust_code
@@ -111,6 +112,32 @@ text_line_directive = _{
 text_line = @{
     ( !(NEWLINE) ~ ANY )*
 }
+
+html_element = @{
+    &("<" ~ html_name)
+    ~ ( html_tag_self | html_tag )
+}
+
+html_tag_self= _{
+    "<" ~ html_name ~ WHITESPACE+ ~ (!"/>" ~ ANY)* ~ "/>"
+}
+
+html_tag = _{
+    html_open
+    ~ (html_element | !( "<" ) ~ ANY)*
+    ~ html_close
+}
+
+html_open = _{
+    "<" ~ html_name ~ (!">" ~ ANY)* ~ ">"
+}
+
+html_close = _{
+    "</" ~ html_name ~ WHITESPACE* ~ ">"
+}
+
+html_name = _{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
+
 
 // endregion
 
