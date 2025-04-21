@@ -78,14 +78,6 @@ expression_boundary = _{
 
 // region --- Rust Code Blocks (@{ ... }) ---
 
-// rust_block = @{ WHITESPACE* ~ "{" ~ rust_block_content* ~ "}" }
-//
-// rust_block_content = _{
-//     text_line_directive
-//     |    ( "{" ~ rust_block_content* ~ "}" )
-//     | ( (!"}") ~ ANY )
-// }
-
 rust_block = {
     WHITESPACE* ~ "{" ~ rust_block_content* ~ "}"
 }
@@ -101,9 +93,9 @@ nested_block = {
     "{" ~ rust_block_content* ~ "}"
 }
 
-rust_code = @{
-    ( !( "@:" | "{" | "}") ~ ANY )+
-}
+// rust_code = @{
+//     ( !( "@:" | "{" | "}") ~ ANY )+
+// }
 
 // Rust code block with string support, to prevent nested blocks in strings from assuming curly braces
 // rust_code = @{
@@ -116,22 +108,22 @@ rust_code = @{
 // }
 
 // Rust code block with string support, to prevent nested blocks in strings from assuming curly braces
-// rust_code = @{
-//     (
-//         _string_literal |
-//         !( "@:" | "{" | "}" | "\"" | "r\"" ) ~ ANY
-//     )+
-// }
-//
-// _normal_string_char = _{ escaped_char | (!("\"" | "\\") ~ ANY) }
-// escaped_char = _{ "\\" ~ ANY }
-// _normal_string = _{ "\"" ~ _normal_string_char* ~ "\"" }
-//
-// _raw_string = _{
-//     ("r\"" ~ ( !"\"" ~ ANY )* ~ "\"") |
-//     ("r#\"" ~ ( !"\"#" ~ ANY )* ~ "\"#")
-// }
-// _string_literal = _{ _normal_string | _raw_string }
+rust_code = @{
+    (
+        _string_literal |
+        !( "@:" | "{" | "}" | "\"" | "r\"" ) ~ ANY
+    )+
+}
+
+_normal_string_char = _{ escaped_char | (!("\"" | "\\") ~ ANY) }
+escaped_char = _{ "\\" ~ ANY }
+_normal_string = _{ "\"" ~ _normal_string_char* ~ "\"" }
+
+_raw_string = _{
+    ("r\"" ~ ( !"\"" ~ ANY )* ~ "\"") |
+    ("r#\"" ~ ( !"\"#" ~ ANY )* ~ "\"#")
+}
+_string_literal = _{ _normal_string | _raw_string }
 
 
 text_line_directive = _{
@@ -191,7 +183,6 @@ nested_expression = _{
 
 
 // TODO 1: Add <text>text</text> support for rust blocks for multiline texts
-// TODO 2: Add double quotes support knowledge for rust blocks ex: println!("{}", x); it is not a nested block just a string
 
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*

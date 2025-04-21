@@ -85,16 +85,6 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
                 Err("Internal Error: Empty block encountered".to_string())
             }
         }
-        // Rule::rust_block => {
-        //     let full_block_str = pair.as_str();
-        //     let code_content = full_block_str
-        //         .trim_start_matches('@')
-        //         .trim_start_matches('{')
-        //         .trim_end_matches('}')
-        //         .trim()
-        //         .to_string();
-        //     Ok(Node::RustBlock(code_content))
-        // }
         Rule::rust_block => {
             let contents = build_rust_block_contents(pair.into_inner())?;
             Ok(Node::RustBlock(contents))
@@ -107,14 +97,6 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
 
             // Loop through all head-body pairs captured by the (...)+ structure in pest
             while inner_pairs.peek().is_some() {
-                // Skip any leading whitespace captured before the head
-                // while let Some(p) = inner_pairs.peek() {
-                //     if p.as_rule() == Rule::WHITESPACE {
-                //         inner_pairs.next(); // Consume whitespace
-                //     } else {
-                //         break;
-                //     }
-                // }
 
                 // Expect a head (e.g., "if condition", "else if condition", "else", "for item in items")
                 let head_pair = inner_pairs
