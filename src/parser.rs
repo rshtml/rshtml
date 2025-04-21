@@ -12,20 +12,26 @@ pub enum TextBlockItem {
     RustExprSimple(String),
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum TextLineItem {
+    Text(String),
+    RustExprSimple(String),
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum RustBlockContent {
     Code(String),
-    TextLine(String),
+    TextLine(Vec<TextLineItem>),
     TextBlock(Vec<TextBlockItem>),
     NestedBlock(Vec<RustBlockContent>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node {
-    Template(Vec<Node>), // main template, contains child nodes
-    Text(String),        // plain text content (@@ -> @)
-    InnerText(String),   // text inside a block (@@ -> @, @{ -> {, @} -> })
-    Comment(String),     // comment content
+    Template(Vec<Node>),              // main template, contains child nodes
+    Text(String),                     // plain text content (@@ -> @)
+    InnerText(String),                // text inside a block (@@ -> @, @{ -> {, @} -> })
+    Comment(String),                  // comment content
     RustBlock(Vec<RustBlockContent>), // @{ ... } block content (with trim)
     RustExprSimple(String),           // @expr ... (simple expression)
     RustExprParen(String),
@@ -234,10 +240,10 @@ fn build_rust_block_contents(pairs: Pairs<Rule>) -> Result<Vec<RustBlockContent>
     let mut content_parts = Vec::new();
     for inner_pair in pairs {
         match inner_pair.as_rule() {
-            Rule::text_line => {
-                content_parts.push(RustBlockContent::TextLine(inner_pair.as_str().to_string()));
+            Rule::text_line_directive => {
+                content_parts.push(build_text_line(inner_pair));
             }
-            Rule::text_block | Rule::rust_expr_simple => {
+            Rule::text_block_tag => {
                 content_parts.push(build_text_block(inner_pair));
             }
             Rule::rust_code => {
@@ -258,6 +264,38 @@ fn build_rust_block_contents(pairs: Pairs<Rule>) -> Result<Vec<RustBlockContent>
     Ok(content_parts)
 }
 
+fn build_text_line(inner_pair: Pair<Rule>) -> RustBlockContent {
+    let mut items = Vec::new();
+
+    for item_pair in inner_pair.into_inner() {
+        match item_pair.as_rule() {
+            Rule::rust_expr_simple => {
+                if let Some(expr_pair) = item_pair.into_inner().nth(1) {
+                    items.push(TextLineItem::RustExprSimple(
+                        expr_pair.as_str().to_string(),
+                    ));
+                } else {
+                    eprintln!("Warning: Empty or bad embedded expression found.");
+                }
+            }
+            Rule::text_line => {
+                let text = item_pair.as_str().replace("@@", "@");
+                if !text.is_empty() {
+                    items.push(TextLineItem::Text(text));
+                }
+            }
+            _ => {
+                eprintln!(
+                    "Warning: Unexpected rule in text_block: {:?}",
+                    item_pair.as_rule()
+                );
+            }
+        }
+    }
+
+    RustBlockContent::TextLine(items)
+}
+
 fn build_text_block(inner_pair: Pair<Rule>) -> RustBlockContent {
     let mut items = Vec::new();
 
@@ -269,7 +307,7 @@ fn build_text_block(inner_pair: Pair<Rule>) -> RustBlockContent {
                         expr_pair.as_str().to_string(),
                     ));
                 } else {
-                    eprintln!("Uyarı: Boş veya hatalı embedded expression bulundu.");
+                    eprintln!("Warning: Empty or bad embedded expression found.");
                 }
             }
             Rule::text_block => {
@@ -280,7 +318,7 @@ fn build_text_block(inner_pair: Pair<Rule>) -> RustBlockContent {
             }
             _ => {
                 eprintln!(
-                    "Uyarı: text_block içinde beklenmeyen kural: {:?}",
+                    "Warning: Unexpected rule in text_block: {:?}",
                     item_pair.as_rule()
                 );
             }

@@ -1,6 +1,6 @@
 // region --- Utility & Lexical Rules ---
 
-WHITESPACE = _{ " " | "\t" | "\r" | NEWLINE}
+WHITESPACE = _{ " " | "\t" | NEWLINE }
 rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
 // endregion
@@ -25,7 +25,7 @@ comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
 // region --- Block Types ---
 
 block = !{
-    "@" ~ (rust_block | rust_expr | rust_expr_simple | rust_expr_parenthesized)
+    "@" ~ (rust_block | rust_expr | rust_expr_parenthesized | rust_expr_simple )
 }
 
 // endregion
@@ -126,20 +126,11 @@ _raw_string = _{
 _string_literal = _{ _normal_string | _raw_string }
 
 
-text_line_directive = _{
-    "@:" ~ text_line
-}
+text_line_directive = ${ ("@:" ~ (("@" ~ rust_expr_simple) | text_line)*) }
+text_line = @{ (!(NEWLINE | ("@" ~ rust_expr_simple)) ~ ANY)+ }
 
-text_line = @{
-    ( !(NEWLINE) ~ ANY )*
-}
 
-text_block_tag = _{
-    "<text>" ~ text_block_content* ~ "</text>"
-}
-
-text_block_content = _{ ("@" ~ (rust_expr_simple)) |  text_block }
-
+text_block_tag = { "<text>" ~ (("@" ~ (rust_expr_simple)) |  text_block)* ~ "</text>" }
 text_block = @{ ("@@" | !( "</text>" | ("@" ~ (rust_expr_simple)) ) ~ ANY)+ }
 
 // endregion
@@ -163,10 +154,6 @@ nested_expression = _{
 // endregion
 
 
-// TODO 1: support rust_expr_simple in the text_line directive (@:). ex: @:"Hello, @name!"
-// maybe we can use directly the rust_expr_simple and rust_expr_paren parser for this
-// TODO 2: Add <text>text</text> support for rust blocks for multiline texts. ex: <text> text<p>abc</p> </text>
-// writing text directly in rust code should be supported and its content should be imported as html
 
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
