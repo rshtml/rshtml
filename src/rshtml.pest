@@ -181,8 +181,10 @@ nested_expression = _{
 // endregion
 
 
-
-// TODO 1: Add <text>text</text> support for rust blocks for multiline texts
+// TODO 1: support rust_expr_simple in the text_line directive (@:). ex: @:"Hello, @name!"
+// maybe we can use directly the rust_expr_simple and rust_expr_paren parser for this
+// TODO 2: Add <text>text</text> support for rust blocks for multiline texts. ex: <text> text<p>abc</p> </text>
+// writing text directly in rust code should be supported and its content should be imported as html
 
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
