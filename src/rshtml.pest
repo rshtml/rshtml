@@ -84,6 +84,7 @@ rust_block = {
 
 rust_block_content = _{
     text_line_directive |
+    text_block_tag |
     nested_block  |
     rust_code
 }
@@ -110,7 +111,7 @@ nested_block = {
 rust_code = @{
     (
         _string_literal |
-        !( "@:" | "{" | "}" | "\"" | "r\"" ) ~ ANY
+        !( "@:" | "{" | "}" | "\"" | "r\"" | text_block_tag ) ~ ANY
     )+
 }
 
@@ -132,6 +133,14 @@ text_line_directive = _{
 text_line = @{
     ( !(NEWLINE) ~ ANY )*
 }
+
+text_block_tag = _{
+    "<text>" ~ text_block_content* ~ "</text>"
+}
+
+text_block_content = _{ ("@" ~ (rust_expr_simple)) |  text_block }
+
+text_block = @{ ("@@" | !( "</text>" | ("@" ~ (rust_expr_simple)) ) ~ ANY)+ }
 
 // endregion
 

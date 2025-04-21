@@ -6,12 +6,18 @@ use pest_derive::Parser;
 #[grammar = "rshtml.pest"]
 pub struct TemplateParser;
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum TextBlockItem {
+    Text(String),
+    RustExprSimple(String),
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum RustBlockContent {
     Code(String),
     TextLine(String),
+    TextBlock(Vec<TextBlockItem>),
     NestedBlock(Vec<RustBlockContent>),
-    HtmlElement(String)
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -20,7 +26,6 @@ pub enum Node {
     Text(String),        // plain text content (@@ -> @)
     InnerText(String),   // text inside a block (@@ -> @, @{ -> {, @} -> })
     Comment(String),     // comment content
-    //RustBlock(String),      // @{ ... } block content (with trim)
     RustBlock(Vec<RustBlockContent>), // @{ ... } block content (with trim)
     RustExprSimple(String),           // @expr ... (simple expression)
     RustExprParen(String),
@@ -97,7 +102,6 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
 
             // Loop through all head-body pairs captured by the (...)+ structure in pest
             while inner_pairs.peek().is_some() {
-
                 // Expect a head (e.g., "if condition", "else if condition", "else", "for item in items")
                 let head_pair = inner_pairs
                     .next_if(|p| p.as_rule() == Rule::rust_expr_head)
@@ -233,15 +237,15 @@ fn build_rust_block_contents(pairs: Pairs<Rule>) -> Result<Vec<RustBlockContent>
             Rule::text_line => {
                 content_parts.push(RustBlockContent::TextLine(inner_pair.as_str().to_string()));
             }
+            Rule::text_block | Rule::rust_expr_simple => {
+                content_parts.push(build_text_block(inner_pair));
+            }
             Rule::rust_code => {
                 content_parts.push(RustBlockContent::Code(inner_pair.as_str().to_string()));
             }
             Rule::nested_block => {
                 let nested_contents = build_rust_block_contents(inner_pair.into_inner())?;
                 content_parts.push(RustBlockContent::NestedBlock(nested_contents));
-            }
-            Rule::html_element => {
-                content_parts.push(RustBlockContent::HtmlElement(inner_pair.as_str().to_string()));
             }
             rule => {
                 return Err(format!(
@@ -252,6 +256,38 @@ fn build_rust_block_contents(pairs: Pairs<Rule>) -> Result<Vec<RustBlockContent>
         }
     }
     Ok(content_parts)
+}
+
+fn build_text_block(inner_pair: Pair<Rule>) -> RustBlockContent {
+    let mut items = Vec::new();
+
+    for item_pair in inner_pair.into_inner() {
+        match item_pair.as_rule() {
+            Rule::rust_expr_simple => {
+                if let Some(expr_pair) = item_pair.into_inner().nth(1) {
+                    items.push(TextBlockItem::RustExprSimple(
+                        expr_pair.as_str().to_string(),
+                    ));
+                } else {
+                    eprintln!("Uyarı: Boş veya hatalı embedded expression bulundu.");
+                }
+            }
+            Rule::text_block => {
+                let text = item_pair.as_str().replace("@@", "@");
+                if !text.is_empty() {
+                    items.push(TextBlockItem::Text(text));
+                }
+            }
+            _ => {
+                eprintln!(
+                    "Uyarı: text_block içinde beklenmeyen kural: {:?}",
+                    item_pair.as_rule()
+                );
+            }
+        }
+    }
+
+    RustBlockContent::TextBlock(items)
 }
 
 /// takes an input string and parses it into an AST.
