@@ -1,4 +1,4 @@
-﻿use crate::parser::{Node, RustBlockContent, TextBlockItem, TextLineItem};
+﻿use crate::node::{Node, RustBlockContent, TextBlockItem, TextLineItem};
 
 fn print_indent(indent: usize) {
     print!("{}", "  ".repeat(indent));
