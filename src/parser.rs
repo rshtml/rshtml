@@ -2,6 +2,7 @@ use crate::config::Config;
 use pest::Parser;
 use pest::iterators::{Pair, Pairs};
 use pest_derive::Parser;
+use std::collections::HashSet;
 
 use crate::node::*;
 
@@ -14,12 +15,13 @@ impl RsHtmlParser {
         &self,
         pairs: Pairs<Rule>,
         config: &Config,
+        included_templates: &HashSet<String>,
     ) -> Result<Vec<Node>, String> {
         let mut nodes = Vec::new();
         for pair in pairs {
             match pair.as_rule() {
                 Rule::comment_block | Rule::block | Rule::text | Rule::inner_text => {
-                    nodes.push(self.build_ast_node(pair, config)?);
+                    nodes.push(self.build_ast_node(pair, config, included_templates)?);
                 }
                 // skip other rules (EOI, WHITESPACE, etc.)
                 _ => {}
@@ -28,10 +30,16 @@ impl RsHtmlParser {
         Ok(nodes)
     }
 
-    fn build_ast_node(&self, pair: Pair<Rule>, config: &Config) -> Result<Node, String> {
+    fn build_ast_node(
+        &self,
+        pair: Pair<Rule>,
+        config: &Config,
+        included_templates: &HashSet<String>,
+    ) -> Result<Node, String> {
         match pair.as_rule() {
             Rule::template => {
-                let children = self.build_nodes_from_pairs(pair.into_inner(), config)?;
+                let children =
+                    self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?;
                 Ok(Node::Template(children))
             }
             Rule::text => {
@@ -60,7 +68,7 @@ impl RsHtmlParser {
             }
             Rule::block => {
                 if let Some(inner_block_pair) = pair.into_inner().next() {
-                    self.build_ast_node(inner_block_pair, config)
+                    self.build_ast_node(inner_block_pair, config, included_templates)
                 } else {
                     Err("Internal Error: Empty block encountered".to_string())
                 }
@@ -86,8 +94,28 @@ impl RsHtmlParser {
                     }
                 };
 
-                let inner_template =
-                    self.parse_template(included_content.clone().as_str(), config)?;
+                let canonical_path = view_path
+                    .canonicalize()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
+
+                if included_templates.contains(&canonical_path) {
+                    return Err(format!(
+                        "Error: Circular include detected for file '{}'",
+                        path
+                    ));
+                }
+
+                let mut included_templates = included_templates.clone();
+                included_templates.insert(canonical_path);
+
+                let inner_template = self.parse_template(
+                    included_content.clone().as_str(),
+                    config,
+                    &included_templates,
+                )?;
+
                 let nodes = match inner_template {
                     Node::Template(nodes) => nodes,
                     _ => {
@@ -144,8 +172,11 @@ impl RsHtmlParser {
                         })?;
 
                     // Recursively parse the nodes within the body
-                    let body_nodes =
-                        self.build_nodes_from_pairs(template_pair.into_inner(), config)?;
+                    let body_nodes = self.build_nodes_from_pairs(
+                        template_pair.into_inner(),
+                        config,
+                        included_templates,
+                    )?;
 
                     clauses.push((head.clone(), body_nodes)); // Clone head here
 
@@ -338,11 +369,16 @@ impl RsHtmlParser {
         RustBlockContent::TextBlock(items)
     }
 
-    fn parse_template(&self, input: &str, config: &Config) -> Result<Node, String> {
+    fn parse_template(
+        &self,
+        input: &str,
+        config: &Config,
+        included_templates: &HashSet<String>,
+    ) -> Result<Node, String> {
         let mut pairs = Self::parse(Rule::template, input).unwrap();
         let template_pair = pairs.next().unwrap();
         if template_pair.as_rule() == Rule::template {
-            let ast = self.build_ast_node(template_pair, config)?;
+            let ast = self.build_ast_node(template_pair, config, included_templates)?;
             Ok(ast)
         } else {
             panic!("Expected 'template', found {:?}", template_pair.as_rule());
@@ -351,8 +387,8 @@ impl RsHtmlParser {
 }
 
 pub fn run<'a>(input: &'a str, config: &Config) -> Result<(Pairs<'a, Rule>, Node), String> {
-    let rshtml_parser = RsHtmlParser {};
-    let node = rshtml_parser.parse_template(input, config)?;
+    let mut rshtml_parser = RsHtmlParser {};
+    let node = rshtml_parser.parse_template(input, config, &HashSet::new())?;
     let pairs = RsHtmlParser::parse(Rule::template, input).unwrap();
 
     Ok((pairs.clone(), node))
