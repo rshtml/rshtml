@@ -1,3 +1,4 @@
+use crate::config::Config;
 use pest::Parser;
 use pest::iterators::{Pair, Pairs};
 use pest_derive::Parser;
@@ -45,12 +46,12 @@ pub enum Node {
 }
 
 /// takes a list of 'Pair's (parsed nodes) and builds AST nodes from them.
-fn build_nodes_from_pairs(pairs: Pairs<Rule>) -> Result<Vec<Node>, String> {
+fn build_nodes_from_pairs(pairs: Pairs<Rule>, config: &Config) -> Result<Vec<Node>, String> {
     let mut nodes = Vec::new();
     for pair in pairs {
         match pair.as_rule() {
             Rule::comment_block | Rule::block | Rule::text | Rule::inner_text => {
-                nodes.push(build_ast_node(pair)?);
+                nodes.push(build_ast_node(pair, config)?);
             }
             // skip other rules (EOI, WHITESPACE, etc.)
             _ => {}
@@ -60,10 +61,10 @@ fn build_nodes_from_pairs(pairs: Pairs<Rule>) -> Result<Vec<Node>, String> {
 }
 
 /// takes a 'Pair' (parsed node) and converts it to an AST 'Node'.
-fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
+fn build_ast_node(pair: Pair<Rule>, config: &Config) -> Result<Node, String> {
     match pair.as_rule() {
         Rule::template => {
-            let children = build_nodes_from_pairs(pair.into_inner())?;
+            let children = build_nodes_from_pairs(pair.into_inner(), config)?;
             Ok(Node::Template(children))
         }
         Rule::text => {
@@ -92,12 +93,46 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
         }
         Rule::block => {
             if let Some(inner_block_pair) = pair.into_inner().next() {
-                build_ast_node(inner_block_pair)
+                build_ast_node(inner_block_pair, config)
             } else {
                 Err("Internal Error: Empty block encountered".to_string())
             }
         }
-        Rule::include_directive => Ok(Node::IncludeDirective(pair.as_str().to_string())),
+        Rule::include_directive => {
+            let path_pair = pair
+                .into_inner()
+                .find(|p| p.as_rule() == Rule::include_path)
+                .unwrap();
+
+            let path = path_pair
+                .as_str()
+                .trim_matches('"')
+                .trim_matches('\'')
+                .to_string();
+
+            let view_path = config.views_base_path.join(&path);
+
+            let included_content = match std::fs::read_to_string(&view_path) {
+                Ok(content) => content,
+                Err(e) => {
+                    return Err(format!("Error reading included file '{}': {}", path, e));
+                }
+            };
+
+            let inner_template = parse_template(included_content.clone().as_str(), config)?;
+            let nodes = match inner_template {
+                Node::Template(nodes) => nodes,
+                _ => {
+                    return Err(format!(
+                        "Error: Expected a template in the included file '{}', found {:?}",
+                        path, inner_template
+                    ));
+                }
+            };
+
+            Ok(Node::Template(nodes))
+            //Ok(Node::IncludeDirective(pair.as_str().to_string()))
+        }
         Rule::rust_block => {
             let contents = build_rust_block_contents(pair.into_inner())?;
             Ok(Node::RustBlock(contents))
@@ -141,7 +176,7 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
                     })?;
 
                 // Recursively parse the nodes within the body
-                let body_nodes = build_nodes_from_pairs(template_pair.into_inner())?;
+                let body_nodes = build_nodes_from_pairs(template_pair.into_inner(), config)?;
 
                 clauses.push((head.clone(), body_nodes)); // Clone head here
 
@@ -329,27 +364,20 @@ fn build_text_block(inner_pair: Pair<Rule>) -> RustBlockContent {
 }
 
 /// takes an input string and parses it into an AST.
-pub fn parse_template(input: &str) -> Result<(Pairs<Rule>, Node), String> {
-    match TemplateParser::parse(Rule::template, input) {
-        Ok(mut pairs) => {
-            let pairs_cloned = pairs.clone();
-
-            if let Some(template_pair) = pairs.next() {
-                if template_pair.as_rule() == Rule::template {
-                    match build_ast_node(template_pair) {
-                        Ok(ast) => Ok((pairs_cloned, ast)),
-                        Err(e) => Err(format!("Error building AST from template: {}", e)),
-                    }
-                } else {
-                    Err(format!(
-                        "Internal Error: Expected top-level rule to be 'template', found {:?}",
-                        template_pair.as_rule()
-                    ))
-                }
-            } else {
-                Err("Internal Error: Parsing produced no pairs".to_string())
-            }
-        }
-        Err(e) => Err(format!("Parse Error:\n{}", e)),
+fn parse_template(input: &str, config: &Config) -> Result<Node, String> {
+    let mut pairs = TemplateParser::parse(Rule::template, input).unwrap();
+    let template_pair = pairs.next().unwrap();
+    if template_pair.as_rule() == Rule::template {
+        let ast = build_ast_node(template_pair, config)?;
+        Ok(ast)
+    } else {
+        panic!("Expected 'template', found {:?}", template_pair.as_rule());
     }
+}
+
+pub fn run<'a>(input: &'a str, config: &Config) -> Result<(Pairs<'a, Rule>, Node), String> {
+    let node = parse_template(input, config)?;
+    let pairs = TemplateParser::parse(Rule::template, input).unwrap();
+
+    Ok((pairs.clone(), node))
 }
