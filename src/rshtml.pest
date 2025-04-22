@@ -127,11 +127,11 @@ _string_literal = _{ _normal_string | _raw_string }
 
 
 text_line_directive = ${ ("@:" ~ (("@" ~ rust_expr_simple) | text_line)*) }
-text_line = @{ (!(NEWLINE | ("@" ~ rust_expr_simple)) ~ ANY)+ }
+text_line = @{ ("@@" | !(NEWLINE | ("@" ~ rust_expr_simple)) ~ ANY)+ }
 
 
 text_block_tag = { "<text>" ~ (("@" ~ (rust_expr_simple)) |  text_block)* ~ "</text>" }
-text_block = @{ ("@@" | !( "</text>" | ("@" ~ (rust_expr_simple)) ) ~ ANY)+ }
+text_block = @{ ("@@" | !("</text>" | ("@" ~ (rust_expr_simple))) ~ ANY)+ }
 
 // endregion
 
@@ -154,6 +154,11 @@ nested_expression = _{
 // endregion
 
 
+/// region Code blocks and code transfers
+
+
+
+/// endregion Code blocks and code transfers
 
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
