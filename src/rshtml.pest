@@ -25,7 +25,7 @@ comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
 // region --- Block Types ---
 
 block = !{
-    "@" ~ (rust_block | rust_expr | rust_expr_parenthesized | rust_expr_simple )
+    "@" ~ ( include_directive | (rust_block | rust_expr | rust_expr_parenthesized | rust_expr_simple ))
 }
 
 // endregion
@@ -156,7 +156,20 @@ nested_expression = _{
 
 /// region Code blocks and code transfers
 
+// region @include directive @include('other_view.html')
 
+include_directive = {
+    &"include"
+    ~ "include" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
+        ~ include_path
+    ~ WHITESPACE* ~ ")"
+}
+include_path = @{
+    "\"" ~ ( escaped_char | !("\"" | "\\") ~ ANY )* ~ "\"" |
+    "'" ~ ( escaped_char | !("'" | "\\") ~ ANY )* ~ "'"
+}
+
+// endregion
 
 /// endregion Code blocks and code transfers
 

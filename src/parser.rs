@@ -32,6 +32,7 @@ pub enum Node {
     Text(String),                     // plain text content (@@ -> @)
     InnerText(String),                // text inside a block (@@ -> @, @{ -> {, @} -> })
     Comment(String),                  // comment content
+    IncludeDirective(String),         // include directive @include("other_view.html")
     RustBlock(Vec<RustBlockContent>), // @{ ... } block content (with trim)
     RustExprSimple(String),           // @expr ... (simple expression)
     RustExprParen(String),
@@ -96,6 +97,7 @@ fn build_ast_node(pair: Pair<Rule>) -> Result<Node, String> {
                 Err("Internal Error: Empty block encountered".to_string())
             }
         }
+        Rule::include_directive => Ok(Node::IncludeDirective(pair.as_str().to_string())),
         Rule::rust_block => {
             let contents = build_rust_block_contents(pair.into_inner())?;
             Ok(Node::RustBlock(contents))
@@ -271,9 +273,7 @@ fn build_text_line(inner_pair: Pair<Rule>) -> RustBlockContent {
         match item_pair.as_rule() {
             Rule::rust_expr_simple => {
                 if let Some(expr_pair) = item_pair.into_inner().nth(1) {
-                    items.push(TextLineItem::RustExprSimple(
-                        expr_pair.as_str().to_string(),
-                    ));
+                    items.push(TextLineItem::RustExprSimple(expr_pair.as_str().to_string()));
                 } else {
                     eprintln!("Warning: Empty or bad embedded expression found.");
                 }

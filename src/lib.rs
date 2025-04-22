@@ -20,15 +20,15 @@ mod tests {
         assert!(matches!(ast, Node::Template(_)));
     }
 
-    // #[test]
-    // fn test_template_format2() {
-    //     let template = fs::read_to_string("src/views/index.html").unwrap();
-    //
-    //     match TemplateParser::parse(Rule::template, template.as_str()) {
-    //         Ok(pairs) => {
-    //             viewer::execute_pairs(pairs, 0, true);
-    //         }
-    //         Err(e) => println!("Parse Error:\n{}", e),
-    //     }
-    // }
+    #[test]
+    fn test_template_format2() {
+        let template = fs::read_to_string("src/views/index.html").unwrap();
+    
+        match TemplateParser::parse(Rule::template, template.as_str()) {
+            Ok(pairs) => {
+                viewer::execute_pairs(pairs, 0, true);
+            }
+            Err(e) => println!("Parse Error:\n{}", e),
+        }
+    }
 }
