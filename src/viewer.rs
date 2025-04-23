@@ -1,11 +1,11 @@
 ﻿// use pest::Parser;
 // use pest::iterators::Pairs;
 // use pest_derive::Parser;
-// 
+//
 // #[derive(Parser)]
 // #[grammar = "template.pest"]
 // pub struct TemplateParser;
-// 
+//
 // pub fn execute_template(input: &str) {
 //     match TemplateParser::parse(Rule::template, input) {
 //         Ok(pairs) => {
@@ -15,8 +15,8 @@
 //     }
 // }
 
-use pest::iterators::Pairs;
 use crate::parser::Rule;
+use pest::iterators::Pairs;
 
 pub fn execute_pairs(pairs: Pairs<Rule>, indent: usize, mut start: bool) {
     let pairs_len = pairs.clone().len();
@@ -45,7 +45,7 @@ pub fn execute_pairs(pairs: Pairs<Rule>, indent: usize, mut start: bool) {
             execute_pairs(pair.into_inner(), indent + 1, true);
             start = true;
         } else {
-            if start {
+            if start || pairs_len > 1 {
                 print!("{} - {:?}", "  ".repeat(indent), pair.as_rule());
             } else {
                 print!(" > {:?}", pair.as_rule());

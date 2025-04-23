@@ -20,20 +20,12 @@ impl RsHtmlParser {
         let mut nodes = Vec::new();
         for pair in pairs {
             match pair.as_rule() {
-                Rule::extends_directive => {
-                    let path_pair = pair
-                        .into_inner()
-                        .find(|p| p.as_rule() == Rule::include_path)
-                        .unwrap();
-                    let path_str = path_pair
-                        .as_str()
-                        .trim_matches('"')
-                        .trim_matches('\'')
-                        .to_string();
-
-                    nodes.push(Node::ExtendsDirective(path_str));
-                }
-                Rule::comment_block | Rule::block | Rule::text | Rule::inner_text => {
+                Rule::section_block
+                | Rule::extends_directive
+                | Rule::comment_block
+                | Rule::block
+                | Rule::text
+                | Rule::inner_text => {
                     nodes.push(self.build_ast_node(pair, config, included_templates)?);
                 }
                 // skip other rules (EOI, WHITESPACE, etc.)
@@ -143,6 +135,19 @@ impl RsHtmlParser {
                 //Ok(Node::IncludeDirective(pair.as_str().to_string()))
             }
             Rule::yield_directive => Ok(Node::YieldDirective(pair.as_str().to_string())),
+            Rule::extends_directive => {
+                let path_pair = pair
+                    .into_inner()
+                    .find(|p| p.as_rule() == Rule::include_path)
+                    .unwrap();
+                let path_str = path_pair
+                    .as_str()
+                    .trim_matches('"')
+                    .trim_matches('\'')
+                    .to_string();
+
+                Ok(Node::ExtendsDirective(path_str))
+            }
             Rule::rust_block => {
                 let contents = self.build_rust_block_contents(pair.into_inner())?;
                 Ok(Node::RustBlock(contents))
@@ -280,6 +285,23 @@ impl RsHtmlParser {
                 }
 
                 Ok(Node::RustExpr { clauses })
+            }
+            Rule::section_block => {
+                let name_pair = pair
+                    .clone()
+                    .into_inner()
+                    .find(|p| p.as_rule() == Rule::include_path)
+                    .unwrap();
+
+                let name = name_pair
+                    .as_str()
+                    .trim_matches('"')
+                    .trim_matches('\'')
+                    .to_string();
+
+                let body =
+                    self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?;
+                Ok(Node::SectionBlock { name, body })
             }
 
             rule => Err(format!(

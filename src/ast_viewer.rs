@@ -96,5 +96,11 @@ pub fn view_node(node: &Node, indent: usize) {
                 }
             }
         }
+        Node::SectionBlock { name, body } => {
+            println!("- SectionBlock:");
+            for inner_node in body {
+                view_node(inner_node, indent + 1);
+            }
+        }
     }
 }

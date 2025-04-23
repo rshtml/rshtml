@@ -1,23 +1,28 @@
 ﻿@extends('layout.html')
 
-@section('title', 'About Page')
+@section('title')
+    About Page
+@end
 
 @section('content')
     <h1>About Page</h1>
-    <p>This is the about page of our website.</p>
-    <p>We provide various services and information.</p>
-    <p>Contact us for more details.</p>
-    <p>Follow us on social media for updates.</p>
-    <p>Thank you for visiting our website.</p>
-    <p>We hope you find what you're looking for.</p>
+
+    @{
+        let myVar = true;
+        let myVar2 = false;
+        let items = vec![1, 2, 3, 4, 5];
+    }
+
+    @if myVar {
+        <p>We hope you find what you're looking for.</p>
+    }
 
     <div>
         <h2>Our Team</h2>
         <ul>
-            <li>John Doe - CEO</li>
-            <li>Jane Smith - CTO</li>
-            <li>Emily Johnson - Designer</li>
-            <li>Michael Brown - Developer</li>
+            @for i in 0..10 {
+                <li>Team Member @i</li>
+            }
         </ul>
 
         <h2>Our Mission</h2>

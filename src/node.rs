@@ -1,4 +1,3 @@
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum TextBlockItem {
     Text(String),
@@ -34,7 +33,10 @@ pub enum Node {
     RustExpr {
         // @if ...  { ... } else { ... } / @for ... { ... }
         clauses: Vec<(String, Vec<Node>)>,
-        //head: String, // if myVar / for i in items (with trim)
-        //body: Vec<Node>, // inner nodes (inner_template)
+    },
+    SectionBlock {
+        // section block @section("content") content @end
+        name: String,
+        body: Vec<Node>,
     },
 }

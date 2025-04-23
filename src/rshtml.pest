@@ -7,7 +7,9 @@ rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
 // region --- Core Template Rules ---
 
-template = { SOI ~ extends_directive? ~ (comment_block | block | text)* ~ EOI }
+BOM = _{ "\u{FEFF}" }
+template = { SOI ~ BOM? ~ extends_directive? ~ WHITESPACE* ~ (section_block | template_content)* ~ EOI }
+template_content = _{ (comment_block | block | text) }
 inner_template = { (comment_block | block | inner_text)* }
 
 // endregion
@@ -49,7 +51,7 @@ rust_expr_head = @{
 // region --- Simple Rust Expressions (@identifier...) ---
 
 rust_expr_simple = @{
-    !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "else" | "include" | "extends" | "yield"))
+    !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "else" | "include" | "extends" | "yield" | "section" | "end"))
     ~ rust_identifier ~ (&(!expression_boundary) ~ chain_segment)*
 }
 
@@ -197,8 +199,22 @@ yield_directive = {
 
 // endregion
 
+// region @section directive @section('section_name')
+
+section_block = { section_start ~ template_content* ~ section_end }
+section_start = _{
+    &("@" ~ "section")
+    ~ "@" ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
+        ~ include_path
+        ~ WHITESPACE* ~ ")"
+}
+section_end = _{ "@" ~ "end" }
+
+// endregion
+
 /// endregion Code blocks and code transfers
 
+// TODO 1: make a section in one line @section("name","value")
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
     @extends('layouts.app')

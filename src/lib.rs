@@ -22,10 +22,12 @@ mod tests {
     use super::*;
     use crate::config::Config;
     use std::fs;
+    use crate::parser::{RsHtmlParser, Rule};
+    use pest::Parser;
 
     #[test]
     fn test_template_format() {
-        let view_name = "layout.html"; //"index.html";
+        let view_name = "about.html"; //"layout.html"; //"index.html";
         let config = Config::default();
         let template = fs::read_to_string(config.views_base_path.join(view_name)).unwrap();
         let (pairs, ast) = parser::run(template.as_str(), &config).unwrap();
@@ -38,13 +40,14 @@ mod tests {
 
     // #[test]
     // fn test_template_format_without_parsing() {
-    //     let template = fs::read_to_string("src/views/index.html").unwrap();
-    //
-    //     match TemplateParser::parse(Rule::template, template.as_str()) {
+    //     let template = fs::read_to_string("src/views/about.html").unwrap();
+    //     match RsHtmlParser::parse(Rule::template, template.as_str()) {
     //         Ok(pairs) => {
     //             viewer::execute_pairs(pairs, 0, true);
     //         }
-    //         Err(e) => println!("Parse Error:\n{}", e),
+    //         Err(e) => {
+    //             println!("Error parsing template: {:?}", e);
+    //         }
     //     }
     // }
 }
