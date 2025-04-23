@@ -20,6 +20,15 @@ impl RsHtmlParser {
         let mut nodes = Vec::new();
         for pair in pairs {
             match pair.as_rule() {
+                Rule::extends_directive => {
+                    let path_pair = pair
+                        .into_inner()
+                        .find(|p| p.as_rule() == Rule::include_path)
+                        .unwrap();
+                    let path_str = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
+
+                    nodes.push(Node::ExtendsDirective(path_str));
+                }
                 Rule::comment_block | Rule::block | Rule::text | Rule::inner_text => {
                     nodes.push(self.build_ast_node(pair, config, included_templates)?);
                 }
@@ -275,6 +284,22 @@ impl RsHtmlParser {
         }
     }
 
+    fn parse_template(
+        &self,
+        input: &str,
+        config: &Config,
+        included_templates: &HashSet<String>,
+    ) -> Result<Node, String> {
+        let mut pairs = Self::parse(Rule::template, input).unwrap();
+        let template_pair = pairs.next().unwrap();
+        if template_pair.as_rule() == Rule::template {
+            let ast = self.build_ast_node(template_pair, config, included_templates)?;
+            Ok(ast)
+        } else {
+            panic!("Expected 'template', found {:?}", template_pair.as_rule());
+        }
+    }
+
     fn build_rust_block_contents(
         &self,
         pairs: Pairs<Rule>,
@@ -368,26 +393,10 @@ impl RsHtmlParser {
 
         RustBlockContent::TextBlock(items)
     }
-
-    fn parse_template(
-        &self,
-        input: &str,
-        config: &Config,
-        included_templates: &HashSet<String>,
-    ) -> Result<Node, String> {
-        let mut pairs = Self::parse(Rule::template, input).unwrap();
-        let template_pair = pairs.next().unwrap();
-        if template_pair.as_rule() == Rule::template {
-            let ast = self.build_ast_node(template_pair, config, included_templates)?;
-            Ok(ast)
-        } else {
-            panic!("Expected 'template', found {:?}", template_pair.as_rule());
-        }
-    }
 }
 
 pub fn run<'a>(input: &'a str, config: &Config) -> Result<(Pairs<'a, Rule>, Node), String> {
-    let mut rshtml_parser = RsHtmlParser {};
+    let rshtml_parser = RsHtmlParser {};
     let node = rshtml_parser.parse_template(input, config, &HashSet::new())?;
     let pairs = RsHtmlParser::parse(Rule::template, input).unwrap();
 

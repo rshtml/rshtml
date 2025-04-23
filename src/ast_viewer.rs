@@ -68,6 +68,9 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::IncludeDirective(path) => {
             println!("- IncludeDirective: {:?}", path);
         }
+        Node::ExtendsDirective(path) => {
+            println!("- ExtendsDirective: {:?}", path);
+        }
         Node::RustBlock(contents) => {
             println!("- RustBlock:");
             for content in contents {

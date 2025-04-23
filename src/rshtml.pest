@@ -7,7 +7,7 @@ rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
 // region --- Core Template Rules ---
 
-template = { SOI ~ (comment_block | block | text)* ~ EOI }
+template = { SOI ~ extends_directive? ~ (comment_block | block | text)* ~ EOI }
 inner_template = { (comment_block | block | inner_text)* }
 
 // endregion
@@ -167,6 +167,28 @@ include_directive = {
 include_path = @{
     "\"" ~ ( escaped_char | !("\"" | "\\") ~ ANY )* ~ "\"" |
     "'" ~ ( escaped_char | !("'" | "\\") ~ ANY )* ~ "'"
+}
+
+// endregion f
+
+// region @extends directive @extends('layout.html')
+
+extends_directive = {
+    &("@" ~ "extends")
+    ~ "@" ~ "extends" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
+        ~ include_path
+    ~ WHITESPACE* ~ ")"
+}
+
+// endregion
+
+// region @yield directive @yield('section_name')
+
+yield_directive = {
+    &"yield"
+    ~ "yield" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
+    ~ _string_literal
+    ~ WHITESPACE* ~ ")"
 }
 
 // endregion
