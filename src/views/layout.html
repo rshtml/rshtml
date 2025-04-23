@@ -2,9 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>RsHtml Template</title>
+    <title>RsHtml Template - @yield('title')</title>
+    @* this comment is in layout *@
 </head>
 <body>
-    @yield()
+@if isOk {
+    @yield("content")
+} else {
+    <h1>Something went wrong</h1>
+    <p>Please try again later.</p>
+}
+
+@for i in 0..10 {
+    <p>Item @i</p>
+}
+
 </body>
 </html>

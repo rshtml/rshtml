@@ -25,7 +25,11 @@ impl RsHtmlParser {
                         .into_inner()
                         .find(|p| p.as_rule() == Rule::include_path)
                         .unwrap();
-                    let path_str = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
+                    let path_str = path_pair
+                        .as_str()
+                        .trim_matches('"')
+                        .trim_matches('\'')
+                        .to_string();
 
                     nodes.push(Node::ExtendsDirective(path_str));
                 }
@@ -138,6 +142,7 @@ impl RsHtmlParser {
                 Ok(Node::Template(nodes))
                 //Ok(Node::IncludeDirective(pair.as_str().to_string()))
             }
+            Rule::yield_directive => Ok(Node::YieldDirective(pair.as_str().to_string())),
             Rule::rust_block => {
                 let contents = self.build_rust_block_contents(pair.into_inner())?;
                 Ok(Node::RustBlock(contents))

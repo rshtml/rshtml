@@ -25,8 +25,9 @@ mod tests {
 
     #[test]
     fn test_template_format() {
+        let view_name = "layout.html"; //"index.html";
         let config = Config::default();
-        let template = fs::read_to_string(config.views_base_path.join("index.html")).unwrap();
+        let template = fs::read_to_string(config.views_base_path.join(view_name)).unwrap();
         let (pairs, ast) = parser::run(template.as_str(), &config).unwrap();
 
         //viewer::execute_pairs(pairs, 0, true);
@@ -36,7 +37,7 @@ mod tests {
     }
 
     // #[test]
-    // fn test_template_format2() {
+    // fn test_template_format_without_parsing() {
     //     let template = fs::read_to_string("src/views/index.html").unwrap();
     //
     //     match TemplateParser::parse(Rule::template, template.as_str()) {

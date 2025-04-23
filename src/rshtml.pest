@@ -25,7 +25,10 @@ comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
 // region --- Block Types ---
 
 block = !{
-    "@" ~ ( include_directive | (rust_block | rust_expr | rust_expr_parenthesized | rust_expr_simple ))
+    "@" ~ (
+        yield_directive | include_directive
+        | (rust_block | rust_expr | rust_expr_parenthesized | rust_expr_simple )
+    )
 }
 
 // endregion
@@ -46,7 +49,8 @@ rust_expr_head = @{
 // region --- Simple Rust Expressions (@identifier...) ---
 
 rust_expr_simple = @{
-    !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "else")) ~ rust_identifier ~ (&(!expression_boundary) ~ chain_segment)*
+    !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "else" | "include" | "extends" | "yield"))
+    ~ rust_identifier ~ (&(!expression_boundary) ~ chain_segment)*
 }
 
 
@@ -187,7 +191,7 @@ extends_directive = {
 yield_directive = {
     &"yield"
     ~ "yield" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
-    ~ _string_literal
+    ~ include_path
     ~ WHITESPACE* ~ ")"
 }
 
