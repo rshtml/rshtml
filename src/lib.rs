@@ -21,13 +21,14 @@ pub fn rshtml(path: String) -> String {
 mod tests {
     use super::*;
     use crate::config::Config;
-    use std::fs;
     use crate::parser::{RsHtmlParser, Rule};
     use pest::Parser;
+    use std::fs;
 
     #[test]
     fn test_template_format() {
-        let view_name = "about.html"; //"layout.html"; //"index.html";
+        let views = vec!["layout.html", "index.html", "about.html"];
+        let view_name = views[1];
         let config = Config::default();
         let template = fs::read_to_string(config.views_base_path.join(view_name)).unwrap();
         let (pairs, ast) = parser::run(template.as_str(), &config).unwrap();

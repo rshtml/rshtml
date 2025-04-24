@@ -225,24 +225,10 @@ section_directive = {
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: make a section in one line @section("name","value")
+
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
-    @extends('layouts.app')
-
-    @section('title', 'Page Title')
-
-    @section('sidebar')
-        <p>This is appended to the master sidebar.</p>
-    @end
-
-    @section('content')
-        <p>This is my body content.</p>
-
-         <div class="pull-right">
-                @include('default-navigation')
-         </div>
-    @end
+    @push / @stack
 
     maybe ToJavascript
 
