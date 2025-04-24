@@ -222,8 +222,8 @@ section_directive = {
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: Add default value for @yield directive
-// TODO 2: Adding html escapes during rendering also a directive that can print without escape is required
+// TODO 1: Add single quote support for _string_literal
+// TODO 2: Add default value for @yield directive
 
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
@@ -237,3 +237,5 @@ section_directive = {
 
     @end
 */
+
+// TODO After: Adding html escapes during rendering also a directive that can print without escape is required
