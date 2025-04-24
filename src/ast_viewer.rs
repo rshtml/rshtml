@@ -96,8 +96,17 @@ pub fn view_node(node: &Node, indent: usize) {
                 }
             }
         }
+        Node::SectionDirective(name, value) => {
+            println!("- SectionDirective:");
+            print_indent(indent + 1);
+            println!("- StringLine: {:?}", name);
+            print_indent(indent + 1);
+            println!("- Value: {:?}", value);
+        }
         Node::SectionBlock { name, body } => {
             println!("- SectionBlock:");
+            print_indent(indent + 1);
+            println!("- StringLine: {:?}", name);
             for inner_node in body {
                 view_node(inner_node, indent + 1);
             }

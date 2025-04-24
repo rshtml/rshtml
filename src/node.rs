@@ -34,6 +34,7 @@ pub enum Node {
         // @if ...  { ... } else { ... } / @for ... { ... }
         clauses: Vec<(String, Vec<Node>)>,
     },
+    SectionDirective(String, String), // @section("content")
     SectionBlock {
         // section block @section("content") content @end
         name: String,

@@ -8,7 +8,7 @@ rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 // region --- Core Template Rules ---
 
 BOM = _{ "\u{FEFF}" }
-template = { SOI ~ BOM? ~ extends_directive? ~ WHITESPACE* ~ (section_block | template_content)* ~ EOI }
+template = { SOI ~ BOM? ~ extends_directive? ~ WHITESPACE* ~ (section_directive | section_block | template_content)* ~ EOI }
 template_content = _{ (comment_block | block | text) }
 inner_template = { (comment_block | block | inner_text)* }
 
@@ -162,17 +162,18 @@ nested_expression = _{
 
 /// region Code blocks and code transfers
 
+string_line = @{
+    "\"" ~ ( escaped_char | !("\"" | "\\") ~ ANY )* ~ "\"" |
+    "'" ~ ( escaped_char | !("'" | "\\") ~ ANY )* ~ "'"
+}
+
 // region @include directive @include('other_view.html')
 
 include_directive = {
     &"include"
     ~ "include" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
-        ~ include_path
+        ~ string_line
     ~ WHITESPACE* ~ ")"
-}
-include_path = @{
-    "\"" ~ ( escaped_char | !("\"" | "\\") ~ ANY )* ~ "\"" |
-    "'" ~ ( escaped_char | !("'" | "\\") ~ ANY )* ~ "'"
 }
 
 // endregion f
@@ -182,7 +183,7 @@ include_path = @{
 extends_directive = {
     &("@" ~ "extends")
     ~ "@" ~ "extends" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
-        ~ include_path
+        ~ string_line
     ~ WHITESPACE* ~ ")"
 }
 
@@ -193,7 +194,7 @@ extends_directive = {
 yield_directive = {
     &"yield"
     ~ "yield" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
-    ~ include_path
+    ~ string_line
     ~ WHITESPACE* ~ ")"
 }
 
@@ -205,10 +206,20 @@ section_block = { section_start ~ template_content* ~ section_end }
 section_start = _{
     &("@" ~ "section")
     ~ "@" ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
-        ~ include_path
+        ~ string_line
         ~ WHITESPACE* ~ ")"
 }
 section_end = _{ "@" ~ "end" }
+
+// one line section
+section_directive = {
+    &("@" ~ "section")
+    ~ "@" ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
+        ~ string_line
+        ~ ","
+        ~ (string_line | ("@" ~ rust_expr_simple))
+        ~ WHITESPACE* ~ ")"
+}
 
 // endregion
 

@@ -20,7 +20,8 @@ impl RsHtmlParser {
         let mut nodes = Vec::new();
         for pair in pairs {
             match pair.as_rule() {
-                Rule::section_block
+                Rule::section_directive
+                | Rule::section_block
                 | Rule::extends_directive
                 | Rule::comment_block
                 | Rule::block
@@ -81,7 +82,7 @@ impl RsHtmlParser {
             Rule::include_directive => {
                 let path_pair = pair
                     .into_inner()
-                    .find(|p| p.as_rule() == Rule::include_path)
+                    .find(|p| p.as_rule() == Rule::string_line)
                     .unwrap();
 
                 let path = path_pair
@@ -138,7 +139,7 @@ impl RsHtmlParser {
             Rule::extends_directive => {
                 let path_pair = pair
                     .into_inner()
-                    .find(|p| p.as_rule() == Rule::include_path)
+                    .find(|p| p.as_rule() == Rule::string_line)
                     .unwrap();
                 let path_str = path_pair
                     .as_str()
@@ -286,11 +287,27 @@ impl RsHtmlParser {
 
                 Ok(Node::RustExpr { clauses })
             }
+            Rule::section_directive => {
+                let pairs: Vec<Pair<Rule>> = pair
+                    .clone()
+                    .into_inner()
+                    .filter(|p| p.as_rule() == Rule::string_line)
+                    .collect();
+
+                let mut processed_iter = pairs
+                    .iter()
+                    .map(|x| x.as_str().trim_matches('"').trim_matches('\'').to_string());
+
+                match (processed_iter.next(), processed_iter.next()) {
+                    (Some(name), Some(value)) => Ok(Node::SectionDirective(name, value)),
+                    _ => Err("Error: section_directive".to_string()),
+                }
+            }
             Rule::section_block => {
                 let name_pair = pair
                     .clone()
                     .into_inner()
-                    .find(|p| p.as_rule() == Rule::include_path)
+                    .find(|p| p.as_rule() == Rule::string_line)
                     .unwrap();
 
                 let name = name_pair
