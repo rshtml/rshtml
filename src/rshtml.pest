@@ -181,8 +181,7 @@ include_directive = {
 // region @extends directive @extends('layout.html')
 
 extends_directive = {
-    &("@" ~ "extends")
-    ~ "@" ~ "extends" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
+    "@" ~ "extends" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
         ~ string_line
     ~ WHITESPACE* ~ ")"
 }
@@ -204,8 +203,7 @@ yield_directive = {
 
 section_block = { section_start ~ template_content* ~ section_end }
 section_start = _{
-    &("@" ~ "section")
-    ~ "@" ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
+    "@" ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
         ~ string_line
         ~ WHITESPACE* ~ ")"
 }
@@ -213,8 +211,7 @@ section_end = _{ "@" ~ "end" }
 
 // one line section
 section_directive = {
-    &("@" ~ "section")
-    ~ "@" ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
+     "@" ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
         ~ string_line
         ~ ","
         ~ (string_line | (rust_expr_simple))
@@ -225,12 +222,15 @@ section_directive = {
 
 /// endregion Code blocks and code transfers
 
+// TODO 1: Add default value for @yield directive
+// TODO 2: Adding html escapes during rendering also a directive that can print without escape is required
 
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
     @push / @stack
+    @component / @slot
 
-    maybe ToJavascript
+    maybe ToJavascript @json
 
     maybe
     @client

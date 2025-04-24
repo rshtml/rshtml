@@ -27,8 +27,8 @@ mod tests {
 
     #[test]
     fn test_template_format() {
-        let views = vec!["layout.html", "index.html", "about.html"];
-        let view_name = views[1];
+        let views = vec!["layout.rs.html", "index.rs.html", "about.rs.html"];
+        let view_name = views[2];
         let config = Config::default();
         let template = fs::read_to_string(config.views_base_path.join(view_name)).unwrap();
         let (pairs, ast) = parser::run(template.as_str(), &config).unwrap();
@@ -41,7 +41,7 @@ mod tests {
 
     #[test]
     fn test_template_format_without_parsing() {
-        let template = fs::read_to_string("src/views/about.html").unwrap();
+        let template = fs::read_to_string("src/views/about.rs.html").unwrap();
         match RsHtmlParser::parse(Rule::template, template.as_str()) {
             Ok(pairs) => {
                 viewer::execute_pairs(pairs, 0, true);
