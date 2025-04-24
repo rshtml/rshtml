@@ -217,7 +217,7 @@ section_directive = {
     ~ "@" ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
         ~ string_line
         ~ ","
-        ~ (string_line | ("@" ~ rust_expr_simple))
+        ~ (string_line | (rust_expr_simple))
         ~ WHITESPACE* ~ ")"
 }
 

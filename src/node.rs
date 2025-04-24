@@ -19,6 +19,12 @@ pub enum RustBlockContent {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+pub enum SectionDirectiveContent {
+    Text(String),
+    RustExprSimple(String),
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum Node {
     Template(Vec<Node>),              // main template, contains child nodes
     Text(String),                     // plain text content (@@ -> @)
@@ -34,7 +40,7 @@ pub enum Node {
         // @if ...  { ... } else { ... } / @for ... { ... }
         clauses: Vec<(String, Vec<Node>)>,
     },
-    SectionDirective(String, String), // @section("content")
+    SectionDirective(String, SectionDirectiveContent), // @section("content")
     SectionBlock {
         // section block @section("content") content @end
         name: String,

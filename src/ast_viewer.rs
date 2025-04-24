@@ -1,4 +1,4 @@
-﻿use crate::node::{Node, RustBlockContent, TextBlockItem, TextLineItem};
+﻿use crate::node::{Node, RustBlockContent, SectionDirectiveContent, TextBlockItem, TextLineItem};
 
 fn print_indent(indent: usize) {
     print!("{}", "  ".repeat(indent));
@@ -96,12 +96,15 @@ pub fn view_node(node: &Node, indent: usize) {
                 }
             }
         }
-        Node::SectionDirective(name, value) => {
+        Node::SectionDirective(name, body) => {
             println!("- SectionDirective:");
             print_indent(indent + 1);
             println!("- StringLine: {:?}", name);
             print_indent(indent + 1);
-            println!("- Value: {:?}", value);
+            match body {
+                SectionDirectiveContent::Text(s) => println!("- StringLine: {:?}", s),
+                SectionDirectiveContent::RustExprSimple(s) => println!("- RustExprSimple: {:?}", s),
+            }
         }
         Node::SectionBlock { name, body } => {
             println!("- SectionBlock:");

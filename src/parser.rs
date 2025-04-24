@@ -288,18 +288,36 @@ impl RsHtmlParser {
                 Ok(Node::RustExpr { clauses })
             }
             Rule::section_directive => {
-                let pairs: Vec<Pair<Rule>> = pair
-                    .clone()
-                    .into_inner()
-                    .filter(|p| p.as_rule() == Rule::string_line)
-                    .collect();
+                let mut pairs = pair.clone().into_inner().filter(|p| {
+                    p.as_rule() == Rule::string_line || p.as_rule() == Rule::rust_expr_simple
+                });
 
-                let mut processed_iter = pairs
-                    .iter()
-                    .map(|x| x.as_str().trim_matches('"').trim_matches('\'').to_string());
+                match (pairs.next(), pairs.next()) {
+                    (Some(name), Some(value)) => {
+                        let value_pair = match value.as_rule() {
+                            Rule::string_line => {
+                                let value = value
+                                    .as_str()
+                                    .trim_matches('"')
+                                    .trim_matches('\'')
+                                    .to_string();
+                                SectionDirectiveContent::Text(value)
+                            }
+                            Rule::rust_expr_simple => {
+                                let value = value.as_str().to_string();
+                                SectionDirectiveContent::RustExprSimple(value)
+                            }
+                            _ => unreachable!(),
+                        };
 
-                match (processed_iter.next(), processed_iter.next()) {
-                    (Some(name), Some(value)) => Ok(Node::SectionDirective(name, value)),
+                        let name = name
+                            .as_str()
+                            .trim_matches('"')
+                            .trim_matches('\'')
+                            .to_string();
+
+                        Ok(Node::SectionDirective(name, value_pair))
+                    }
                     _ => Err("Error: section_directive".to_string()),
                 }
             }
