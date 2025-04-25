@@ -237,7 +237,6 @@ render_body_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: Add default value for @render directive
 
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
@@ -250,4 +249,8 @@ render_body_directive = @{
     @client
 */
 
-// TODO After: Adding html escapes during rendering also a directive that can print without escape is required
+// TODO After: (Rust Time)
+/*
+    1. Adding html escapes during rendering also a directive that can print without escape is required
+    2. IsRenderSectionDefined or hasSection like method must be defined
+*/
