@@ -322,21 +322,29 @@ impl RsHtmlParser {
                 }
             }
             Rule::section_block => {
-                let name_pair = pair
+                let section_head_pair = pair
                     .clone()
                     .into_inner()
-                    .find(|p| p.as_rule() == Rule::string_line)
+                    .find(|p| p.as_rule() == Rule::section_head)
                     .unwrap();
 
-                let name = name_pair
+                let section_head = section_head_pair
                     .as_str()
                     .trim_matches('"')
                     .trim_matches('\'')
                     .to_string();
 
-                let body =
-                    self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?;
-                Ok(Node::SectionBlock { name, body })
+                let inner_pairs = pair
+                    .into_inner()
+                    .find(|x| x.as_rule() == Rule::inner_template)
+                    .unwrap();
+
+                let body = self.build_nodes_from_pairs(
+                    inner_pairs.into_inner(),
+                    config,
+                    included_templates,
+                )?;
+                Ok(Node::SectionBlock(section_head, body))
             }
 
             rule => Err(format!(

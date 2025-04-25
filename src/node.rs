@@ -41,9 +41,5 @@ pub enum Node {
         clauses: Vec<(String, Vec<Node>)>,
     },
     SectionDirective(String, SectionDirectiveContent), // @section("content")
-    SectionBlock {
-        // section block @section("content") content @end
-        name: String,
-        body: Vec<Node>,
-    },
+    SectionBlock(String, Vec<Node>),                   // @section content { ... }
 }

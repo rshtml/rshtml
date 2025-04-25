@@ -4,31 +4,43 @@
 
 @section('title','About Page')
 
-@section('content')
-    <h1>About Page</h1>
+what is going on
 
-    @{
-        let myVar = true;
-        let myVar2 = false;
-        let items = vec![1, 2, 3, 4, 5];
+@section footer {
+    <p>Footer content goes here.</p>
+    what is going on dude @hey
+    <p>Footer content goes here.</p>
+
+    @if myvar {
+        <p>MyVar is true</p>
+    } else {
+        <p>MyVar is false</p>
     }
+}
 
-    @if myVar {
-        <p>We hope you find what you're looking for.</p>
-    }
+<h1>About Page</h1>
 
-    <div>
-        <h2>Our Team</h2>
-        <ul>
-            @for i in 0..10 {
-                <li>Team Member @i</li>
-            }
-        </ul>
+@{
+    let myVar = true;
+    let myVar2 = false;
+    let items = vec![1, 2, 3, 4, 5];
+}
 
-        <h2>Our Mission</h2>
-        <p>To provide the best services to our customers.</p>
+@if myVar {
+    <p>We hope you find what you're looking for.</p>
+}
 
-        <h2>Contact Us</h2>
-        <p>Email:
-    </div>
-@end
+<div>
+    <h2>Our Team</h2>
+    <ul>
+        @for i in 0..10 {
+            <li>Team Member @i</li>
+        }
+    </ul>
+
+    <h2>Our Mission</h2>
+    <p>To provide the best services to our customers.</p>
+
+    <h2>Contact Us</h2>
+    <p>Email:
+</div>
