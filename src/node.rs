@@ -32,7 +32,7 @@ pub enum Node {
     Comment(String),                  // comment content
     IncludeDirective(String),         // include directive @include("other_view.html")
     ExtendsDirective(String),         // extends directive @extends("layout.html")
-    YieldDirective(String),           // yield directive @yield("content")
+    RenderDirective(String),           // yield directive @yield("content")
     RustBlock(Vec<RustBlockContent>), // @{ ... } block content (with trim)
     RustExprSimple(String),           // @expr ... (simple expression)
     RustExprParen(String),
@@ -42,4 +42,5 @@ pub enum Node {
     },
     SectionDirective(String, SectionDirectiveContent), // @section("content")
     SectionBlock(String, Vec<Node>),                   // @section content { ... }
+    RenderBody,
 }

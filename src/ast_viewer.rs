@@ -71,8 +71,8 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::ExtendsDirective(path) => {
             println!("- ExtendsDirective: {:?}", path);
         }
-        Node::YieldDirective(path) => {
-            println!("- YieldDirective: {:?}", path);
+        Node::RenderDirective(path) => {
+            println!("- RenderDirective: {:?}", path);
         }
         Node::RustBlock(contents) => {
             println!("- RustBlock:");
@@ -113,6 +113,9 @@ pub fn view_node(node: &Node, indent: usize) {
             for inner_node in body {
                 view_node(inner_node, indent + 1);
             }
+        }
+        Node::RenderBody => {
+            println!("- RenderBody");
         }
     }
 }

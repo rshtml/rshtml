@@ -9,7 +9,7 @@
 @* this is a @ comment *@
 <body>
 
-    @include("header.html")
+    @include("header.rs.html")
 
     @abc@def
 
@@ -17,6 +17,8 @@
     @((inner))
 
     @(chrono::Utc::now() - chrono::Duration::days(7))
+
+    @iffunc()
 
     @{
         let x = || {

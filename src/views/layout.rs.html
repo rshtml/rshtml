@@ -2,16 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>RsHtml Template - @yield('title')</title>
+    <title>RsHtml Template - @render('title')</title>
     @* this comment is in layout *@
 </head>
 <body>
 @if isOk {
-    @yield("content")
+    @render_body
 } else {
     <h1>Something went wrong</h1>
     <p>Please try again later.</p>
 }
+
+@render("content")
 
 @for i in 0..10 {
     <p>Item @i</p>

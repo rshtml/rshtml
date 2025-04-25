@@ -41,7 +41,7 @@ mod tests {
 
     #[test]
     fn test_template_format_without_parsing() {
-        let template = fs::read_to_string("src/views/about.rs.html").unwrap();
+        let template = fs::read_to_string("src/views/index.rs.html").unwrap();
         match RsHtmlParser::parse(Rule::template, template.as_str()) {
             Ok(pairs) => {
                 viewer::execute_pairs(pairs, 0, true);

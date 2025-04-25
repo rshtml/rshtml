@@ -135,7 +135,20 @@ impl RsHtmlParser {
                 Ok(Node::Template(nodes))
                 //Ok(Node::IncludeDirective(pair.as_str().to_string()))
             }
-            Rule::yield_directive => Ok(Node::YieldDirective(pair.as_str().to_string())),
+            Rule::render_directive => {
+                let path_pair = pair
+                    .into_inner()
+                    .find(|p| p.as_rule() == Rule::string_line)
+                    .unwrap();
+                let path_str = path_pair
+                    .as_str()
+                    .trim_matches('"')
+                    .trim_matches('\'')
+                    .to_string();
+
+                Ok(Node::RenderDirective(path_str))
+            }
+            Rule::render_body_directive => Ok(Node::RenderBody),
             Rule::extends_directive => {
                 let path_pair = pair
                     .into_inner()
@@ -347,10 +360,7 @@ impl RsHtmlParser {
                 Ok(Node::SectionBlock(section_head, body))
             }
 
-            rule => Err(format!(
-                "Internal Error: Unexpected rule encountered in build_ast_node: {:?}",
-                rule
-            )),
+            rule => Err(format!("Error: Unexpected rule: {:?}", rule)),
         }
     }
 

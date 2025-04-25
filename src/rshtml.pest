@@ -28,8 +28,8 @@ comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
 
 block = !{
     "@" ~ (
-        ( yield_directive | include_directive | section_directive | section_block )
-        | (rust_block | rust_expr | rust_expr_parenthesized | rust_expr_simple )
+        (render_directive | include_directive | section_directive | section_block | render_body_directive)
+        | (rust_block | rust_expr | rust_expr_parenthesized | rust_expr_simple)
     )
 }
 
@@ -49,9 +49,12 @@ rust_expr_head = @{
 // endregion
 
 // region --- Simple Rust Expressions (@identifier...) ---
-
+//
 rust_expr_simple = @{
-    !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "else" | "include" | "extends" | "yield" | "section"))
+    !(WHITESPACE*
+    ~ ("{"|"if"|"for"|"while"|"else"|"include"|"extends"|"render"|"section"|"render_body")
+    ~ WHITESPACE+
+    )
     ~ rust_identifier ~ (&(!expression_boundary) ~ chain_segment)*
 }
 
@@ -188,17 +191,6 @@ extends_directive = {
 
 // endregion
 
-// region @yield directive @yield('section_name')
-
-yield_directive = {
-    &"yield"
-    ~ "yield" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
-    ~ string_line
-    ~ WHITESPACE* ~ ")"
-}
-
-// endregion
-
 // region @section directive and block @section('section_name'), @section content { ... }
 
 section_block = { &(section_head ~ WHITESPACE* ~ "{") ~ section_head ~ WHITESPACE* ~ "{" ~ inner_template ~ "}" }
@@ -216,10 +208,31 @@ section_directive = {
 
 // endregion
 
+// region @render directive @render('section_name')
+
+render_directive = {
+    &"render"
+    ~ "render" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
+    ~ string_line
+    ~ WHITESPACE* ~ ")"
+}
+
+// endregion
+
+// region @render_body directive @render_body
+
+render_body_directive = @{
+    &"render_body"
+    ~ "render_body"
+    ~ (&(WHITESPACE+) | ("(" ~ ")"))
+}
+
+// endregion
+
 /// endregion Code blocks and code transfers
 
 // TODO 1: Add single quote support for _string_literal
-// TODO 2: Add default value for @yield directive
+// TODO 2: Add default value for @render directive
 
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
@@ -230,8 +243,6 @@ section_directive = {
 
     maybe
     @client
-
-    @end
 */
 
 // TODO After: Adding html escapes during rendering also a directive that can print without escape is required
