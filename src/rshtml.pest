@@ -28,7 +28,7 @@ comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
 
 block = !{
     "@" ~ (
-        (render_directive | include_directive | section_directive | section_block | render_body_directive)
+        (render_directive | include_directive | section_directive | section_block | render_body_directive | child_content_directive | component)
         | (rust_block | rust_expr | rust_expr_parenthesized | rust_expr_simple)
     )
 }
@@ -102,21 +102,7 @@ nested_block = {
     "{" ~ rust_block_content* ~ "}"
 }
 
-// rust_code = @{
-//     ( !( "@:" | "{" | "}") ~ ANY )+
-// }
 
-// Rust code block with string support, to prevent nested blocks in strings from assuming curly braces
-// rust_code = @{
-// 	(
-//     ( "\"" ~ ( ("\\" ~ ANY) | (!("\"" | "\\") ~ ANY) )* ~ "\"" ) |
-//     ( "r\"" ~ ( !"\"" ~ ANY )* ~ "\"" ) |
-//     ( "r#\"" ~ ( !"\"#" ~ ANY )* ~ "\"#" ) |
-//     !( "@:" | "{" | "}" | "\"" | "r\"" ) ~ ANY
-//     )+
-// }
-
-// Rust code block with string support, to prevent nested blocks in strings from assuming curly braces
 rust_code = @{
     (
         _line_comment |
@@ -232,6 +218,44 @@ render_body_directive = @{
     ~ "render_body"
     ~ (&(WHITESPACE+) | ("(" ~ ")"))
 }
+
+// endregion
+
+// region @child_content directive @child_content
+
+child_content_directive = @{
+    &"child_content"
+    ~ "child_content"
+    ~ (&(WHITESPACE+) | ("(" ~ ")"))
+}
+
+// endregion
+
+// region component usage @component_name(param1:value1, param2:value2){inside}
+
+    component = {
+        &(rust_identifier ~ "(")
+        ~ rust_identifier ~ WHITESPACE* ~ "(" ~ WHITESPACE*
+        ~ (component_parameter ~(WHITESPACE* ~ "," ~ WHITESPACE* ~ component_parameter)*)*
+        ~ WHITESPACE* ~ ")" ~ WHITESPACE*
+        ~ "{" ~ inner_template ~ "}"
+    }
+
+    component_parameter = {
+        rust_identifier ~ WHITESPACE*
+        ~ ":" ~ WHITESPACE* ~ (
+        bool
+        | number
+        | string
+        | ("@" ~ rust_expr_parenthesized)
+        | ("@" ~ rust_expr_simple)
+        | ("{" ~ inner_template ~ "}")
+        )
+    }
+
+    bool = @{ "true" | "false" }
+    number = @{ ("-")? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
+    string = @{ _normal_string }
 
 // endregion
 
