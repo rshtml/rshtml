@@ -263,6 +263,7 @@ child_content_directive = @{
 
 // TODO 1: Remove extends directive and manage layout system from Rust time.
 // maybe define _layout = "layout.html" support in rust block to set view layout.
+// TODO 2: Add parser for component system
 
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
