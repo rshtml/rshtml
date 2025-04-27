@@ -11,20 +11,11 @@ use crate::node::*;
 pub struct RsHtmlParser;
 
 impl RsHtmlParser {
-    fn build_nodes_from_pairs(
-        &self,
-        pairs: Pairs<Rule>,
-        config: &Config,
-        included_templates: &HashSet<String>,
-    ) -> Result<Vec<Node>, String> {
+    fn build_nodes_from_pairs(&self, pairs: Pairs<Rule>, config: &Config, included_templates: &HashSet<String>) -> Result<Vec<Node>, String> {
         let mut nodes = Vec::new();
         for pair in pairs {
             match pair.as_rule() {
-                Rule::extends_directive
-                | Rule::comment_block
-                | Rule::block
-                | Rule::text
-                | Rule::inner_text => {
+                Rule::extends_directive | Rule::comment_block | Rule::block | Rule::text | Rule::inner_text => {
                     nodes.push(self.build_ast_node(pair, config, included_templates)?);
                 }
                 // skip other rules (EOI, WHITESPACE, etc.)
@@ -34,40 +25,22 @@ impl RsHtmlParser {
         Ok(nodes)
     }
 
-    fn build_ast_node(
-        &self,
-        pair: Pair<Rule>,
-        config: &Config,
-        included_templates: &HashSet<String>,
-    ) -> Result<Node, String> {
+    fn build_ast_node(&self, pair: Pair<Rule>, config: &Config, included_templates: &HashSet<String>) -> Result<Node, String> {
         match pair.as_rule() {
             Rule::template => {
-                let children =
-                    self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?;
+                let children = self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?;
                 Ok(Node::Template(children))
             }
             Rule::text => {
-                let processed_text = pair
-                    .as_str()
-                    .replace("@@", "@")
-                    .replace("@@{", "{")
-                    .replace("@@}", "}");
+                let processed_text = pair.as_str().replace("@@", "@").replace("@@{", "{").replace("@@}", "}");
                 Ok(Node::Text(processed_text))
             }
             Rule::inner_text => {
-                let processed_text = pair
-                    .as_str()
-                    .replace("@@", "@")
-                    .replace("@@{", "{")
-                    .replace("@@}", "}");
+                let processed_text = pair.as_str().replace("@@", "@").replace("@@{", "{").replace("@@}", "}");
                 Ok(Node::InnerText(processed_text))
             }
             Rule::comment_block => {
-                let content = pair
-                    .into_inner()
-                    .find(|p| p.as_rule() == Rule::comment_content)
-                    .map(|p| p.as_str().to_string())
-                    .unwrap_or_default();
+                let content = pair.into_inner().find(|p| p.as_rule() == Rule::comment_content).map(|p| p.as_str().to_string()).unwrap_or_default();
                 Ok(Node::Comment(content))
             }
             Rule::block => {
@@ -78,16 +51,9 @@ impl RsHtmlParser {
                 }
             }
             Rule::include_directive => {
-                let path_pair = pair
-                    .into_inner()
-                    .find(|p| p.as_rule() == Rule::string_line)
-                    .unwrap();
+                let path_pair = pair.into_inner().find(|p| p.as_rule() == Rule::string_line).unwrap();
 
-                let path = path_pair
-                    .as_str()
-                    .trim_matches('"')
-                    .trim_matches('\'')
-                    .to_string();
+                let path = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
 
                 let view_path = config.views_base_path.join(&path);
 
@@ -98,35 +64,21 @@ impl RsHtmlParser {
                     }
                 };
 
-                let canonical_path = view_path
-                    .canonicalize()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-                    .to_string();
+                let canonical_path = view_path.canonicalize().unwrap_or_default().to_string_lossy().to_string();
 
                 if included_templates.contains(&canonical_path) {
-                    return Err(format!(
-                        "Error: Circular include detected for file '{}'",
-                        path
-                    ));
+                    return Err(format!("Error: Circular include detected for file '{}'", path));
                 }
 
                 let mut included_templates = included_templates.clone();
                 included_templates.insert(canonical_path);
 
-                let inner_template = self.parse_template(
-                    included_content.clone().as_str(),
-                    config,
-                    &included_templates,
-                )?;
+                let inner_template = self.parse_template(included_content.clone().as_str(), config, &included_templates)?;
 
                 let nodes = match inner_template {
                     Node::Template(nodes) => nodes,
                     _ => {
-                        return Err(format!(
-                            "Error: Expected a template in the included file '{}', found {:?}",
-                            path, inner_template
-                        ));
+                        return Err(format!("Error: Expected a template in the included file '{}', found {:?}", path, inner_template));
                     }
                 };
 
@@ -134,29 +86,15 @@ impl RsHtmlParser {
                 //Ok(Node::IncludeDirective(pair.as_str().to_string()))
             }
             Rule::render_directive => {
-                let path_pair = pair
-                    .into_inner()
-                    .find(|p| p.as_rule() == Rule::string_line)
-                    .unwrap();
-                let path_str = path_pair
-                    .as_str()
-                    .trim_matches('"')
-                    .trim_matches('\'')
-                    .to_string();
+                let path_pair = pair.into_inner().find(|p| p.as_rule() == Rule::string_line).unwrap();
+                let path_str = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
 
                 Ok(Node::RenderDirective(path_str))
             }
             Rule::render_body_directive => Ok(Node::RenderBody),
             Rule::extends_directive => {
-                let path_pair = pair
-                    .into_inner()
-                    .find(|p| p.as_rule() == Rule::string_line)
-                    .unwrap();
-                let path_str = path_pair
-                    .as_str()
-                    .trim_matches('"')
-                    .trim_matches('\'')
-                    .to_string();
+                let path_pair = pair.into_inner().find(|p| p.as_rule() == Rule::string_line).unwrap();
+                let path_str = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
 
                 Ok(Node::ExtendsDirective(path_str))
             }
@@ -175,12 +113,7 @@ impl RsHtmlParser {
                     // Expect a head (e.g., "if condition", "else if condition", "else", "for item in items")
                     let head_pair = inner_pairs
                         .next_if(|p| p.as_rule() == Rule::rust_expr_head)
-                        .ok_or_else(|| {
-                            format!(
-                                "Internal Error: rust_expr expected a head, found {:?}",
-                                inner_pairs.peek().map(|p| p.as_rule())
-                            )
-                        })?;
+                        .ok_or_else(|| format!("Internal Error: rust_expr expected a head, found {:?}", inner_pairs.peek().map(|p| p.as_rule())))?;
                     let head = head_pair.as_str().trim().to_string();
 
                     // Skip any whitespace captured between the head and the opening brace '{'
@@ -195,19 +128,10 @@ impl RsHtmlParser {
                     // Expect the body (inner_template)
                     let template_pair = inner_pairs
                         .next_if(|p| p.as_rule() == Rule::inner_template)
-                        .ok_or_else(|| {
-                            format!(
-                                "Internal Error: rust_expr missing inner_template for head: '{}'",
-                                head
-                            )
-                        })?;
+                        .ok_or_else(|| format!("Internal Error: rust_expr missing inner_template for head: '{}'", head))?;
 
                     // Recursively parse the nodes within the body
-                    let body_nodes = self.build_nodes_from_pairs(
-                        template_pair.into_inner(),
-                        config,
-                        included_templates,
-                    )?;
+                    let body_nodes = self.build_nodes_from_pairs(template_pair.into_inner(), config, included_templates)?;
 
                     clauses.push((head.clone(), body_nodes)); // Clone head here
 
@@ -235,40 +159,24 @@ impl RsHtmlParser {
 
                     if current_clause_type == "else" {
                         if !is_conditional {
-                            return Err(format!(
-                                "Syntax Error: 'else' clause used without a preceding 'if' or 'match' (found '{}').",
-                                first_head
-                            ));
+                            return Err(format!("Syntax Error: 'else' clause used without a preceding 'if' or 'match' (found '{}').", first_head));
                         }
                         if i == 0 {
-                            return Err(
-                                "Syntax Error: Expression cannot start with 'else'.".to_string()
-                            );
+                            return Err("Syntax Error: Expression cannot start with 'else'.".to_string());
                         }
                         if i != clauses.len() - 1 {
-                            return Err(
-                                "Syntax Error: 'else' clause must be the last clause in the chain."
-                                    .to_string(),
-                            );
+                            return Err("Syntax Error: 'else' clause must be the last clause in the chain.".to_string());
                         }
                         found_else = true;
                     } else if current_clause_type == "else if" {
                         if !is_conditional {
-                            return Err(format!(
-                                "Syntax Error: 'else if' clause used without a preceding 'if' or 'match' (found '{}').",
-                                first_head
-                            ));
+                            return Err(format!("Syntax Error: 'else if' clause used without a preceding 'if' or 'match' (found '{}').", first_head));
                         }
                         if found_else {
-                            return Err(
-                                "Syntax Error: 'else if' clause found after 'else' clause."
-                                    .to_string(),
-                            );
+                            return Err("Syntax Error: 'else if' clause found after 'else' clause.".to_string());
                         }
                         if i == 0 {
-                            return Err(
-                                "Syntax Error: Expression cannot start with 'else if'.".to_string()
-                            );
+                            return Err("Syntax Error: Expression cannot start with 'else if'.".to_string());
                         }
                     } else if i > 0 {
                         // If it's not the first clause
@@ -285,33 +193,23 @@ impl RsHtmlParser {
                             "Syntax Error: Unexpected multiple clauses starting with '{}' and '{}'. Only one clause expected for non-conditional expressions.",
                             first_head, current_clause_type
                         ));
-                    } else if !["if", "for", "while", "match", "let"].contains(&current_clause_type)
-                    {
+                    } else if !["if", "for", "while", "match", "let"].contains(&current_clause_type) {
                         // Validate the start of the first clause if it's not a known keyword
                         // This might be too strict depending on allowed expressions
-                        return Err(format!(
-                            "Syntax Error: Expression started with unexpected keyword or construct: '{}'",
-                            current_clause_type
-                        ));
+                        return Err(format!("Syntax Error: Expression started with unexpected keyword or construct: '{}'", current_clause_type));
                     }
                 }
 
                 Ok(Node::RustExpr { clauses })
             }
             Rule::section_directive => {
-                let mut pairs = pair.clone().into_inner().filter(|p| {
-                    p.as_rule() == Rule::string_line || p.as_rule() == Rule::rust_expr_simple
-                });
+                let mut pairs = pair.clone().into_inner().filter(|p| p.as_rule() == Rule::string_line || p.as_rule() == Rule::rust_expr_simple);
 
                 match (pairs.next(), pairs.next()) {
                     (Some(name), Some(value)) => {
                         let value_pair = match value.as_rule() {
                             Rule::string_line => {
-                                let value = value
-                                    .as_str()
-                                    .trim_matches('"')
-                                    .trim_matches('\'')
-                                    .to_string();
+                                let value = value.as_str().trim_matches('"').trim_matches('\'').to_string();
                                 SectionDirectiveContent::Text(value)
                             }
                             Rule::rust_expr_simple => {
@@ -321,11 +219,7 @@ impl RsHtmlParser {
                             _ => unreachable!(),
                         };
 
-                        let name = name
-                            .as_str()
-                            .trim_matches('"')
-                            .trim_matches('\'')
-                            .to_string();
+                        let name = name.as_str().trim_matches('"').trim_matches('\'').to_string();
 
                         Ok(Node::SectionDirective(name, value_pair))
                     }
@@ -333,77 +227,34 @@ impl RsHtmlParser {
                 }
             }
             Rule::section_block => {
-                let section_head_pair = pair
-                    .clone()
-                    .into_inner()
-                    .find(|p| p.as_rule() == Rule::section_head)
-                    .unwrap();
+                let section_head_pair = pair.clone().into_inner().find(|p| p.as_rule() == Rule::section_head).unwrap();
 
-                let section_head = section_head_pair
-                    .as_str()
-                    .trim_matches('"')
-                    .trim_matches('\'')
-                    .to_string();
+                let section_head = section_head_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
 
-                let inner_pairs = pair
-                    .into_inner()
-                    .find(|x| x.as_rule() == Rule::inner_template)
-                    .unwrap();
+                let inner_pairs = pair.into_inner().find(|x| x.as_rule() == Rule::inner_template).unwrap();
 
-                let body = self.build_nodes_from_pairs(
-                    inner_pairs.into_inner(),
-                    config,
-                    included_templates,
-                )?;
+                let body = self.build_nodes_from_pairs(inner_pairs.into_inner(), config, included_templates)?;
                 Ok(Node::SectionBlock(section_head, body))
             }
             Rule::component => {
-                let component_name = pair
-                    .clone()
-                    .into_inner()
-                    .find(|p| p.as_rule() == Rule::rust_identifier)
-                    .unwrap()
-                    .as_str()
-                    .to_string();
+                let component_name = pair.clone().into_inner().find(|p| p.as_rule() == Rule::rust_identifier).unwrap().as_str().to_string();
 
-                let mut component_parameter_pairs = pair
-                    .clone()
-                    .into_inner()
-                    .filter(|p| p.as_rule() == Rule::component_parameter);
+                let mut component_parameter_pairs = pair.clone().into_inner().filter(|p| p.as_rule() == Rule::component_parameter);
 
                 let mut component_parameters = Vec::new();
                 for pair in component_parameter_pairs {
-                    let pair_name = pair
-                        .clone()
-                        .into_inner()
-                        .find(|p| p.as_rule() == Rule::rust_identifier)
-                        .unwrap();
-                    let pair_value = pair
-                        .clone()
-                        .into_inner()
-                        .find(|p| p.as_rule() != Rule::rust_identifier)
-                        .unwrap();
+                    let pair_name = pair.clone().into_inner().find(|p| p.as_rule() == Rule::rust_identifier).unwrap();
+                    let pair_value = pair.clone().into_inner().find(|p| p.as_rule() != Rule::rust_identifier).unwrap();
 
-                    let value = self.build_component_parameter_value(
-                        pair_value,
-                        config,
-                        included_templates,
-                    )?;
+                    let value = self.build_component_parameter_value(pair_value, config, included_templates)?;
                     let name = pair_name.as_str().to_string();
 
                     component_parameters.push(ComponentParameter { name, value });
                 }
 
-                let content_pairs = pair
-                    .into_inner()
-                    .find(|x| x.as_rule() == Rule::inner_template)
-                    .unwrap();
+                let content_pairs = pair.into_inner().find(|x| x.as_rule() == Rule::inner_template).unwrap();
 
-                let body = self.build_nodes_from_pairs(
-                    content_pairs.into_inner(),
-                    config,
-                    included_templates,
-                )?;
+                let body = self.build_nodes_from_pairs(content_pairs.into_inner(), config, included_templates)?;
                 Ok(Node::Component(component_name, component_parameters, body))
             }
             Rule::child_content_directive => Ok(Node::ChildContent),
@@ -411,12 +262,7 @@ impl RsHtmlParser {
         }
     }
 
-    fn parse_template(
-        &self,
-        input: &str,
-        config: &Config,
-        included_templates: &HashSet<String>,
-    ) -> Result<Node, String> {
+    fn parse_template(&self, input: &str, config: &Config, included_templates: &HashSet<String>) -> Result<Node, String> {
         let mut pairs = Self::parse(Rule::template, input).unwrap();
         let template_pair = pairs.next().unwrap();
         if template_pair.as_rule() == Rule::template {
@@ -427,12 +273,7 @@ impl RsHtmlParser {
         }
     }
 
-    fn build_component_parameter_value(
-        &self,
-        pair: Pair<Rule>,
-        config: &Config,
-        included_templates: &HashSet<String>,
-    ) -> Result<ComponentParameterValue, String> {
+    fn build_component_parameter_value(&self, pair: Pair<Rule>, config: &Config, included_templates: &HashSet<String>) -> Result<ComponentParameterValue, String> {
         match pair.as_rule() {
             Rule::bool => Ok(ComponentParameterValue::Bool(pair.as_str() == "true")),
             Rule::number => Ok(ComponentParameterValue::Number(pair.as_str().to_string())),
@@ -440,28 +281,17 @@ impl RsHtmlParser {
                 let raw_str = pair.as_str().trim_matches('"').trim_matches('\'');
                 Ok(ComponentParameterValue::String(raw_str.to_string()))
             }
-            Rule::rust_expr_simple => Ok(ComponentParameterValue::RustExprSimple(
-                pair.as_str().to_string(),
-            )),
-            Rule::rust_expr_paren => Ok(ComponentParameterValue::RustExprParen(
-                pair.as_str().to_string(),
-            )),
+            Rule::rust_expr_simple => Ok(ComponentParameterValue::RustExprSimple(pair.as_str().to_string())),
+            Rule::rust_expr_paren => Ok(ComponentParameterValue::RustExprParen(pair.as_str().to_string())),
             Rule::inner_template => {
-                let block_nodes =
-                    self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?;
+                let block_nodes = self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?;
                 Ok(ComponentParameterValue::Block(block_nodes))
             }
-            rule => Err(format!(
-                "Unexpected rule for component parameter value: {:?}",
-                rule
-            )),
+            rule => Err(format!("Unexpected rule for component parameter value: {:?}", rule)),
         }
     }
 
-    fn build_rust_block_contents(
-        &self,
-        pairs: Pairs<Rule>,
-    ) -> Result<Vec<RustBlockContent>, String> {
+    fn build_rust_block_contents(&self, pairs: Pairs<Rule>) -> Result<Vec<RustBlockContent>, String> {
         let mut content_parts = Vec::new();
         for inner_pair in pairs {
             match inner_pair.as_rule() {
@@ -475,15 +305,11 @@ impl RsHtmlParser {
                     content_parts.push(RustBlockContent::Code(inner_pair.as_str().to_string()));
                 }
                 Rule::nested_block => {
-                    let nested_contents =
-                        self.build_rust_block_contents(inner_pair.into_inner())?;
+                    let nested_contents = self.build_rust_block_contents(inner_pair.into_inner())?;
                     content_parts.push(RustBlockContent::NestedBlock(nested_contents));
                 }
                 rule => {
-                    return Err(format!(
-                        "Internal Error: Unexpected rule {:?} inside rust block content",
-                        rule
-                    ));
+                    return Err(format!("Internal Error: Unexpected rule {:?} inside rust block content", rule));
                 }
             }
         }
@@ -509,10 +335,7 @@ impl RsHtmlParser {
                     }
                 }
                 _ => {
-                    eprintln!(
-                        "Warning: Unexpected rule in text_block: {:?}",
-                        item_pair.as_rule()
-                    );
+                    eprintln!("Warning: Unexpected rule in text_block: {:?}", item_pair.as_rule());
                 }
             }
         }
@@ -527,9 +350,7 @@ impl RsHtmlParser {
             match item_pair.as_rule() {
                 Rule::rust_expr_simple => {
                     if let Some(expr_pair) = item_pair.into_inner().nth(1) {
-                        items.push(TextBlockItem::RustExprSimple(
-                            expr_pair.as_str().to_string(),
-                        ));
+                        items.push(TextBlockItem::RustExprSimple(expr_pair.as_str().to_string()));
                     } else {
                         eprintln!("Warning: Empty or bad embedded expression found.");
                     }
@@ -541,10 +362,7 @@ impl RsHtmlParser {
                     }
                 }
                 _ => {
-                    eprintln!(
-                        "Warning: Unexpected rule in text_block: {:?}",
-                        item_pair.as_rule()
-                    );
+                    eprintln!("Warning: Unexpected rule in text_block: {:?}", item_pair.as_rule());
                 }
             }
         }
