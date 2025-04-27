@@ -1,4 +1,7 @@
-﻿use crate::node::{Node, RustBlockContent, SectionDirectiveContent, TextBlockItem, TextLineItem};
+﻿use crate::node::{
+    ComponentParameterValue, Node, RustBlockContent, SectionDirectiveContent, TextBlockItem,
+    TextLineItem,
+};
 
 fn print_indent(indent: usize) {
     print!("{}", "  ".repeat(indent));
@@ -116,6 +119,34 @@ pub fn view_node(node: &Node, indent: usize) {
         }
         Node::RenderBody => {
             println!("- RenderBody");
+        }
+        Node::Component(name, parameters, body) => {
+            println!("- Component:");
+            print_indent(indent + 1);
+            println!("- Name: {:?}", name);
+            print_indent(indent + 1);
+            println!("- Parameters:");
+            for parameter in parameters {
+                print_indent(indent + 2);
+                println!("- Name: {:?}", parameter.name);
+                print_indent(indent + 2);
+                match &parameter.value {
+                    ComponentParameterValue::Bool(b) => println!("- Bool: {:?}", b),
+                    ComponentParameterValue::Number(b) => println!("- Number: {:?}", b),
+                    ComponentParameterValue::String(s) => println!("- String: {:?}", s),
+                    ComponentParameterValue::RustExprSimple(s) => println!("- RustExprSimple: {:?}", s),
+                    ComponentParameterValue::RustExprParen(s) => println!("- RustExprParen: {:?}", s),
+                    ComponentParameterValue::Block(nodes) => {
+                        println!("- Block:");
+                        for node in nodes {
+                            view_node(node, indent + 3)
+                        }
+                    }
+                }
+            }
+            for inner_node in body {
+                view_node(inner_node, indent + 1);
+            }
         }
     }
 }

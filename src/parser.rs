@@ -20,7 +20,8 @@ impl RsHtmlParser {
         let mut nodes = Vec::new();
         for pair in pairs {
             match pair.as_rule() {
-                Rule::section_directive
+                Rule::component
+                | Rule::section_directive
                 | Rule::section_block
                 | Rule::extends_directive
                 | Rule::comment_block
@@ -359,7 +360,49 @@ impl RsHtmlParser {
                 )?;
                 Ok(Node::SectionBlock(section_head, body))
             }
+            Rule::component => {
+                let component_name = pair
+                    .clone()
+                    .into_inner()
+                    .find(|p| p.as_rule() == Rule::rust_identifier)
+                    .unwrap()
+                    .as_str()
+                    .to_string();
 
+                let mut component_parameter_pairs = pair
+                    .clone()
+                    .into_inner()
+                    .filter(|p| p.as_rule() == Rule::component_parameter);
+
+                let mut component_parameters = Vec::new();
+                for pair in component_parameter_pairs {
+                    let pair_name = pair.clone().into_inner()
+                        .find(|p| p.as_rule() == Rule::rust_identifier).unwrap();
+                    let pair_value = pair.clone().into_inner()
+                        .find(|p| p.as_rule() != Rule::rust_identifier).unwrap();
+
+                    let value = self.build_component_parameter_value(
+                        pair_value,
+                        config,
+                        included_templates,
+                    )?;
+                    let name = pair_name.as_str().to_string();
+
+                    component_parameters.push(ComponentParameter { name, value });
+                }
+
+                let content_pairs = pair
+                    .into_inner()
+                    .find(|x| x.as_rule() == Rule::inner_template)
+                    .unwrap();
+
+                let body = self.build_nodes_from_pairs(
+                    content_pairs.into_inner(),
+                    config,
+                    included_templates,
+                )?;
+                Ok(Node::Component(component_name, component_parameters, body))
+            }
             rule => Err(format!("Error: Unexpected rule: {:?}", rule)),
         }
     }
@@ -377,6 +420,35 @@ impl RsHtmlParser {
             Ok(ast)
         } else {
             panic!("Expected 'template', found {:?}", template_pair.as_rule());
+        }
+    }
+
+    fn build_component_parameter_value(
+        &self,
+        pair: Pair<Rule>,
+        config: &Config,
+        included_templates: &HashSet<String>,
+    ) -> Result<ComponentParameterValue, String> {
+        match pair.as_rule() {
+            Rule::bool => Ok(ComponentParameterValue::Bool(pair.as_str() == "true")),
+            Rule::number => Ok(ComponentParameterValue::Number(pair.as_str().to_string())),
+            Rule::string => {
+                let raw_str = pair.as_str().trim_matches('"').trim_matches('\'');
+                Ok(ComponentParameterValue::String(raw_str.to_string()))
+            }
+            Rule::rust_expr_simple => Ok(ComponentParameterValue::RustExprSimple(pair.as_str().to_string())),
+            Rule::rust_expr_paren => Ok(ComponentParameterValue::RustExprParen(
+                pair.as_str().to_string(),
+            )),
+            Rule::inner_template => {
+                let block_nodes =
+                    self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?;
+                Ok(ComponentParameterValue::Block(block_nodes))
+            }
+            rule => Err(format!(
+                "Unexpected rule for component parameter value: {:?}",
+                rule
+            )),
         }
     }
 
