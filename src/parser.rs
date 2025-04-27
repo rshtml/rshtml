@@ -20,10 +20,7 @@ impl RsHtmlParser {
         let mut nodes = Vec::new();
         for pair in pairs {
             match pair.as_rule() {
-                Rule::component
-                | Rule::section_directive
-                | Rule::section_block
-                | Rule::extends_directive
+                Rule::extends_directive
                 | Rule::comment_block
                 | Rule::block
                 | Rule::text
