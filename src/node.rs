@@ -60,4 +60,5 @@ pub enum Node {
     SectionBlock(String, Vec<Node>),                   // @section content { ... }
     RenderBody,
     Component(String, Vec<ComponentParameter>, Vec<Node>), // @componentName(param1 = value1, param2 = value2) { ... }
+    ChildContent,
 }

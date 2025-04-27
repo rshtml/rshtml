@@ -376,10 +376,16 @@ impl RsHtmlParser {
 
                 let mut component_parameters = Vec::new();
                 for pair in component_parameter_pairs {
-                    let pair_name = pair.clone().into_inner()
-                        .find(|p| p.as_rule() == Rule::rust_identifier).unwrap();
-                    let pair_value = pair.clone().into_inner()
-                        .find(|p| p.as_rule() != Rule::rust_identifier).unwrap();
+                    let pair_name = pair
+                        .clone()
+                        .into_inner()
+                        .find(|p| p.as_rule() == Rule::rust_identifier)
+                        .unwrap();
+                    let pair_value = pair
+                        .clone()
+                        .into_inner()
+                        .find(|p| p.as_rule() != Rule::rust_identifier)
+                        .unwrap();
 
                     let value = self.build_component_parameter_value(
                         pair_value,
@@ -403,6 +409,7 @@ impl RsHtmlParser {
                 )?;
                 Ok(Node::Component(component_name, component_parameters, body))
             }
+            Rule::child_content_directive => Ok(Node::ChildContent),
             rule => Err(format!("Error: Unexpected rule: {:?}", rule)),
         }
     }
@@ -436,7 +443,9 @@ impl RsHtmlParser {
                 let raw_str = pair.as_str().trim_matches('"').trim_matches('\'');
                 Ok(ComponentParameterValue::String(raw_str.to_string()))
             }
-            Rule::rust_expr_simple => Ok(ComponentParameterValue::RustExprSimple(pair.as_str().to_string())),
+            Rule::rust_expr_simple => Ok(ComponentParameterValue::RustExprSimple(
+                pair.as_str().to_string(),
+            )),
             Rule::rust_expr_paren => Ok(ComponentParameterValue::RustExprParen(
                 pair.as_str().to_string(),
             )),

@@ -134,8 +134,12 @@ pub fn view_node(node: &Node, indent: usize) {
                     ComponentParameterValue::Bool(b) => println!("- Bool: {:?}", b),
                     ComponentParameterValue::Number(b) => println!("- Number: {:?}", b),
                     ComponentParameterValue::String(s) => println!("- String: {:?}", s),
-                    ComponentParameterValue::RustExprSimple(s) => println!("- RustExprSimple: {:?}", s),
-                    ComponentParameterValue::RustExprParen(s) => println!("- RustExprParen: {:?}", s),
+                    ComponentParameterValue::RustExprSimple(s) => {
+                        println!("- RustExprSimple: {:?}", s)
+                    }
+                    ComponentParameterValue::RustExprParen(s) => {
+                        println!("- RustExprParen: {:?}", s)
+                    }
                     ComponentParameterValue::Block(nodes) => {
                         println!("- Block:");
                         for node in nodes {
@@ -147,6 +151,9 @@ pub fn view_node(node: &Node, indent: usize) {
             for inner_node in body {
                 view_node(inner_node, indent + 1);
             }
+        }
+        Node::ChildContent => {
+            println!("- ChildContent");
         }
     }
 }
