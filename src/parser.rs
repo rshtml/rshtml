@@ -1,3 +1,12 @@
+mod component;
+mod extends_directive;
+mod include_directive;
+mod render_directive;
+mod rust_block;
+mod rust_expr;
+mod section_block;
+mod section_directive;
+
 use crate::config::Config;
 use pest::Parser;
 use pest::iterators::{Pair, Pairs};
@@ -5,6 +14,14 @@ use pest_derive::Parser;
 use std::collections::HashSet;
 
 use crate::node::*;
+use crate::parser::component::ComponentParser;
+use crate::parser::extends_directive::ExtendsDirectiveParser;
+use crate::parser::include_directive::IncludeDirectiveParser;
+use crate::parser::render_directive::RenderDirectiveParser;
+use crate::parser::rust_block::RustBlockParser;
+use crate::parser::rust_expr::RustExprParser;
+use crate::parser::section_block::SectionBlockParser;
+use crate::parser::section_directive::SectionDirectiveParser;
 
 #[derive(Parser)]
 #[grammar = "rshtml.pest"]
@@ -27,236 +44,24 @@ impl RsHtmlParser {
 
     fn build_ast_node(&self, pair: Pair<Rule>, config: &Config, included_templates: &HashSet<String>) -> Result<Node, String> {
         match pair.as_rule() {
-            Rule::template => {
-                let children = self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?;
-                Ok(Node::Template(children))
-            }
-            Rule::text => {
-                let processed_text = pair.as_str().replace("@@", "@").replace("@@{", "{").replace("@@}", "}");
-                Ok(Node::Text(processed_text))
-            }
-            Rule::inner_text => {
-                let processed_text = pair.as_str().replace("@@", "@").replace("@@{", "{").replace("@@}", "}");
-                Ok(Node::InnerText(processed_text))
-            }
-            Rule::comment_block => {
-                let content = pair.into_inner().find(|p| p.as_rule() == Rule::comment_content).map(|p| p.as_str().to_string()).unwrap_or_default();
-                Ok(Node::Comment(content))
-            }
-            Rule::block => {
-                if let Some(inner_block_pair) = pair.into_inner().next() {
-                    self.build_ast_node(inner_block_pair, config, included_templates)
-                } else {
-                    Err("Internal Error: Empty block encountered".to_string())
-                }
-            }
-            Rule::include_directive => {
-                let path_pair = pair.into_inner().find(|p| p.as_rule() == Rule::string_line).unwrap();
-
-                let path = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
-
-                let view_path = config.views_base_path.join(&path);
-
-                let included_content = match std::fs::read_to_string(&view_path) {
-                    Ok(content) => content,
-                    Err(e) => {
-                        return Err(format!("Error reading included file '{}': {}", path, e));
-                    }
-                };
-
-                let canonical_path = view_path.canonicalize().unwrap_or_default().to_string_lossy().to_string();
-
-                if included_templates.contains(&canonical_path) {
-                    return Err(format!("Error: Circular include detected for file '{}'", path));
-                }
-
-                let mut included_templates = included_templates.clone();
-                included_templates.insert(canonical_path);
-
-                let inner_template = self.parse_template(included_content.clone().as_str(), config, &included_templates)?;
-
-                let nodes = match inner_template {
-                    Node::Template(nodes) => nodes,
-                    _ => {
-                        return Err(format!("Error: Expected a template in the included file '{}', found {:?}", path, inner_template));
-                    }
-                };
-
-                Ok(Node::Template(nodes))
-                //Ok(Node::IncludeDirective(pair.as_str().to_string()))
-            }
-            Rule::render_directive => {
-                let path_pair = pair.into_inner().find(|p| p.as_rule() == Rule::string_line).unwrap();
-                let path_str = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
-
-                Ok(Node::RenderDirective(path_str))
-            }
+            Rule::template => Ok(Node::Template(self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?)),
+            Rule::text => Ok(Node::Text(pair.as_str().replace("@@", "@").replace("@@{", "{").replace("@@}", "}"))),
+            Rule::inner_text => Ok(Node::InnerText(pair.as_str().replace("@@", "@").replace("@@{", "{").replace("@@}", "}"))),
+            Rule::comment_block => Ok(Node::Comment(
+                pair.into_inner().find(|p| p.as_rule() == Rule::comment_content).map(|p| p.as_str().to_string()).unwrap_or_default(),
+            )),
+            Rule::block => self.build_ast_node(pair.into_inner().next().ok_or_else(|| "Error: Empty block".to_string())?, config, included_templates),
+            Rule::include_directive => IncludeDirectiveParser::parse(self, pair, config, included_templates),
+            Rule::render_directive => RenderDirectiveParser::parse(self, pair, config, included_templates),
             Rule::render_body_directive => Ok(Node::RenderBody),
-            Rule::extends_directive => {
-                let path_pair = pair.into_inner().find(|p| p.as_rule() == Rule::string_line).unwrap();
-                let path_str = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
-
-                Ok(Node::ExtendsDirective(path_str))
-            }
-            Rule::rust_block => {
-                let contents = self.build_rust_block_contents(pair.into_inner())?;
-                Ok(Node::RustBlock(contents))
-            }
+            Rule::extends_directive => ExtendsDirectiveParser::parse(self, pair, config, included_templates),
+            Rule::rust_block => RustBlockParser::parse(self, pair, config, included_templates),
             Rule::rust_expr_simple => Ok(Node::RustExprSimple(pair.as_str().to_string())),
             Rule::rust_expr_paren => Ok(Node::RustExprParen(pair.as_str().to_string())),
-            Rule::rust_expr => {
-                let mut inner_pairs = pair.into_inner().peekable();
-                let mut clauses: Vec<(String, Vec<Node>)> = Vec::new();
-
-                // Loop through all head-body pairs captured by the (...)+ structure in pest
-                while inner_pairs.peek().is_some() {
-                    // Expect a head (e.g., "if condition", "else if condition", "else", "for item in items")
-                    let head_pair = inner_pairs
-                        .next_if(|p| p.as_rule() == Rule::rust_expr_head)
-                        .ok_or_else(|| format!("Internal Error: rust_expr expected a head, found {:?}", inner_pairs.peek().map(|p| p.as_rule())))?;
-                    let head = head_pair.as_str().trim().to_string();
-
-                    // Skip any whitespace captured between the head and the opening brace '{'
-                    while let Some(p) = inner_pairs.peek() {
-                        if p.as_rule() == Rule::WHITESPACE {
-                            inner_pairs.next(); // Consume whitespace
-                        } else {
-                            break;
-                        }
-                    }
-
-                    // Expect the body (inner_template)
-                    let template_pair = inner_pairs
-                        .next_if(|p| p.as_rule() == Rule::inner_template)
-                        .ok_or_else(|| format!("Internal Error: rust_expr missing inner_template for head: '{}'", head))?;
-
-                    // Recursively parse the nodes within the body
-                    let body_nodes = self.build_nodes_from_pairs(template_pair.into_inner(), config, included_templates)?;
-
-                    clauses.push((head.clone(), body_nodes)); // Clone head here
-
-                    // Skip any trailing whitespace captured after the closing brace '}'
-                    while let Some(p) = inner_pairs.peek() {
-                        if p.as_rule() == Rule::WHITESPACE {
-                            inner_pairs.next(); // Consume whitespace
-                        } else {
-                            break;
-                        }
-                    }
-                }
-
-                if clauses.is_empty() {
-                    return Err("Internal Error: rust_expr parsed with no clauses".to_string());
-                }
-
-                // Basic validation for else/else if order (can be enhanced)
-                let mut found_else = false;
-                let first_head = clauses[0].0.split_whitespace().next().unwrap_or("");
-                let is_conditional = ["if", "match"].contains(&first_head); // Assuming match also starts a chain
-
-                for (i, (head_str, _)) in clauses.iter().enumerate() {
-                    let current_clause_type = head_str.split_whitespace().next().unwrap_or("");
-
-                    if current_clause_type == "else" {
-                        if !is_conditional {
-                            return Err(format!("Syntax Error: 'else' clause used without a preceding 'if' or 'match' (found '{}').", first_head));
-                        }
-                        if i == 0 {
-                            return Err("Syntax Error: Expression cannot start with 'else'.".to_string());
-                        }
-                        if i != clauses.len() - 1 {
-                            return Err("Syntax Error: 'else' clause must be the last clause in the chain.".to_string());
-                        }
-                        found_else = true;
-                    } else if current_clause_type == "else if" {
-                        if !is_conditional {
-                            return Err(format!("Syntax Error: 'else if' clause used without a preceding 'if' or 'match' (found '{}').", first_head));
-                        }
-                        if found_else {
-                            return Err("Syntax Error: 'else if' clause found after 'else' clause.".to_string());
-                        }
-                        if i == 0 {
-                            return Err("Syntax Error: Expression cannot start with 'else if'.".to_string());
-                        }
-                    } else if i > 0 {
-                        // If it's not the first clause
-                        // Check if it's a valid start of a new expression or an invalid continuation
-                        if is_conditional {
-                            // If the chain started with if/match, subsequent clauses must be else/else if
-                            return Err(format!(
-                                "Syntax Error: Unexpected start of a new clause type '{}' within an if/match chain. Expected 'else if' or 'else'.",
-                                current_clause_type
-                            ));
-                        }
-                        // If it wasn't conditional (e.g. for/while), multiple clauses are likely an error anyway
-                        return Err(format!(
-                            "Syntax Error: Unexpected multiple clauses starting with '{}' and '{}'. Only one clause expected for non-conditional expressions.",
-                            first_head, current_clause_type
-                        ));
-                    } else if !["if", "for", "while", "match", "let"].contains(&current_clause_type) {
-                        // Validate the start of the first clause if it's not a known keyword
-                        // This might be too strict depending on allowed expressions
-                        return Err(format!("Syntax Error: Expression started with unexpected keyword or construct: '{}'", current_clause_type));
-                    }
-                }
-
-                Ok(Node::RustExpr { clauses })
-            }
-            Rule::section_directive => {
-                let mut pairs = pair.clone().into_inner().filter(|p| p.as_rule() == Rule::string_line || p.as_rule() == Rule::rust_expr_simple);
-
-                match (pairs.next(), pairs.next()) {
-                    (Some(name), Some(value)) => {
-                        let value_pair = match value.as_rule() {
-                            Rule::string_line => {
-                                let value = value.as_str().trim_matches('"').trim_matches('\'').to_string();
-                                SectionDirectiveContent::Text(value)
-                            }
-                            Rule::rust_expr_simple => {
-                                let value = value.as_str().to_string();
-                                SectionDirectiveContent::RustExprSimple(value)
-                            }
-                            _ => unreachable!(),
-                        };
-
-                        let name = name.as_str().trim_matches('"').trim_matches('\'').to_string();
-
-                        Ok(Node::SectionDirective(name, value_pair))
-                    }
-                    _ => Err("Error: section_directive".to_string()),
-                }
-            }
-            Rule::section_block => {
-                let section_head_pair = pair.clone().into_inner().find(|p| p.as_rule() == Rule::section_head).unwrap();
-
-                let section_head = section_head_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
-
-                let inner_pairs = pair.into_inner().find(|x| x.as_rule() == Rule::inner_template).unwrap();
-
-                let body = self.build_nodes_from_pairs(inner_pairs.into_inner(), config, included_templates)?;
-                Ok(Node::SectionBlock(section_head, body))
-            }
-            Rule::component => {
-                let component_name = pair.clone().into_inner().find(|p| p.as_rule() == Rule::rust_identifier).unwrap().as_str().to_string();
-
-                let mut component_parameter_pairs = pair.clone().into_inner().filter(|p| p.as_rule() == Rule::component_parameter);
-
-                let mut component_parameters = Vec::new();
-                for pair in component_parameter_pairs {
-                    let pair_name = pair.clone().into_inner().find(|p| p.as_rule() == Rule::rust_identifier).unwrap();
-                    let pair_value = pair.clone().into_inner().find(|p| p.as_rule() != Rule::rust_identifier).unwrap();
-
-                    let value = self.build_component_parameter_value(pair_value, config, included_templates)?;
-                    let name = pair_name.as_str().to_string();
-
-                    component_parameters.push(ComponentParameter { name, value });
-                }
-
-                let content_pairs = pair.into_inner().find(|x| x.as_rule() == Rule::inner_template).unwrap();
-
-                let body = self.build_nodes_from_pairs(content_pairs.into_inner(), config, included_templates)?;
-                Ok(Node::Component(component_name, component_parameters, body))
-            }
+            Rule::rust_expr => RustExprParser::parse(self, pair, config, included_templates),
+            Rule::section_directive => SectionDirectiveParser::parse(self, pair, config, included_templates),
+            Rule::section_block => SectionBlockParser::parse(self, pair, config, included_templates),
+            Rule::component => ComponentParser::parse(self, pair, config, included_templates),
             Rule::child_content_directive => Ok(Node::ChildContent),
             rule => Err(format!("Error: Unexpected rule: {:?}", rule)),
         }
@@ -272,103 +77,6 @@ impl RsHtmlParser {
             panic!("Expected 'template', found {:?}", template_pair.as_rule());
         }
     }
-
-    fn build_component_parameter_value(&self, pair: Pair<Rule>, config: &Config, included_templates: &HashSet<String>) -> Result<ComponentParameterValue, String> {
-        match pair.as_rule() {
-            Rule::bool => Ok(ComponentParameterValue::Bool(pair.as_str() == "true")),
-            Rule::number => Ok(ComponentParameterValue::Number(pair.as_str().to_string())),
-            Rule::string => {
-                let raw_str = pair.as_str().trim_matches('"').trim_matches('\'');
-                Ok(ComponentParameterValue::String(raw_str.to_string()))
-            }
-            Rule::rust_expr_simple => Ok(ComponentParameterValue::RustExprSimple(pair.as_str().to_string())),
-            Rule::rust_expr_paren => Ok(ComponentParameterValue::RustExprParen(pair.as_str().to_string())),
-            Rule::inner_template => {
-                let block_nodes = self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?;
-                Ok(ComponentParameterValue::Block(block_nodes))
-            }
-            rule => Err(format!("Unexpected rule for component parameter value: {:?}", rule)),
-        }
-    }
-
-    fn build_rust_block_contents(&self, pairs: Pairs<Rule>) -> Result<Vec<RustBlockContent>, String> {
-        let mut content_parts = Vec::new();
-        for inner_pair in pairs {
-            match inner_pair.as_rule() {
-                Rule::text_line_directive => {
-                    content_parts.push(self.build_text_line(inner_pair));
-                }
-                Rule::text_block_tag => {
-                    content_parts.push(self.build_text_block(inner_pair));
-                }
-                Rule::rust_code => {
-                    content_parts.push(RustBlockContent::Code(inner_pair.as_str().to_string()));
-                }
-                Rule::nested_block => {
-                    let nested_contents = self.build_rust_block_contents(inner_pair.into_inner())?;
-                    content_parts.push(RustBlockContent::NestedBlock(nested_contents));
-                }
-                rule => {
-                    return Err(format!("Internal Error: Unexpected rule {:?} inside rust block content", rule));
-                }
-            }
-        }
-        Ok(content_parts)
-    }
-
-    fn build_text_line(&self, inner_pair: Pair<Rule>) -> RustBlockContent {
-        let mut items = Vec::new();
-
-        for item_pair in inner_pair.into_inner() {
-            match item_pair.as_rule() {
-                Rule::rust_expr_simple => {
-                    if let Some(expr_pair) = item_pair.into_inner().nth(1) {
-                        items.push(TextLineItem::RustExprSimple(expr_pair.as_str().to_string()));
-                    } else {
-                        eprintln!("Warning: Empty or bad embedded expression found.");
-                    }
-                }
-                Rule::text_line => {
-                    let text = item_pair.as_str().replace("@@", "@");
-                    if !text.is_empty() {
-                        items.push(TextLineItem::Text(text));
-                    }
-                }
-                _ => {
-                    eprintln!("Warning: Unexpected rule in text_block: {:?}", item_pair.as_rule());
-                }
-            }
-        }
-
-        RustBlockContent::TextLine(items)
-    }
-
-    fn build_text_block(&self, inner_pair: Pair<Rule>) -> RustBlockContent {
-        let mut items = Vec::new();
-
-        for item_pair in inner_pair.into_inner() {
-            match item_pair.as_rule() {
-                Rule::rust_expr_simple => {
-                    if let Some(expr_pair) = item_pair.into_inner().nth(1) {
-                        items.push(TextBlockItem::RustExprSimple(expr_pair.as_str().to_string()));
-                    } else {
-                        eprintln!("Warning: Empty or bad embedded expression found.");
-                    }
-                }
-                Rule::text_block => {
-                    let text = item_pair.as_str().replace("@@", "@");
-                    if !text.is_empty() {
-                        items.push(TextBlockItem::Text(text));
-                    }
-                }
-                _ => {
-                    eprintln!("Warning: Unexpected rule in text_block: {:?}", item_pair.as_rule());
-                }
-            }
-        }
-
-        RustBlockContent::TextBlock(items)
-    }
 }
 
 pub fn run<'a>(input: &'a str, config: &Config) -> Result<(Pairs<'a, Rule>, Node), String> {
@@ -377,4 +85,8 @@ pub fn run<'a>(input: &'a str, config: &Config) -> Result<(Pairs<'a, Rule>, Node
     let pairs = RsHtmlParser::parse(Rule::template, input).unwrap();
 
     Ok((pairs.clone(), node))
+}
+
+pub trait IParser {
+    fn parse(parser: &RsHtmlParser, pair: Pair<Rule>, config: &Config, included_templates: &HashSet<String>) -> Result<Node, String>;
 }

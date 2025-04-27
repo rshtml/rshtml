@@ -5,6 +5,7 @@ pub struct Config {
     pub views_base_path: PathBuf,
 }
 
+#[allow(dead_code)]
 impl Config {
     pub fn new<P: AsRef<Path>>(views_base_path: P) -> Self {
         Config {
