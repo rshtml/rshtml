@@ -154,7 +154,7 @@ nested_expression = _{
 
 // endregion
 
-// region match expression @match ... { ... => ... }
+// region --- Rust match expression @match ... { ... => ... }
 
 match_expr = {
     match_expr_head ~ WHITESPACE*

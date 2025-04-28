@@ -52,6 +52,7 @@ pub enum Node {
     RustBlock(Vec<RustBlockContent>), // @{ ... } block content (with trim)
     RustExprSimple(String),           // @expr ... (simple expression)
     RustExprParen(String),
+    MatchExpr(String, Vec<(String, Vec<Node>)>), // @match expr { ... => ... }
     RustExpr {
         // @if ...  { ... } else { ... } / @for ... { ... }
         clauses: Vec<(String, Vec<Node>)>,

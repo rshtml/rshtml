@@ -1,7 +1,4 @@
-﻿use crate::node::{
-    ComponentParameterValue, Node, RustBlockContent, SectionDirectiveContent, TextBlockItem,
-    TextLineItem,
-};
+﻿use crate::node::{ComponentParameterValue, Node, RustBlockContent, SectionDirectiveContent, TextBlockItem, TextLineItem};
 
 fn print_indent(indent: usize) {
     print!("{}", "  ".repeat(indent));
@@ -96,6 +93,20 @@ pub fn view_node(node: &Node, indent: usize) {
                 println!("- Clause: {:?}", condition);
                 for inner_node in nodes {
                     view_node(inner_node, indent + 2);
+                }
+            }
+        }
+        Node::MatchExpr(head, arms) => {
+            println!("- MatchExpr:");
+            print_indent(indent + 1);
+            println!("- Clause: {:?}", head);
+            print_indent(indent + 1);
+            println!("- Arms:");
+            for (head, values) in arms {
+                print_indent(indent + 2);
+                println!("- Arm: {:?}", head);
+                for inner_node in values {
+                    view_node(inner_node, indent + 3);
                 }
             }
         }

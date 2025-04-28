@@ -6,6 +6,7 @@ mod rust_block;
 mod rust_expr;
 mod section_block;
 mod section_directive;
+mod match_expr;
 
 use crate::config::Config;
 use pest::Parser;
@@ -17,6 +18,7 @@ use crate::node::*;
 use crate::parser::component::ComponentParser;
 use crate::parser::extends_directive::ExtendsDirectiveParser;
 use crate::parser::include_directive::IncludeDirectiveParser;
+use crate::parser::match_expr::MatchExprParser;
 use crate::parser::render_directive::RenderDirectiveParser;
 use crate::parser::rust_block::RustBlockParser;
 use crate::parser::rust_expr::RustExprParser;
@@ -59,6 +61,7 @@ impl RsHtmlParser {
             Rule::rust_expr_simple => Ok(Node::RustExprSimple(pair.as_str().to_string())),
             Rule::rust_expr_paren => Ok(Node::RustExprParen(pair.as_str().to_string())),
             Rule::rust_expr => RustExprParser::parse(self, pair, config, included_templates),
+            Rule::match_expr => MatchExprParser::parse(self, pair, config, included_templates),
             Rule::section_directive => SectionDirectiveParser::parse(self, pair, config, included_templates),
             Rule::section_block => SectionBlockParser::parse(self, pair, config, included_templates),
             Rule::component => ComponentParser::parse(self, pair, config, included_templates),
