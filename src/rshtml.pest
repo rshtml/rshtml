@@ -287,21 +287,17 @@ child_content_directive = @{
 
 
 // TODO 1: add match expression support for parser
+// TODO 2: maybe add @let = func() support
+// TODO 3: Maybe a block for raw text could be added @raw_text { ... }
 
-// TODO 999: Add support for html blocks and extends and layout system, maybe import templates
-/*
-    @push / @stack
-    @component / @slot
-
-    maybe ToJavascript @json
-
-    maybe
-    @client
-*/
+// TODO 999: Maybe add @client {...} support for client side codes and templates
 
 // TODO After: (Rust Time)
 /*
     1. Adding html escapes during rendering also a directive that can print without escape is required
     2. IsRenderSectionDefined or hasSection like method must be defined
     3. define _layout = "layout.rs.html" support in rust block to set view layout. maybe remove extends directive after this
+    4. add class, checked, selected, disabled, readonly, required functions to use in html attributes or json like functions for js
+    5. define push/stack functions for asset management
+
 */
