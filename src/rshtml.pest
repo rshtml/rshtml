@@ -29,7 +29,7 @@ comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
 block = !{
     "@" ~ (
         (render_directive | include_directive | section_directive | section_block | render_body_directive | child_content_directive | component)
-        | (rust_block | rust_expr | rust_expr_parenthesized | rust_expr_simple)
+        | (rust_block | rust_expr | rust_expr_parenthesized | match_expr | rust_expr_simple)
     )
 }
 
@@ -52,7 +52,7 @@ rust_expr_head = @{
 
 rust_expr_simple = @{
     !(WHITESPACE*
-    ~ ("{"|"if"|"for"|"while"|"else"|"include"|"extends"|"render"|"section"|"render_body")
+    ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body")
     ~ WHITESPACE+
     )
     ~ rust_identifier ~ (&(!expression_boundary) ~ chain_segment)*
@@ -154,6 +154,30 @@ nested_expression = _{
 
 // endregion
 
+// region match expression @match ... { ... => ... }
+
+match_expr = {
+    match_expr_head ~ WHITESPACE*
+    ~ "{" ~ WHITESPACE*
+    ~ match_expr_arm*
+    ~ WHITESPACE* ~ "}"
+}
+
+match_expr_head = @{
+    "match" ~ WHITESPACE+ ~ (rust_expr_simple | rust_expr_parenthesized | !("{" | "@" | "}") ~ ANY)+
+}
+
+match_expr_arm = {
+    match_expr_arm_head ~ WHITESPACE*
+    ~ "=>" ~ WHITESPACE*
+    ~ (("{" ~ inner_template ~ "}") | rust_expr_simple | (match_inner_text)) ~ WHITESPACE* ~ ","?
+}
+
+match_expr_arm_head = @{ (!("@" | "=>") ~ ANY)+ }
+
+match_inner_text = @{ ( "@@}" | "@@{" | "@@" | (!(NEWLINE | "@" | ("," ~ WHITESPACE* ~ "}") | "}") ~ ANY) )+ }
+
+// endregion
 
 /// region Code blocks and code transfers
 
@@ -262,7 +286,7 @@ child_content_directive = @{
 /// endregion Code blocks and code transfers
 
 
-// TODO 1: add match expression support
+// TODO 1: add match expression support for parser
 
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*

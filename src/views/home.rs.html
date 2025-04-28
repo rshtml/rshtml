@@ -1,4 +1,10 @@
-﻿@include("Card.rs.html")
+﻿<h1>Hey</h1>
+
+@match cardCount {
+  0 => i,
+  1 => { <div>merhaba</div> },
+  _ => <p>aaa</p>,
+}
 
 <div>
   <h1>Home Page</h1>
@@ -14,5 +20,7 @@
   @Card(title: "Card Title", footer: {<p>Footer content</p>}, isok:true, c:'c', d: @myVar, e: @(5i32)) {
       <p>This is the content of the card.</p>
   }
+
+
 
 </div>
