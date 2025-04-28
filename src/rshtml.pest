@@ -49,7 +49,7 @@ rust_expr_head = @{
 // endregion
 
 // region --- Simple Rust Expressions (@identifier...) ---
-//
+
 rust_expr_simple = @{
     !(WHITESPACE*
     ~ ("{"|"if"|"for"|"while"|"else"|"include"|"extends"|"render"|"section"|"render_body")
@@ -261,9 +261,8 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: Remove extends directive and manage layout system from Rust time.
-// maybe define _layout = "layout.html" support in rust block to set view layout.
-// TODO 2: Add parser for component system
+
+// TODO 1: add match expression support
 
 // TODO 999: Add support for html blocks and extends and layout system, maybe import templates
 /*
@@ -280,4 +279,5 @@ child_content_directive = @{
 /*
     1. Adding html escapes during rendering also a directive that can print without escape is required
     2. IsRenderSectionDefined or hasSection like method must be defined
+    3. define _layout = "layout.rs.html" support in rust block to set view layout. maybe remove extends directive after this
 */
