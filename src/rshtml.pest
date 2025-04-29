@@ -28,7 +28,7 @@ comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
 
 block = !{
     "@" ~ (
-        (render_directive | include_directive | section_directive | section_block | render_body_directive | child_content_directive | component)
+        (raw_block | render_directive | include_directive | section_directive | section_block | render_body_directive | child_content_directive | component)
         | (rust_block | rust_expr | rust_expr_parenthesized | match_expr | rust_expr_simple)
     )
 }
@@ -52,7 +52,7 @@ rust_expr_head = @{
 
 rust_expr_simple = @{
     !(WHITESPACE*
-    ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body")
+    ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body"|"raw")
     ~ WHITESPACE+
     )
     ~ rust_identifier ~ chain_segment*
@@ -149,7 +149,7 @@ nested_expression = _{
 
 // endregion
 
-// region --- Rust match expression @match ... { ... => ... }
+// region --- Rust match expression @match ... { ... => ... } ---
 
 match_expr = {
     match_expr_head ~ WHITESPACE*
@@ -250,7 +250,7 @@ child_content_directive = @{
 
 // endregion
 
-// region component usage @component_name(param1:value1, param2:value2){inside}
+// region Component usage @component_name(param1:value1, param2:value2){inside}
 
     component = {
         &(rust_identifier ~ "(")
@@ -278,11 +278,20 @@ child_content_directive = @{
 
 // endregion
 
+// region --- @raw block @raw { ... } ---
+
+    raw_block = { "raw" ~ WHITESPACE* ~ "{" ~ raw_content ~ "}" }
+
+    raw_content = @{ ("@{" | "@}"| raw_nested_block | !("{" | "}") ~ ANY)* }
+
+    raw_nested_block = { "{" ~ raw_content ~ "}" }
+
+// endregion
+
 /// endregion Code blocks and code transfers
 
 
-// TODO 1: Simplify the rust_expr_simple
-// TODO 1: Maybe a block for raw text could be added @raw_text { ... }
+// TODO 1: Maybe a block for raw text could be added @raw { ... }, develop parser for raw
 
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
