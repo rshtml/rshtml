@@ -11,6 +11,13 @@
 
     @include("header.rs.html")
 
+    @match whatisthis {
+        0 => <p>this is zero</p>,
+        1 => <p>this is one</p>,
+        2 => <p>this is two</p>,
+        _ => <p>this is not three</p>,
+    }
+
     @abc@def
 
     @(abc)

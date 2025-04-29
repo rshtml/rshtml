@@ -55,25 +55,20 @@ rust_expr_simple = @{
     ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body")
     ~ WHITESPACE+
     )
-    ~ rust_identifier ~ (&(!expression_boundary) ~ chain_segment)*
+    ~ rust_identifier ~ chain_segment*
 }
 
-
 chain_segment = {
-    ("." | "?.") ~ rust_identifier
-  | "::" ~ rust_identifier
-  | ("?"? ~ "(" ~ nested_content* ~ ")")
-  | ("?"? ~ "[" ~ nested_content* ~ "]")
-  | ("::" ~ "<" ~ nested_content* ~ ">")
-  | "?"
+    (".") ~ rust_identifier
+    | "::" ~ rust_identifier
+    | ("(" ~ nested_content* ~ ")")
+    | ("[" ~ nested_content* ~ "]")
 }
 
 nested_content = _{
     ("(" ~ nested_content* ~ ")")
-  | ("[" ~ nested_content* ~ "]")
-  | ("<" ~ nested_content* ~ ">")
-  | ("{" ~ nested_content* ~ "}")
-  | (!((")" | "]" | ">" | "}") | expression_boundary) ~ ANY)
+    | ("[" ~ nested_content* ~ "]")
+    | _normal_string | (!((")" | "]") | expression_boundary) ~ ANY)
 }
 
 expression_boundary = _{
@@ -286,8 +281,8 @@ child_content_directive = @{
 /// endregion Code blocks and code transfers
 
 
-// TODO 2: maybe add @let = func() support
-// TODO 3: Maybe a block for raw text could be added @raw_text { ... }
+// TODO 1: Simplify the rust_expr_simple
+// TODO 1: Maybe a block for raw text could be added @raw_text { ... }
 
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
