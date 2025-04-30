@@ -290,6 +290,7 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
+// TODO 1: maybe components and includes can be like html tags
 
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
@@ -300,5 +301,9 @@ child_content_directive = @{
     3. define _layout = "layout.rs.html" support in rust block to set view layout. maybe remove extends directive after this
     4. add class, checked, selected, disabled, readonly, required functions to use in html attributes or json like functions for js
     5. define push/stack functions for asset management
-
+    6. maybe define @t function for translation Internationalization (i18n) / Localization (i10n)
+        // @t('welcome_message') or @t('items_found', { 'count': item_count }), t(key: &str, params: Option<HashMap<&str, &str>>)
+        // fluent-rs, gettext, serde
+    7. maybe add source mapping for better error messages, sourcemap crate
+    8. for better error messages like use pest::error::Error::renamed_rules
 */
