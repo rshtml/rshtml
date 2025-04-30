@@ -278,7 +278,7 @@ child_content_directive = @{
 
 // endregion
 
-// region --- @raw block @raw { ... } ---
+// region @raw block @raw { ... }
 
     raw_block = { "raw" ~ WHITESPACE* ~ "{" ~ raw_content ~ "}" }
 
@@ -290,8 +290,6 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-
-// TODO 1: Maybe a block for raw text could be added @raw { ... }, develop parser for raw
 
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
