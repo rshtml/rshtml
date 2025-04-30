@@ -28,7 +28,8 @@ comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
 
 block = !{
     "@" ~ (
-        (raw_block | render_directive | include_directive | section_directive | section_block | render_body_directive | child_content_directive | component)
+        (raw_block | render_directive | include_directive | section_directive | section_block
+        | render_body_directive | child_content_directive | component | import_directive)
         | (rust_block | rust_expr | rust_expr_parenthesized | match_expr | rust_expr_simple)
     )
 }
@@ -52,7 +53,7 @@ rust_expr_head = @{
 
 rust_expr_simple = @{
     !(WHITESPACE*
-    ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body"|"raw")
+    ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body"|"raw"|"import")
     ~ WHITESPACE+
     )
     ~ rust_identifier ~ chain_segment*
@@ -285,6 +286,18 @@ child_content_directive = @{
     raw_content = @{ ("@{" | "@}"| raw_nested_block | !("{" | "}") ~ ANY)* }
 
     raw_nested_block = { "{" ~ raw_content ~ "}" }
+
+// endregion
+
+// region @import directive @import Component from "components/Comp.rshtml"
+
+    import_directive = ${
+     &"import"
+     ~ "import" ~ WHITESPACE+
+     ~ rust_identifier ~ WHITESPACE+
+     ~ "from" ~ WHITESPACE+
+     ~ string_line ~ (";" | &(WHITESPACE+))
+    }
 
 // endregion
 

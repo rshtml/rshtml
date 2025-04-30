@@ -1,5 +1,6 @@
 mod component;
 mod extends_directive;
+mod import_directive;
 mod include_directive;
 mod match_expr;
 mod render_directive;
@@ -17,6 +18,7 @@ use std::collections::HashSet;
 use crate::node::*;
 use crate::parser::component::ComponentParser;
 use crate::parser::extends_directive::ExtendsDirectiveParser;
+use crate::parser::import_directive::ImportDirectiveParser;
 use crate::parser::include_directive::IncludeDirectiveParser;
 use crate::parser::match_expr::MatchExprParser;
 use crate::parser::render_directive::RenderDirectiveParser;
@@ -69,6 +71,7 @@ impl RsHtmlParser {
             Rule::raw_block => Ok(Node::Raw(
                 pair.into_inner().find(|p| p.as_rule() == Rule::raw_content).map(|p| p.as_str().to_string()).unwrap_or_default(),
             )),
+            Rule::import_directive => ImportDirectiveParser::parse(self, pair, config, included_templates),
             rule => Err(format!("Error: Unexpected rule: {:?}", rule)),
         }
     }
