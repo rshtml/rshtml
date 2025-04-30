@@ -62,4 +62,5 @@ pub enum Node {
     RenderBody,
     Component(String, Vec<ComponentParameter>, Vec<Node>), // @componentName(param1 = value1, param2 = value2) { ... }
     ChildContent,
+    Raw(String),
 }

@@ -1,12 +1,12 @@
 mod component;
 mod extends_directive;
 mod include_directive;
+mod match_expr;
 mod render_directive;
 mod rust_block;
 mod rust_expr;
 mod section_block;
 mod section_directive;
-mod match_expr;
 
 use crate::config::Config;
 use pest::Parser;
@@ -66,6 +66,9 @@ impl RsHtmlParser {
             Rule::section_block => SectionBlockParser::parse(self, pair, config, included_templates),
             Rule::component => ComponentParser::parse(self, pair, config, included_templates),
             Rule::child_content_directive => Ok(Node::ChildContent),
+            Rule::raw_block => Ok(Node::Raw(
+                pair.into_inner().find(|p| p.as_rule() == Rule::raw_content).map(|p| p.as_str().to_string()).unwrap_or_default(),
+            )),
             rule => Err(format!("Error: Unexpected rule: {:?}", rule)),
         }
     }

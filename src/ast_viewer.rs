@@ -166,5 +166,6 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::ChildContent => {
             println!("- ChildContent");
         }
+        Node::Raw(s) => println!("- Raw: {:?}", s),
     }
 }
