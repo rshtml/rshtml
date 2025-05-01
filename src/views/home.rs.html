@@ -2,7 +2,7 @@
 
 @import Card from "Card.rs.html"
 
-@abc(34)._def_def_("<this> is just string", 5, true,false, 34i32, 34.6f64).aaa[0][1].MyStruct::<i32>::new(text)?::abc(myfunc("helloo"))
+<Card prop="okayy" prop2/>
 
 @raw {
   @if (x > 5) { print("@}"); } ... @}
@@ -15,7 +15,14 @@
   <button @click="decrement">Dec (-)</button>
 }
 
+<Card prop=@i prop2 prop3="hey" prop4={<p>what is this</p>}>
+  <p>hello</p>
+  <p>world</p>
+  @if true {
+    <p>say something</p>
+  }
 
+</Card>
 
 @match cardCount {
   0 => i,
@@ -38,7 +45,5 @@
   @Card(title: "Card Title", footer: {<p>Footer content</p>}, isok:true, c:'c', d: @myVar, e: @(5i32)) {
       <p>This is the content of the card.</p>
   }
-
-
 
 </div>

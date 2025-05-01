@@ -11,13 +11,14 @@ BOM = _{ "\u{FEFF}" }
 template = { SOI ~ BOM? ~ extends_directive? ~ WHITESPACE* ~ template_content* ~ EOI }
 template_content = _{ (comment_block | block | text) }
 inner_template = { (comment_block | block | inner_text)* }
+tag_template = { (comment_block | block | text)* }
 
 // endregion
 
 // region --- Text and Comment Rules ---
-
-text = @{ ( "@@}" | "@@{" | "@@" |  (!("@") ~ ANY) )+ }
-inner_text = @{ ( "@@}" | "@@{" | "@@" | (!("@" | "}") ~ ANY) )+ }
+//
+text = @{ ("@@}" | "@@{" | "@@" |  (!("@" | ("<" ~ component_tag_identifier) | ("</" ~ component_tag_identifier)) ~ ANY))+ }
+inner_text = @{ ("@@}" | "@@{" | "@@" | (!("@" | "}" | ("<" ~ component_tag_identifier) | ("</" ~ component_tag_identifier)) ~ ANY))+ }
 
 comment_block = { "@*" ~ comment_content ~ "*@" }
 comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
@@ -27,10 +28,13 @@ comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
 // region --- Block Types ---
 
 block = !{
+    component_tag
+    | (
     "@" ~ (
         (raw_block | render_directive | include_directive | section_directive | section_block
         | render_body_directive | child_content_directive | component | import_directive)
         | (rust_block | rust_expr | rust_expr_parenthesized | match_expr | rust_expr_simple)
+        )
     )
 }
 
@@ -251,7 +255,7 @@ child_content_directive = @{
 
 // endregion
 
-// region Component usage @component_name(param1:value1, param2:value2){inside}
+// region Component block @component_name(param1:value1, param2:value2){inside}
 
     component = {
         &(rust_identifier ~ "(")
@@ -276,6 +280,32 @@ child_content_directive = @{
     bool = @{ "true" | "false" }
     number = @{ ("-")? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
     string = @{ _normal_string }
+
+// endregion
+
+// region Component tag <ComponentName param1="value", param2=@value2> ... <ComponentName/>
+
+    component_tag = ${
+        &("<" ~ component_tag_identifier) ~
+        "<" ~ component_tag_name ~ attributes ~ WHITESPACE*
+        ~ ("/>" | (">" ~ tag_template ~ "</" ~ component_tag_identifier ~ ">"))
+    }
+
+    attributes = _{ (WHITESPACE+ ~ attribute)* }
+    attribute = { attribute_name ~ (WHITESPACE* ~ "=" ~ WHITESPACE* ~ attribute_value)? }
+    attribute_name = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
+    attribute_value = _{
+        bool
+        | number
+        | string
+        | ("@" ~ rust_expr_parenthesized)
+        | ("@" ~ rust_expr_simple)
+        | ("{" ~ inner_template ~ "}")
+    }
+
+    component_tag_identifier = _{ (ASCII_ALPHA_UPPER ~ ASCII_ALPHANUMERIC*) ~ ("." ~ (ASCII_ALPHA_UPPER ~ ASCII_ALPHANUMERIC*))* }
+    component_tag_name = @{ component_tag_identifier }
+
 
 // endregion
 
