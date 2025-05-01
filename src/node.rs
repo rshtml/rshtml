@@ -60,7 +60,7 @@ pub enum Node {
     SectionDirective(String, SectionDirectiveContent), // @section("content")
     SectionBlock(String, Vec<Node>),                   // @section content { ... }
     RenderBody,
-    Component(String, Vec<ComponentParameter>, Vec<Node>), // @componentName(param1 = value1, param2 = value2) { ... }
+    Component(String, Vec<ComponentParameter>, Vec<Node>), // @componentName(param1 = value1, param2 = value2) { ... } also <CompName p=""/> tags
     ChildContent,
     Raw(String),
     ImportDirective(String, String),

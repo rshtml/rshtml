@@ -32,7 +32,7 @@ impl IParser for ComponentParser {
 }
 
 impl ComponentParser {
-    fn build_component_parameter_value(parser: &RsHtmlParser, pair: Pair<Rule>, config: &Config, included_templates: &HashSet<String>) -> Result<ComponentParameterValue, String> {
+    pub fn build_component_parameter_value(parser: &RsHtmlParser, pair: Pair<Rule>, config: &Config, included_templates: &HashSet<String>) -> Result<ComponentParameterValue, String> {
         match pair.as_rule() {
             Rule::bool => Ok(ComponentParameterValue::Bool(pair.as_str() == "true")),
             Rule::number => Ok(ComponentParameterValue::Number(pair.as_str().to_string())),

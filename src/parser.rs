@@ -1,4 +1,5 @@
 mod component;
+mod component_tag;
 mod extends_directive;
 mod import_directive;
 mod include_directive;
@@ -17,6 +18,7 @@ use std::collections::HashSet;
 
 use crate::node::*;
 use crate::parser::component::ComponentParser;
+use crate::parser::component_tag::ComponentTagParser;
 use crate::parser::extends_directive::ExtendsDirectiveParser;
 use crate::parser::import_directive::ImportDirectiveParser;
 use crate::parser::include_directive::IncludeDirectiveParser;
@@ -67,6 +69,7 @@ impl RsHtmlParser {
             Rule::section_directive => SectionDirectiveParser::parse(self, pair, config, included_templates),
             Rule::section_block => SectionBlockParser::parse(self, pair, config, included_templates),
             Rule::component => ComponentParser::parse(self, pair, config, included_templates),
+            Rule::component_tag => ComponentTagParser::parse(self, pair, config, included_templates),
             Rule::child_content_directive => Ok(Node::ChildContent),
             Rule::raw_block => Ok(Node::Raw(
                 pair.into_inner().find(|p| p.as_rule() == Rule::raw_content).map(|p| p.as_str().to_string()).unwrap_or_default(),

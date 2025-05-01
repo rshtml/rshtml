@@ -333,8 +333,6 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: maybe components and includes can be like html tags
-
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
 // TODO After: (Rust Time)
