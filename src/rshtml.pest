@@ -57,7 +57,7 @@ rust_expr_head = @{
 
 rust_expr_simple = @{
     !(WHITESPACE*
-    ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body"|"raw"|"import")
+    ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body"|"raw"|"use")
     ~ WHITESPACE+
     )
     ~ rust_identifier ~ chain_segment*
@@ -325,8 +325,7 @@ child_content_directive = @{
          &"use"
          ~ "use" ~ WHITESPACE+
          ~ string_line ~ WHITESPACE+
-         ~ "as" ~ WHITESPACE+
-         ~ rust_identifier ~ (";" | &(WHITESPACE+))
+         ~ ("as" ~ WHITESPACE+ ~ rust_identifier ~ (";" | &(WHITESPACE+)))?
         }
 
 // endregion

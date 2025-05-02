@@ -172,7 +172,7 @@ pub fn view_node(node: &Node, indent: usize) {
             print_indent(indent + 1);
             println!("- ComponentName: {:?}", component_name);
             print_indent(indent + 1);
-            println!("- ImportPath: {:?}", import_path);
+            println!("- ImportPath: {:#?}", import_path);
         }
     }
 }
