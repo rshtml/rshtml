@@ -332,8 +332,7 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: control the imports for components on ast build, maybe imports config,
-// optional enable to use the use directive without using as Name. take filename as component name.
+// TODO 1: control the imports for components on ast build, maybe imports config
 
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
