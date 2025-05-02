@@ -332,8 +332,6 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: control the imports for components on ast build, maybe imports config
-
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
 // TODO After: (Rust Time)
@@ -348,4 +346,5 @@ child_content_directive = @{
         // fluent-rs, gettext, serde
     7. maybe add source mapping for better error messages, sourcemap crate
     8. for better error messages like use pest::error::Error::renamed_rules
+    9. control the imports for components
 */

@@ -86,7 +86,7 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::RustExprParen(expr) => {
             println!("- RustExprParen: {:?}", expr);
         }
-        Node::RustExpr { clauses } => {
+        Node::RustExpr(clauses) => {
             println!("- RustExpr:");
             for (condition, nodes) in clauses {
                 print_indent(indent + 1);

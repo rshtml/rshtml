@@ -44,21 +44,18 @@ pub struct ComponentParameter {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node {
-    Template(Vec<Node>),              // main template, contains child nodes
-    Text(String),                     // plain text content (@@ -> @)
-    InnerText(String),                // text inside a block (@@ -> @, @{ -> {, @} -> })
-    Comment(String),                  // comment content
+    Template(Vec<Node>), // main template, contains child nodes
+    Text(String),        // plain text content (@@ -> @)
+    InnerText(String),   // text inside a block (@@ -> @, @{ -> {, @} -> })
+    Comment(String),     // comment content
     //IncludeDirective(PathBuf),         // include directive @include("other_view.html")
-    ExtendsDirective(PathBuf),         // extends directive @extends("layout.html")
+    ExtendsDirective(PathBuf),        // extends directive @extends("layout.html")
     RenderDirective(String),          // yield directive @yield("content")
     RustBlock(Vec<RustBlockContent>), // @{ ... } block content (with trim)
     RustExprSimple(String),           // @expr ... (simple expression)
     RustExprParen(String),
-    MatchExpr(String, Vec<(String, Vec<Node>)>), // @match expr { ... => ... }
-    RustExpr {
-        // @if ...  { ... } else { ... } / @for ... { ... }
-        clauses: Vec<(String, Vec<Node>)>,
-    },
+    MatchExpr(String, Vec<(String, Vec<Node>)>),       // @match expr { ... => ... }
+    RustExpr(Vec<(String, Vec<Node>)>),                // @if ...  { ... } else { ... } / @for ... { ... }
     SectionDirective(String, SectionDirectiveContent), // @section("content")
     SectionBlock(String, Vec<Node>),                   // @section content { ... }
     RenderBody,
