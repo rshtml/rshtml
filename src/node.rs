@@ -63,5 +63,5 @@ pub enum Node {
     Component(String, Vec<ComponentParameter>, Vec<Node>), // @componentName(param1 = value1, param2 = value2) { ... } also <CompName p=""/> tags
     ChildContent,
     Raw(String),
-    ImportDirective(String, String),
+    UseDirective(String, String),
 }

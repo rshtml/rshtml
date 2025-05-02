@@ -32,7 +32,7 @@ block = !{
     | (
     "@" ~ (
         (raw_block | render_directive | include_directive | section_directive | section_block
-        | render_body_directive | child_content_directive | component | import_directive)
+        | render_body_directive | child_content_directive | component | use_directive)
         | (rust_block | rust_expr | rust_expr_parenthesized | match_expr | rust_expr_simple)
         )
     )
@@ -319,21 +319,22 @@ child_content_directive = @{
 
 // endregion
 
-// region @import directive @import Component from "components/Comp.rshtml"
+// region @use directive @use "components/Comp.rshtml" as Component
 
-    import_directive = ${
-     &"import"
-     ~ "import" ~ WHITESPACE+
-     ~ rust_identifier ~ WHITESPACE+
-     ~ "from" ~ WHITESPACE+
-     ~ string_line ~ (";" | &(WHITESPACE+))
-    }
+       use_directive = ${
+         &"use"
+         ~ "use" ~ WHITESPACE+
+         ~ string_line ~ WHITESPACE+
+         ~ "as" ~ WHITESPACE+
+         ~ rust_identifier ~ (";" | &(WHITESPACE+))
+        }
 
 // endregion
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: control the imports for components on ast build
+// TODO 1: control the imports for components on ast build, maybe imports config,
+// optional enable to use the use directive without using as Name. take filename as component name.
 
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 

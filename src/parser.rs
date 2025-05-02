@@ -1,7 +1,6 @@
 mod component;
 mod component_tag;
 mod extends_directive;
-mod import_directive;
 mod include_directive;
 mod match_expr;
 mod render_directive;
@@ -9,6 +8,7 @@ mod rust_block;
 mod rust_expr;
 mod section_block;
 mod section_directive;
+mod use_directive;
 
 use crate::config::Config;
 use pest::Parser;
@@ -20,7 +20,6 @@ use crate::node::*;
 use crate::parser::component::ComponentParser;
 use crate::parser::component_tag::ComponentTagParser;
 use crate::parser::extends_directive::ExtendsDirectiveParser;
-use crate::parser::import_directive::ImportDirectiveParser;
 use crate::parser::include_directive::IncludeDirectiveParser;
 use crate::parser::match_expr::MatchExprParser;
 use crate::parser::render_directive::RenderDirectiveParser;
@@ -28,6 +27,7 @@ use crate::parser::rust_block::RustBlockParser;
 use crate::parser::rust_expr::RustExprParser;
 use crate::parser::section_block::SectionBlockParser;
 use crate::parser::section_directive::SectionDirectiveParser;
+use crate::parser::use_directive::UseDirectiveParser;
 
 #[derive(Parser)]
 #[grammar = "rshtml.pest"]
@@ -74,7 +74,7 @@ impl RsHtmlParser {
             Rule::raw_block => Ok(Node::Raw(
                 pair.into_inner().find(|p| p.as_rule() == Rule::raw_content).map(|p| p.as_str().to_string()).unwrap_or_default(),
             )),
-            Rule::import_directive => ImportDirectiveParser::parse(self, pair, config, included_templates),
+            Rule::use_directive => UseDirectiveParser::parse(self, pair, config, included_templates),
             rule => Err(format!("Error: Unexpected rule: {:?}", rule)),
         }
     }
