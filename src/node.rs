@@ -48,8 +48,8 @@ pub enum Node {
     Text(String),                     // plain text content (@@ -> @)
     InnerText(String),                // text inside a block (@@ -> @, @{ -> {, @} -> })
     Comment(String),                  // comment content
-    IncludeDirective(String),         // include directive @include("other_view.html")
-    ExtendsDirective(String),         // extends directive @extends("layout.html")
+    //IncludeDirective(PathBuf),         // include directive @include("other_view.html")
+    ExtendsDirective(PathBuf),         // extends directive @extends("layout.html")
     RenderDirective(String),          // yield directive @yield("content")
     RustBlock(Vec<RustBlockContent>), // @{ ... } block content (with trim)
     RustExprSimple(String),           // @expr ... (simple expression)

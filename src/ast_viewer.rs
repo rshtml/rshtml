@@ -65,9 +65,9 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::Comment(comment) => {
             println!("- Comment: {:?}", comment);
         }
-        Node::IncludeDirective(path) => {
-            println!("- IncludeDirective: {:?}", path);
-        }
+        // Node::IncludeDirective(path) => {
+        //     println!("- IncludeDirective: {:?}", path);
+        // }
         Node::ExtendsDirective(path) => {
             println!("- ExtendsDirective: {:?}", path);
         }

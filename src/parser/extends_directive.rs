@@ -3,6 +3,7 @@ use crate::config::Config;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::iterators::Pair;
 use std::collections::HashSet;
+use std::path::PathBuf;
 
 pub struct ExtendsDirectiveParser;
 
@@ -11,6 +12,6 @@ impl IParser for ExtendsDirectiveParser {
         let path_pair = pair.into_inner().find(|p| p.as_rule() == Rule::string_line).unwrap();
         let path_str = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
 
-        Ok(Node::ExtendsDirective(path_str))
+        Ok(Node::ExtendsDirective(PathBuf::from(path_str)))
     }
 }
