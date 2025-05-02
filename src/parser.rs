@@ -1,8 +1,10 @@
+mod comment_block;
 mod component;
 mod component_tag;
 mod extends_directive;
 mod include_directive;
 mod match_expr;
+mod raw_block;
 mod render_directive;
 mod rust_block;
 mod rust_expr;
@@ -17,11 +19,13 @@ use pest_derive::Parser;
 use std::collections::HashSet;
 
 use crate::node::*;
+use crate::parser::comment_block::CommentBlockParser;
 use crate::parser::component::ComponentParser;
 use crate::parser::component_tag::ComponentTagParser;
 use crate::parser::extends_directive::ExtendsDirectiveParser;
 use crate::parser::include_directive::IncludeDirectiveParser;
 use crate::parser::match_expr::MatchExprParser;
+use crate::parser::raw_block::RawBlockParser;
 use crate::parser::render_directive::RenderDirectiveParser;
 use crate::parser::rust_block::RustBlockParser;
 use crate::parser::rust_expr::RustExprParser;
@@ -53,9 +57,7 @@ impl RsHtmlParser {
             Rule::template => Ok(Node::Template(self.build_nodes_from_pairs(pair.into_inner(), config, included_templates)?)),
             Rule::text => Ok(Node::Text(pair.as_str().replace("@@", "@").replace("@@{", "{").replace("@@}", "}"))),
             Rule::inner_text => Ok(Node::InnerText(pair.as_str().replace("@@", "@").replace("@@{", "{").replace("@@}", "}"))),
-            Rule::comment_block => Ok(Node::Comment(
-                pair.into_inner().find(|p| p.as_rule() == Rule::comment_content).map(|p| p.as_str().to_string()).unwrap_or_default(),
-            )),
+            Rule::comment_block => CommentBlockParser::parse(self, pair, config, included_templates),
             Rule::block => self.build_ast_node(pair.into_inner().next().ok_or_else(|| "Error: Empty block".to_string())?, config, included_templates),
             Rule::include_directive => IncludeDirectiveParser::parse(self, pair, config, included_templates),
             Rule::render_directive => RenderDirectiveParser::parse(self, pair, config, included_templates),
@@ -71,9 +73,7 @@ impl RsHtmlParser {
             Rule::component => ComponentParser::parse(self, pair, config, included_templates),
             Rule::component_tag => ComponentTagParser::parse(self, pair, config, included_templates),
             Rule::child_content_directive => Ok(Node::ChildContent),
-            Rule::raw_block => Ok(Node::Raw(
-                pair.into_inner().find(|p| p.as_rule() == Rule::raw_content).map(|p| p.as_str().to_string()).unwrap_or_default(),
-            )),
+            Rule::raw_block => RawBlockParser::parse(self, pair, config, included_templates),
             Rule::use_directive => UseDirectiveParser::parse(self, pair, config, included_templates),
             rule => Err(format!("Error: Unexpected rule: {:?}", rule)),
         }
