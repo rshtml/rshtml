@@ -1,13 +1,11 @@
-﻿use crate::Node;
-use crate::config::Config;
-use crate::parser::{IParser, RsHtmlParser, Rule};
+﻿use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::Node;
 use pest::iterators::Pair;
-use std::collections::HashSet;
 
 pub struct CommentBlockParser;
 
 impl IParser for CommentBlockParser {
-    fn parse(_: &RsHtmlParser, pair: Pair<Rule>, _: &Config, _: &HashSet<String>) -> Result<Node, String> {
+    fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, String> {
         Ok(Node::Comment(
             pair.into_inner()
                 .find(|p| p.as_rule() == Rule::comment_content)

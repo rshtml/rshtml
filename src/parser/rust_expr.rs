@@ -1,14 +1,12 @@
 ﻿use crate::Node;
-use crate::config::Config;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::iterators::{Pair, Pairs};
-use std::collections::HashSet;
 use std::iter::Peekable;
 
 pub struct RustExprParser;
 
 impl IParser for RustExprParser {
-    fn parse(parser: &RsHtmlParser, pair: Pair<Rule>, config: &Config, included_templates: &HashSet<String>) -> Result<Node, String> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, String> {
         let mut inner_pairs = pair.into_inner().peekable();
         let mut clauses: Vec<(String, Vec<Node>)> = Vec::new();
 
@@ -34,7 +32,7 @@ impl IParser for RustExprParser {
                 .next_if(|p| p.as_rule() == Rule::inner_template)
                 .ok_or_else(|| format!("Internal Error: rust_expr missing inner_template for head: '{}'", head))?;
 
-            let body_nodes = parser.build_nodes_from_pairs(template_pair.into_inner(), config, included_templates)?;
+            let body_nodes = parser.build_nodes_from_pairs(template_pair.into_inner())?;
 
             clauses.push((head.clone(), body_nodes));
 

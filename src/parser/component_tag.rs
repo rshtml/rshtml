@@ -1,15 +1,13 @@
-﻿use crate::Node;
-use crate::config::Config;
-use crate::node::{ComponentParameter, ComponentParameterValue};
+﻿use crate::node::{ComponentParameter, ComponentParameterValue};
 use crate::parser::component::ComponentParser;
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::Node;
 use pest::iterators::Pair;
-use std::collections::HashSet;
 
 pub struct ComponentTagParser;
 
 impl IParser for ComponentTagParser {
-    fn parse(parser: &RsHtmlParser, pair: Pair<Rule>, config: &Config, included_templates: &HashSet<String>) -> Result<Node, String> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, String> {
         let mut inner_pairs = pair.into_inner();
         let component_name = inner_pairs.find(|p| p.as_rule() == Rule::component_tag_name).unwrap().as_str().to_string();
 
@@ -20,7 +18,7 @@ impl IParser for ComponentTagParser {
             let pair_name = pair.clone().into_inner().find(|p| p.as_rule() == Rule::attribute_name).unwrap();
 
             let value = match pair.clone().into_inner().find(|p| p.as_rule() != Rule::attribute_name) {
-                Some(pair_value) => ComponentParser::build_component_parameter_value(parser, pair_value, config, included_templates)?,
+                Some(pair_value) => ComponentParser::build_component_parameter_value(parser, pair_value)?,
                 None => ComponentParameterValue::Bool(true),
             };
 
@@ -30,7 +28,7 @@ impl IParser for ComponentTagParser {
         }
 
         let body = match inner_pairs.find(|x| x.as_rule() == Rule::tag_template) {
-            Some(tag_template) => parser.build_nodes_from_pairs(tag_template.into_inner(), config, included_templates)?,
+            Some(tag_template) => parser.build_nodes_from_pairs(tag_template.into_inner())?,
             None => vec![],
         };
 

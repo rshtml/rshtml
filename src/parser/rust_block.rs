@@ -1,14 +1,12 @@
 ﻿use crate::Node;
-use crate::config::Config;
 use crate::node::{RustBlockContent, TextBlockItem, TextLineItem};
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::iterators::{Pair, Pairs};
-use std::collections::HashSet;
 
 pub struct RustBlockParser;
 
 impl IParser for RustBlockParser {
-    fn parse(_: &RsHtmlParser, pair: Pair<Rule>, _: &Config, _: &HashSet<String>) -> Result<Node, String> {
+    fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, String> {
         Ok(Node::RustBlock(Self::build_rust_block_contents(pair.into_inner())?))
     }
 }
