@@ -1,12 +1,14 @@
 ﻿use crate::Node;
 use crate::node::SectionDirectiveContent;
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 
 pub struct SectionDirectiveParser;
 
 impl IParser for SectionDirectiveParser {
-    fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, String> {
+    fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+        let pair_span = pair.as_span();
         let mut pairs = pair.clone().into_inner().filter(|p| p.as_rule() == Rule::string_line || p.as_rule() == Rule::rust_expr_simple);
 
         match (pairs.next(), pairs.next()) {
@@ -27,7 +29,12 @@ impl IParser for SectionDirectiveParser {
 
                 Ok(Node::SectionDirective(name, value_pair))
             }
-            _ => Err("Error: section_directive".to_string()),
+            _ => Err(Error::new_from_span(
+                ErrorVariant::CustomError {
+                    message: "Error: section_directive".to_string(),
+                },
+                pair_span,
+            )),
         }
     }
 }

@@ -1,13 +1,15 @@
-﻿use crate::node::{ComponentParameter, ComponentParameterValue};
+﻿use crate::Node;
+use crate::node::{ComponentParameter, ComponentParameterValue};
 use crate::parser::component::ComponentParser;
 use crate::parser::{IParser, RsHtmlParser, Rule};
-use crate::Node;
+use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 
 pub struct ComponentTagParser;
 
 impl IParser for ComponentTagParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, String> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+        let pair_span = pair.as_span();
         let mut inner_pairs = pair.into_inner();
         let component_name = inner_pairs.find(|p| p.as_rule() == Rule::component_tag_name).unwrap().as_str().to_string();
 
@@ -15,7 +17,13 @@ impl IParser for ComponentTagParser {
 
         let mut component_parameters = Vec::new();
         for pair in component_parameter_pairs {
-            let pair_name = pair.clone().into_inner().find(|p| p.as_rule() == Rule::attribute_name).unwrap();
+            let pair_name = pair.clone().into_inner().find(|p| p.as_rule() == Rule::attribute_name).ok_or(Error::new_from_span(
+                ErrorVariant::ParsingError {
+                    positives: vec![Rule::attribute_name],
+                    negatives: vec![],
+                },
+                pair_span,
+            ))?;
 
             let value = match pair.clone().into_inner().find(|p| p.as_rule() != Rule::attribute_name) {
                 Some(pair_value) => ComponentParser::build_component_parameter_value(parser, pair_value)?,

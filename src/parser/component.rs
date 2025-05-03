@@ -1,12 +1,13 @@
-﻿use crate::node::{ComponentParameter, ComponentParameterValue};
+﻿use crate::Node;
+use crate::node::{ComponentParameter, ComponentParameterValue};
 use crate::parser::{IParser, RsHtmlParser, Rule};
-use crate::Node;
+use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 
 pub struct ComponentParser;
 
 impl IParser for ComponentParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, String> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
         let component_name = pair.clone().into_inner().find(|p| p.as_rule() == Rule::rust_identifier).unwrap().as_str().to_string();
 
         let component_parameter_pairs = pair.clone().into_inner().filter(|p| p.as_rule() == Rule::component_parameter);
@@ -30,7 +31,7 @@ impl IParser for ComponentParser {
 }
 
 impl ComponentParser {
-    pub fn build_component_parameter_value(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<ComponentParameterValue, String> {
+    pub fn build_component_parameter_value(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<ComponentParameterValue, Error<Rule>> {
         match pair.as_rule() {
             Rule::bool => Ok(ComponentParameterValue::Bool(pair.as_str() == "true")),
             Rule::number => Ok(ComponentParameterValue::Number(pair.as_str().to_string())),
@@ -44,7 +45,7 @@ impl ComponentParser {
                 let block_nodes = parser.build_nodes_from_pairs(pair.into_inner())?;
                 Ok(ComponentParameterValue::Block(block_nodes))
             }
-            rule => Err(format!("Unexpected rule for component parameter value: {:?}", rule)),
+            rule => Err(Error::new_from_span(ErrorVariant::CustomError {message: format!("Unexpected rule: {:?}", rule)}, pair.as_span())),
         }
     }
 }

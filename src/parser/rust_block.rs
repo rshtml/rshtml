@@ -1,18 +1,19 @@
 ﻿use crate::Node;
 use crate::node::{RustBlockContent, TextBlockItem, TextLineItem};
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use pest::error::{Error, ErrorVariant};
 use pest::iterators::{Pair, Pairs};
 
 pub struct RustBlockParser;
 
 impl IParser for RustBlockParser {
-    fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, String> {
+    fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
         Ok(Node::RustBlock(Self::build_rust_block_contents(pair.into_inner())?))
     }
 }
 
 impl RustBlockParser {
-    fn build_rust_block_contents(pairs: Pairs<Rule>) -> Result<Vec<RustBlockContent>, String> {
+    fn build_rust_block_contents(pairs: Pairs<Rule>) -> Result<Vec<RustBlockContent>, Error<Rule>> {
         let mut content_parts = Vec::new();
         for inner_pair in pairs {
             match inner_pair.as_rule() {
@@ -30,7 +31,12 @@ impl RustBlockParser {
                     content_parts.push(RustBlockContent::NestedBlock(nested_contents));
                 }
                 rule => {
-                    return Err(format!("Internal Error: Unexpected rule {:?} inside rust block content", rule));
+                    return Err(Error::new_from_span(
+                        ErrorVariant::CustomError {
+                            message: format!("Internal Error: Unexpected rule {:?} inside rust block content", rule),
+                        },
+                        inner_pair.as_span(),
+                    ));
                 }
             }
         }
