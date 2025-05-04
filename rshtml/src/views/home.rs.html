@@ -1,0 +1,53 @@
+﻿<h1>Hey</h1>
+
+@use "Card.rs.html" as Card
+
+@use "path/to/directory/Card.rs.html"
+
+<Card prop="okayy" prop2/>
+
+@raw {
+  @if (x > 5) { print("@}"); } ... @}
+
+  <h2>{{ message }}</h2>
+  <p>Count value: {{ count }}</p>
+
+  {{-- Buttons and event listeners --}}
+  <button v-on:click="increment">Inc (+)</button>
+  <button @click="decrement">Dec (-)</button>
+}
+
+<Card prop=@i prop2=false prop3="hey" prop4={<p>what is this</p>}>
+  <p>hello</p>
+  <p>world</p>
+  @if true {
+    <p>say something</p>
+  }
+
+</Card>
+
+@include("header.rs.html")
+
+@match cardCount {
+  0 => i,
+  1 => { <div>mer=>,{..@@}haba @hey</div> },
+  2 => <p>hel,_..loo</p>,
+  _ => <p>aa=>,{..@@}a</p>,
+}
+
+<div>
+  <h1>Home Page</h1>
+  <p>Welcome to the home page.</p>
+  <hr>
+
+  @Card(){}
+
+  @Card(title: "Card Title", footer: "Card Footer"){}
+
+  <!-- {<p>Card Footer</p>} -->
+
+  @Card(title: "Card Title", footer: {<p>Footer content</p>}, isok:true, c:'c', d: @myVar, e: @(5i32)) {
+      <p>This is the content of the card.</p>
+  }
+
+</div>

@@ -1,0 +1,20 @@
+﻿@{
+    let abc = || {
+        let def = 5;
+        def + 1
+    };
+
+    @: entry for header
+}
+
+@* let thisismyvar = "thisismyvar"; *@
+
+<header>
+    @include("bar.rs.html")
+    @if abc {
+        <h1>My Variable is True</h1>
+    }
+
+    <h1>Rust HTML Header</h1>
+    <p>this is rust html header @thisismyvar body</p>
+</header>
