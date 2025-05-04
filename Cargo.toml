@@ -1,8 +1,4 @@
-[package]
-name = "rshtml"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = ["rshtml", "rshtml_macro"]
 
-[dependencies]
-pest = "2.8.0"
-pest_derive = "2.8.0"
+resolver = "2"
