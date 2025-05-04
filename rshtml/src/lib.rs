@@ -15,11 +15,19 @@ pub fn rshtml(path: String) -> String {
     viewer::execute_pairs(pairs, 0, true);
     ast_viewer::view_node(&ast, 0);
 
+    let home_page = HomePage {
+        title: "Hello".to_string(),
+        content: "World".to_string(),
+    }
+    .to_string();
+
+    println!("{:?}", home_page);
+
     format!("{:?}", ast)
 }
 
-#[derive(RsHtml)]
-#[rshtml(path = "home.rs.html")]
+#[derive(Debug, RsHtml)]
+//#[rshtml(path = "home.rs.html")]
 struct HomePage {
     title: String,
     content: String,

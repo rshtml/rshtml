@@ -8,20 +8,19 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
 
     let struct_name = &input.ident;
 
-    // Parse the template path from the #[rshtml(path = "...")] attribute
     let template_path = match parse_template_path_from_attrs(&input.attrs) {
         Ok(Some(path)) => path,
         Ok(None) => {
-            // If the path attribute is missing, return a compile error
-            return syn::Error::new_spanned(
-                struct_name, // Span the error on the struct name
-                "Missing `path` attribute, e.g., #[rshtml(path = \"template.rs.html\")]",
-            )
-            .to_compile_error()
-            .into();
+            let struct_name_str = struct_name.to_string();
+            let template_file = if let Some(stripped) = struct_name_str.strip_suffix("Page") {
+                format!("{}.rs.html", stripped)
+            } else {
+                format!("{}.rs.html", struct_name_str)
+            };
+
+            template_file.to_lowercase()
         }
         Err(err) => {
-            // If parsing the attribute failed, return the error
             return err.to_compile_error().into();
         }
     };
@@ -29,7 +28,6 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
     // TODO: Read and parse the template file content using `template_path`
     // TODO: Generate the `impl std::fmt::Display` block based on the template and struct fields
 
-    // Placeholder implementation: generates an empty Display impl
     let generated_code = quote! {
         impl ::std::fmt::Display for #struct_name {
              fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
@@ -44,9 +42,6 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
 }
 
 fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<Option<String>> {
-    //unimplemented!("Attribute parsing not implemented yet");
-    // Ok("placeholder/template.rs.html".to_string())
-
     for attr in attrs {
         if attr.path().is_ident("rshtml") {
             return match attr.parse_args::<Meta>() {
