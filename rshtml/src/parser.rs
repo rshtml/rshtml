@@ -125,6 +125,15 @@ impl RsHtmlParser {
     }
 }
 
+pub fn start_parser(input: &str, config: Config) -> Result<Node, Error<Rule>> {
+    let mut rshtml_parser = RsHtmlParser {
+        config,
+        included_templates: HashSet::new(),
+    };
+
+    rshtml_parser.parse_template(input)
+}
+
 pub fn run(input: &str, config: Config) -> Result<(Pairs<Rule>, Node), Error<Rule>> {
     let mut rshtml_parser = RsHtmlParser {
         config: config.clone(),
@@ -138,5 +147,5 @@ pub fn run(input: &str, config: Config) -> Result<(Pairs<Rule>, Node), Error<Rul
 }
 
 pub trait IParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, pest::error::Error<Rule>>;
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>>;
 }

@@ -1,6 +1,9 @@
+mod ast_compiler;
+
+use crate::ast_compiler::parse_and_compile_ast;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{DeriveInput, Expr, Lit, Meta, parse_macro_input};
+use syn::{parse_macro_input, DeriveInput, Expr, Lit, Meta};
 
 #[proc_macro_derive(RsHtml, attributes(rshtml))]
 pub fn rshtml_derive(input: TokenStream) -> TokenStream {
@@ -8,7 +11,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
 
     let struct_name = &input.ident;
 
-    let template_path = match parse_template_path_from_attrs(&input.attrs) {
+    let template_name = match parse_template_path_from_attrs(&input.attrs) {
         Ok(Some(path)) => path,
         Ok(None) => {
             let struct_name_str = struct_name.to_string();
@@ -25,15 +28,15 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
         }
     };
 
-    // TODO: Read and parse the template file content using `template_path`
-    // TODO: Generate the `impl std::fmt::Display` block based on the template and struct fields
+    let compiled_ast_tokens = parse_and_compile_ast(&template_name);
+
+    //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
     let generated_code = quote! {
         impl ::std::fmt::Display for #struct_name {
              fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                 // TODO: Implement the actual rendering logic here
-                 // For now, just write the template path for debugging
-                 write!(f, "Template path: {}", #template_path)
+                #compiled_ast_tokens
+                Ok(())
              }
         }
     };

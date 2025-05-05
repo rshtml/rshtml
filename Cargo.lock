@@ -143,7 +143,6 @@ version = "0.1.0"
 dependencies = [
  "pest",
  "pest_derive",
- "rshtml_macro",
 ]
 
 [[package]]
@@ -152,7 +151,16 @@ version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
+ "rshtml",
  "syn",
+]
+
+[[package]]
+name = "rshtml_test"
+version = "0.1.0"
+dependencies = [
+ "rshtml",
+ "rshtml_macro",
 ]
 
 [[package]]

@@ -10,3 +10,4 @@ proc-macro = true
 proc-macro2 = "1.0.95"
 quote = "1.0.26"
 syn = { version = "2.0.27", features = ["full"] }
+rshtml = { path = "../rshtml" }

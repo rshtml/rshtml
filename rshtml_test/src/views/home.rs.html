@@ -17,6 +17,12 @@
   <button @click="decrement">Dec (-)</button>
 }
 
+@if self.title == "Hello" {
+  <p>myvar is true</p>
+} else {
+  <p>myvar is false</p>
+}
+
 <Card prop=@i prop2=false prop3="hey" prop4={<p>what is this</p>}>
   <p>hello</p>
   <p>world</p>
@@ -28,7 +34,7 @@
 
 @include("header.rs.html")
 
-@match cardCount {
+@match self.cardCount {
   0 => i,
   1 => { <div>mer=>,{..@@}haba @hey</div> },
   2 => <p>hel,_..loo</p>,

@@ -16,8 +16,10 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Config {
-            views_base_path: PathBuf::from("src/views"),
-        }
+        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
+        let mut base_path = PathBuf::from(manifest_dir);
+        base_path.push("src");
+        base_path.push("views");
+        Config { views_base_path: base_path }
     }
 }
