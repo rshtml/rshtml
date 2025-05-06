@@ -44,7 +44,7 @@ fn compile_ast(node: &Node) -> TokenStream {
         Node::RenderBody => quote! {},
         Node::Component(name, parameters, body) => quote! {},
         Node::ChildContent => quote! {},
-        Node::Raw(body) => quote! {},
+        Node::Raw(body) => quote! { write!(f, "{}", #body)? },
         Node::UseDirective(name, path) => quote! {},
     }
 }
