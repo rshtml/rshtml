@@ -1,6 +1,6 @@
-mod ast_compiler;
+mod compiler;
 
-use crate::ast_compiler::parse_and_compile_ast;
+use crate::compiler::parse_and_compile_ast;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput, Expr, Lit, Meta};
@@ -30,7 +30,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
 
     let compiled_ast_tokens = parse_and_compile_ast(&template_name);
 
-    dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
+    //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
 
     let generated_code = quote! {

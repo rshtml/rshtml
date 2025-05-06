@@ -167,7 +167,7 @@ pub fn view_node(node: &Node, indent: usize) {
             println!("- ChildContent");
         }
         Node::Raw(s) => println!("- Raw: {:?}", s),
-        Node::UseDirective(component_name, import_path) => {
+        Node::UseDirective(component_name, import_path, component) => {
             println!("- UseDirective:");
             print_indent(indent + 1);
             println!("- ComponentName: {:?}", component_name);

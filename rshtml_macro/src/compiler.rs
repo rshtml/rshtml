@@ -1,0 +1,78 @@
+#![allow(unused_variables, unused_imports)]
+
+mod match_expr;
+mod render_directive;
+mod rust_expr;
+mod rust_expr_simple;
+
+use crate::compiler::match_expr::MatchExprCompiler;
+use crate::compiler::render_directive::RenderDirectiveCompiler;
+use crate::compiler::rust_expr::RustExprCompiler;
+use crate::compiler::rust_expr_simple::RustExprSimpleCompiler;
+use proc_macro2::TokenStream;
+use quote::quote;
+use rshtml::Node;
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::str::FromStr;
+
+pub fn parse_and_compile_ast(template_path: &str) -> TokenStream {
+    let node = rshtml::parse(template_path);
+    let mut x = Compiler::new();
+    let ts = x.compile(&node);
+
+    dbg!("{:?}", x.components);
+
+    ts
+}
+
+struct Compiler {
+    use_directives: Vec<(String, PathBuf)>,
+    components: HashMap<String, Node>,
+}
+
+impl Compiler {
+    fn new() -> Self {
+        Compiler {
+            use_directives: Vec::new(),
+            components: HashMap::new(),
+        }
+    }
+
+    fn compile(&mut self, node: &Node) -> TokenStream {
+        let mut token_stream = TokenStream::new();
+        match node {
+            Node::Template(nodes) => {
+                for node in nodes {
+                    let ts = self.compile(node);
+                    token_stream.extend(quote! {# ts;});
+                }
+                token_stream
+            }
+            Node::Text(text) => quote! { write ! (f, "{}", # text)? },
+            Node::InnerText(inner_text) => quote! { write ! (f, "{}", # inner_text)? },
+            Node::Comment(comment) => quote! {},
+            Node::ExtendsDirective(path) => quote! {},
+            Node::RenderDirective(name) => RenderDirectiveCompiler::compile(&name),
+            Node::RustBlock(contents) => quote! {},
+            Node::RustExprSimple(expr) => RustExprSimpleCompiler::compile(expr),
+            Node::RustExprParen(expr) => quote! {},
+            Node::MatchExpr(name, arms) => MatchExprCompiler::compile(self, name, arms),
+            Node::RustExpr(exprs) => RustExprCompiler::compile(self, exprs),
+            Node::SectionDirective(name, content) => quote! {},
+            Node::SectionBlock(name, content) => quote! {},
+            Node::RenderBody => quote! {},
+            Node::Component(name, parameters, body) => quote! {},
+            Node::ChildContent => quote! {},
+            Node::Raw(body) => quote! { write ! (f, "{}", # body)? },
+            Node::UseDirective(name, path, component) => {
+                let component = component.first().unwrap();
+
+                self.use_directives.push((name.to_string(), path.clone()));
+                self.components.insert(name.to_string(), component.clone());
+                
+                quote! {}
+            }
+        }
+    }
+}
