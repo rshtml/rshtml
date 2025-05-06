@@ -31,7 +31,7 @@ fn compile_ast(node: &Node) -> TokenStream {
         }
         Node::Text(text) => quote! { write!(f, "{}", #text)? },
         Node::InnerText(inner_text) => quote! { write!(f, "{}", #inner_text)? },
-        Node::Comment(comment) => quote! { write!(f, "{}", #comment)? },
+        Node::Comment(comment) => quote! {},
         Node::ExtendsDirective(path) => quote! {},
         Node::RenderDirective(name) => RenderDirectiveCompiler::compile(&name),
         Node::RustBlock(contents) => quote! {},
