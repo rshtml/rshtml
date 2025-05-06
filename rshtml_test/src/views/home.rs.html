@@ -34,9 +34,18 @@
 
 @include("header.rs.html")
 
-@match self.cardCount {
-  0 => i,
-  1 => { <div>mer=>,{..@@}haba @hey</div> },
+@match self.card_count {
+  0 => <div>i</div>,
+  1 => {
+        <div>hell @self.card_count looo</div>
+        <p>hello world</p>
+
+        @if self.card_count > 0 {
+          <p>Count is greater than 0</p>
+        } else {
+          <p>Count is not greater than 0</p>
+        }
+  },
   2 => <p>hel,_..loo</p>,
   _ => <p>aa=>,{..@@}a</p>,
 }

@@ -9,6 +9,8 @@ use rshtml_macro::RsHtml;
 struct HomePage {
     title: String,
     content: String,
+    card_count: usize,
+    my_var: String,
 }
 
 #[cfg(test)]
@@ -47,10 +49,14 @@ mod tests {
         let homepage = HomePage {
             title: "Hello".to_string(),
             content: "World".to_string(),
+            card_count: 1,
+            my_var: "This is my var".to_string(),
         };
 
         let s = homepage.to_string();
 
         print!("{}", s);
     }
+
+    fn r#try() {}
 }
