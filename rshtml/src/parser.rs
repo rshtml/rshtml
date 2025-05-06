@@ -37,7 +37,7 @@ use pest::error::{Error, ErrorVariant};
 use pest::iterators::{Pair, Pairs};
 use pest::{Parser, Position};
 use pest_derive::Parser;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 #[derive(Parser)]

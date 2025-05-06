@@ -50,7 +50,7 @@ impl IParser for UseDirectiveParser {
         let component = parser.read_template(&import_path_str).unwrap();
         let component_node = parser.parse_template(&component)?;
 
-        let use_directive = Ok(Node::UseDirective(component_name.clone(), import_path.to_path_buf(), vec![component_node]));
+        let use_directive = Ok(Node::UseDirective(component_name.clone(), import_path.to_path_buf(), Box::new(component_node)));
 
         use_directive
     }

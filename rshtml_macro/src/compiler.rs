@@ -4,11 +4,13 @@ mod match_expr;
 mod render_directive;
 mod rust_expr;
 mod rust_expr_simple;
+mod use_directive;
 
 use crate::compiler::match_expr::MatchExprCompiler;
 use crate::compiler::render_directive::RenderDirectiveCompiler;
 use crate::compiler::rust_expr::RustExprCompiler;
 use crate::compiler::rust_expr_simple::RustExprSimpleCompiler;
+use crate::compiler::use_directive::UseDirectiveCompiler;
 use proc_macro2::TokenStream;
 use quote::quote;
 use rshtml::Node;
@@ -18,12 +20,7 @@ use std::str::FromStr;
 
 pub fn parse_and_compile_ast(template_path: &str) -> TokenStream {
     let node = rshtml::parse(template_path);
-    let mut x = Compiler::new();
-    let ts = x.compile(&node);
-
-    dbg!("{:?}", x.components);
-
-    ts
+    Compiler::new().compile(&node)
 }
 
 struct Compiler {
@@ -65,14 +62,7 @@ impl Compiler {
             Node::Component(name, parameters, body) => quote! {},
             Node::ChildContent => quote! {},
             Node::Raw(body) => quote! { write ! (f, "{}", # body)? },
-            Node::UseDirective(name, path, component) => {
-                let component = component.first().unwrap();
-
-                self.use_directives.push((name.to_string(), path.clone()));
-                self.components.insert(name.to_string(), component.clone());
-                
-                quote! {}
-            }
+            Node::UseDirective(name, path, component) => UseDirectiveCompiler::compile(self, name, path, component),
         }
     }
 }

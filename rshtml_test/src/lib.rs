@@ -23,7 +23,7 @@ mod tests {
     #[test]
     fn test_template_format() {
         let views = vec!["layout.rs.html", "index.rs.html", "about.rs.html", "home.rs.html"];
-        let view_name = views[1];
+        let view_name = views[3];
         let config = Config::default();
         let template = fs::read_to_string(config.views_base_path.join(view_name)).unwrap();
         let (_pairs, ast) = parser::run(template.as_str(), config).unwrap();
