@@ -11,21 +11,21 @@
 
     @include("header.rs.html")
 
-    @match whatisthis {
+    @match self.users.len() {
         0 => <p>this is zero</p>,
         1 => <p>this is one</p>,
         2 => <p>this is two</p>,
         _ => <p>this is not three</p>,
     }
 
-    @abc@def
+    @self.abc@self.def
 
-    @(abc)
-    @((inner))
+    @(self.abc)
+    @((self.inner))
 
     @(chrono::Utc::now() - chrono::Duration::days(7))
 
-    @iffunc()
+    @self.my_func()
 
     @{
         let x = || {
@@ -34,9 +34,9 @@
             y + 1
         };
 
-        @: this is just text } also text { line @myvarvar @@değil mi?yy
+        @: this is just text } also text { line @x @@değil mi?yy
 
-        myfunc().abc <text>this @@is @myvar @@just <bold>text @MyStruct::<i32>::new(text)?::abc(myfunc("helloo"))</bold>...</text> aaaaa;
+        myfunc().abc <text>this @@is @x @@just <bold>text @MyStruct::<i32>::new(text)?::abc(myfunc("helloo"))</bold>...</text> aaaaa;
 
         println!("Hello,</String>merhaba</div> world! x = {:?}", x());
     }

@@ -8,20 +8,20 @@ rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 // region --- Core Template Rules ---
 
 BOM = _{ "\u{FEFF}" }
-template = { SOI ~ BOM? ~ extends_directive? ~ WHITESPACE* ~ template_content* ~ EOI }
-template_content = _{ (comment_block | block | text) }
-inner_template = { (comment_block | block | inner_text)* }
-tag_template = { (comment_block | block | text)* }
+template = { SOI ~ BOM? ~ extends_directive? ~ WHITESPACE* ~ template_content ~ EOI }
+template_content = ${ (comment_block | block | text)* }
+inner_template = ${ (comment_block | block | inner_text)* }
+tag_template = ${ (comment_block | block | text)* }
 
 // endregion
 
 // region --- Text and Comment Rules ---
-//
+
 text = @{ ("@@}" | "@@{" | "@@" |  (!("@" | ("<" ~ component_tag_identifier) | ("</" ~ component_tag_identifier)) ~ ANY))+ }
 inner_text = @{ ("@@}" | "@@{" | "@@" | (!("@" | "}" | ("<" ~ component_tag_identifier) | ("</" ~ component_tag_identifier)) ~ ANY))+ }
 
 comment_block = { "@*" ~ comment_content ~ "*@" }
-comment_content = @{ ( ("*" ~ !("@")) | (!("*") ~ ANY) )* }
+comment_content = @{ (("*" ~ !("@")) | (!("*") ~ ANY))* }
 
 // endregion
 

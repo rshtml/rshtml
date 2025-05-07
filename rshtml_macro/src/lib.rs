@@ -10,10 +10,10 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let struct_name = &input.ident;
-
+    
     let template_name = match parse_template_path_from_attrs(&input.attrs) {
         Ok(Some(path)) => path,
-        Ok(None) => {
+            Ok(None) => {
             let struct_name_str = struct_name.to_string();
             let template_file = if let Some(stripped) = struct_name_str.strip_suffix("Page") {
                 format!("{}.rs.html", stripped)

@@ -1,29 +1,40 @@
-#![allow(unused_imports)]
+#![allow(unused_imports, dead_code)]
 
 use rshtml::config::Config;
 use rshtml::parser;
 use rshtml_macro::RsHtml;
 
 #[derive(Debug, RsHtml)]
-#[rshtml(path = "home.rs.html")]
+//#[rshtml(path = "header.rs.html")]
 struct HomePage {
     title: String,
     content: String,
     card_count: usize,
     my_var: String,
+    users: Vec<String>,
+    abc: String,
+    def: String,
+    inner: String,
+}
+
+impl HomePage {
+    fn my_func(&self) -> String {
+        format!("{} {}", self.abc, self.def)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::prelude::*;
     use rshtml::parser::{RsHtmlParser, Rule};
     use rshtml::{Node, ast_viewer, viewer};
     use std::fs;
 
     #[test]
     fn test_template_format() {
-        let views = vec!["layout.rs.html", "index.rs.html", "about.rs.html", "home.rs.html"];
-        let view_name = views[3];
+        let views = vec!["layout.rs.html", "index.rs.html", "about.rs.html", "home.rs.html", "header.rs.html"];
+        let view_name = views[4];
         let config = Config::default();
         let template = fs::read_to_string(config.views_base_path.join(view_name)).unwrap();
         let (_pairs, ast) = parser::run(template.as_str(), config).unwrap();
@@ -36,21 +47,21 @@ mod tests {
 
     #[test]
     fn test_template_format_without_parsing() {
-        let template = fs::read_to_string("src/views/home.rs.html").unwrap();
+        let template = fs::read_to_string("src/views/header.rs.html").unwrap();
         rshtml::parse_without_ast(template);
     }
 
     #[test]
     fn test_macro() {
-        //let config = Config::default();
-
-        //println!("{:?}", config);
-
         let homepage = HomePage {
             title: "Hello".to_string(),
             content: "World".to_string(),
             card_count: 1,
             my_var: "This is my var".to_string(),
+            users: vec!["John".to_string(), "Jane".to_string()],
+            abc: "abc".to_string(),
+            def: "def".to_string(),
+            inner: "inner".to_string(),
         };
 
         let s = homepage.to_string();
@@ -67,5 +78,4 @@ mod tests {
         // write!(f, "{:?}", x) ? ; ;
         // write! (f, "{:?}", 3+5) ? ;
     }
-
 }

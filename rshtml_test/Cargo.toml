@@ -8,3 +8,4 @@ build = "build.rs"
 [dependencies]
 rshtml = { path = "../rshtml" }
 rshtml_macro = { path = "../rshtml_macro" }
+chrono = "0.4.41"
