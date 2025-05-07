@@ -131,7 +131,7 @@ text_line_directive = ${ ("@:" ~ (("@" ~ rust_expr_simple) | text_line)*) }
 text_line = @{ ("@@" | !(NEWLINE | ("@" ~ rust_expr_simple)) ~ ANY)+ }
 
 
-text_block_tag = { "<text>" ~ (("@" ~ (rust_expr_simple)) |  text_block)* ~ "</text>" }
+text_block_tag = ${ "<text>" ~ (("@" ~ (rust_expr_simple)) |  text_block)* ~ "</text>" }
 text_block = @{ ("@@" | !("</text>" | ("@" ~ (rust_expr_simple))) ~ ANY)+ }
 
 // endregion
@@ -332,7 +332,6 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: in rust code text, rust expr simple eats spaces, prevent it
 
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
