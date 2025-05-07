@@ -4,6 +4,18 @@
 
 @use "Card.rs.html"
 
+@{
+  let x = 5;
+  let y = 10;
+  println!("{}", x + y);
+  @: this is just a text @x
+
+  <text>this is @y textttt </text>
+}
+
+@(3+5)
+@("Hello, world!")
+
 <Card prop="okayy" prop2/>
 
 @raw {

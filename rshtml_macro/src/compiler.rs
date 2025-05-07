@@ -2,13 +2,17 @@
 
 mod match_expr;
 mod render_directive;
+mod rust_block;
 mod rust_expr;
+mod rust_expr_paren;
 mod rust_expr_simple;
 mod use_directive;
 
 use crate::compiler::match_expr::MatchExprCompiler;
 use crate::compiler::render_directive::RenderDirectiveCompiler;
+use crate::compiler::rust_block::RustBlockCompiler;
 use crate::compiler::rust_expr::RustExprCompiler;
+use crate::compiler::rust_expr_paren::RustExprParenCompiler;
 use crate::compiler::rust_expr_simple::RustExprSimpleCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
 use proc_macro2::TokenStream;
@@ -51,9 +55,9 @@ impl Compiler {
             Node::Comment(comment) => quote! {},
             Node::ExtendsDirective(path) => quote! {},
             Node::RenderDirective(name) => RenderDirectiveCompiler::compile(&name),
-            Node::RustBlock(contents) => quote! {},
+            Node::RustBlock(contents) => RustBlockCompiler::compile(self, contents),
             Node::RustExprSimple(expr) => RustExprSimpleCompiler::compile(expr),
-            Node::RustExprParen(expr) => quote! {},
+            Node::RustExprParen(expr) => RustExprParenCompiler::compile(expr),
             Node::MatchExpr(name, arms) => MatchExprCompiler::compile(self, name, arms),
             Node::RustExpr(exprs) => RustExprCompiler::compile(self, exprs),
             Node::SectionDirective(name, content) => quote! {},
