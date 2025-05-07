@@ -5,7 +5,7 @@ use rshtml::parser;
 use rshtml_macro::RsHtml;
 
 #[derive(Debug, RsHtml)]
-//#[rshtml(path = "header.rs.html")]
+#[rshtml(path = "header.rs.html")]
 struct HomePage {
     title: String,
     content: String,
@@ -33,7 +33,7 @@ mod tests {
 
     #[test]
     fn test_template_format() {
-        let views = vec!["layout.rs.html", "index.rs.html", "about.rs.html", "home.rs.html", "header.rs.html"];
+        let views = vec!["layout.rs.html", "index.rs.html", "about.rs.html", "home.rs.html", "header.rs.html", "bar.rs.html"];
         let view_name = views[4];
         let config = Config::default();
         let template = fs::read_to_string(config.views_base_path.join(view_name)).unwrap();
