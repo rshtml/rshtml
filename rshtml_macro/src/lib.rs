@@ -3,17 +3,20 @@ mod compiler;
 use crate::compiler::parse_and_compile_ast;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Expr, Lit, Meta};
+use rshtml::config::Config;
+use serde::Deserialize;
+use std::path::Path;
+use syn::{DeriveInput, Expr, Lit, Meta, parse_macro_input};
 
 #[proc_macro_derive(RsHtml, attributes(rshtml))]
 pub fn rshtml_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let struct_name = &input.ident;
-    
+
     let template_name = match parse_template_path_from_attrs(&input.attrs) {
         Ok(Some(path)) => path,
-            Ok(None) => {
+        Ok(None) => {
             let struct_name_str = struct_name.to_string();
             let template_file = if let Some(stripped) = struct_name_str.strip_suffix("Page") {
                 format!("{}.rs.html", stripped)
@@ -28,10 +31,10 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
         }
     };
 
-    let compiled_ast_tokens = parse_and_compile_ast(&template_name);
+    let config = get_config_from_toml();
+    let compiled_ast_tokens = parse_and_compile_ast(&template_name, config);
 
     //dbg!("DEBUG: Generated write_calls TokenStream:\n{:#?}", compiled_ast_tokens.to_string());
-
 
     let generated_code = quote! {
         impl ::std::fmt::Display for #struct_name {
@@ -71,4 +74,40 @@ fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<Optio
     }
 
     Ok(None)
+}
+
+fn get_config_from_toml() -> Config {
+    #[derive(Deserialize, Debug, Clone)]
+    pub struct ManifestConfig {
+        pub views_base_path: Option<String>,
+        pub layout: Option<String>,
+    }
+
+    #[derive(Deserialize, Debug)]
+    struct Manifest {
+        rshtml: Option<ManifestConfig>,
+    }
+
+    let mut config = &mut Config::default();
+
+    if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+        let cargo_toml_path = Path::new(&manifest_dir).join("Cargo.toml");
+        if let Ok(content) = std::fs::read_to_string(cargo_toml_path) {
+            match toml::from_str::<Manifest>(&content) {
+                Ok(manifest) => {
+                    if let Some(toml_config) = manifest.rshtml {
+                        if let Some(path_str) = toml_config.views_base_path {
+                            config = config.set_views_base_path(path_str);
+                        }
+                        if let Some(layout_str) = toml_config.layout {
+                            config.set_layout(layout_str);
+                        }
+                    }
+                }
+                Err(_) => {}
+            }
+        }
+    }
+
+    config.clone()
 }

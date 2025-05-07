@@ -4,13 +4,14 @@ pub mod node;
 pub mod parser;
 pub mod viewer;
 
+use crate::config::Config;
 use crate::parser::{RsHtmlParser, Rule};
 pub use node::Node;
-use std::path::PathBuf;
 use pest::Parser;
+use std::path::PathBuf;
 
-pub fn parse(path: &str) -> Node {
-    let config = config::Config::default();
+pub fn parse(path: &str, config: Config) -> Node {
+    //let config = config::Config::default();
     let mut base_path = PathBuf::from(&config.views_base_path);
     base_path.push(path);
 

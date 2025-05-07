@@ -18,12 +18,13 @@ use crate::compiler::use_directive::UseDirectiveCompiler;
 use proc_macro2::TokenStream;
 use quote::quote;
 use rshtml::Node;
+use rshtml::config::Config;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-pub fn parse_and_compile_ast(template_path: &str) -> TokenStream {
-    let node = rshtml::parse(template_path);
+pub fn parse_and_compile_ast(template_path: &str, config: Config) -> TokenStream {
+    let node = rshtml::parse(template_path, config);
     Compiler::new().compile(&node)
 }
 
