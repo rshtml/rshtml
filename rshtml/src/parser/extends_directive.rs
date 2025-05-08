@@ -7,7 +7,7 @@ use std::path::PathBuf;
 pub struct ExtendsDirectiveParser;
 
 impl IParser for ExtendsDirectiveParser {
-    fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
         let span = pair.as_span();
 
         let path_pair = pair
@@ -16,6 +16,9 @@ impl IParser for ExtendsDirectiveParser {
             .ok_or(Error::new_from_span(ErrorVariant::CustomError { message: "No path found".into() }, span))?;
         let path_str = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
 
-        Ok(Node::ExtendsDirective(PathBuf::from(path_str)))
+        let layout = parser.read_template(&path_str).unwrap();
+        let layout_node = parser.parse_template(&layout)?;
+
+        Ok(Node::ExtendsDirective(PathBuf::from(path_str), Box::new(layout_node)))
     }
 }

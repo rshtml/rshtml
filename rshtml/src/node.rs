@@ -49,10 +49,10 @@ pub enum Node {
     InnerText(String),   // text inside a block (@@ -> @, @{ -> {, @} -> })
     Comment(String),     // comment content
     //IncludeDirective(PathBuf),         // include directive @include("other_view.html")
-    ExtendsDirective(PathBuf),        // extends directive @extends("layout.html")
-    RenderDirective(String),          // yield directive @yield("content")
-    RustBlock(Vec<RustBlockContent>), // @{ ... } block content (with trim)
-    RustExprSimple(String),           // @expr ... (simple expression)
+    ExtendsDirective(PathBuf, Box<Node>), // extends directive @extends("layout.html")
+    RenderDirective(String),              // yield directive @yield("content")
+    RustBlock(Vec<RustBlockContent>),     // @{ ... } block content (with trim)
+    RustExprSimple(String),               // @expr ... (simple expression)
     RustExprParen(String),
     MatchExpr(String, Vec<(String, Vec<Node>)>),       // @match expr { ... => ... }
     RustExpr(Vec<(String, Vec<Node>)>),                // @if ...  { ... } else { ... } / @for ... { ... }

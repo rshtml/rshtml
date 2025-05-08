@@ -68,7 +68,7 @@ pub fn view_node(node: &Node, indent: usize) {
         // Node::IncludeDirective(path) => {
         //     println!("- IncludeDirective: {:?}", path);
         // }
-        Node::ExtendsDirective(path) => {
+        Node::ExtendsDirective(path, _) => {
             println!("- ExtendsDirective: {:?}", path);
         }
         Node::RenderDirective(path) => {

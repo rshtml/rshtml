@@ -7,6 +7,7 @@ use regex::Regex;
 pub struct TextParser;
 
 impl TextParser {
+    // Maybe delete this function for <pre> tag or something
     pub fn remove_extra_newlines(text: &str) -> String {
         let text = text.replace("\r\n", "\n");
         let re = Regex::new(r"\n{3,}").unwrap();
