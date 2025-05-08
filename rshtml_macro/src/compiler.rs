@@ -47,12 +47,12 @@ impl Compiler {
             Node::Template(nodes) => {
                 for node in nodes {
                     let ts = self.compile(node);
-                    token_stream.extend(quote! {# ts;});
+                    token_stream.extend(quote! {#ts;});
                 }
                 token_stream
             }
-            Node::Text(text) => quote! { write ! (f, "{}", # text)? },
-            Node::InnerText(inner_text) => quote! { write ! (f, "{}", # inner_text)? },
+            Node::Text(text) => quote! { write!(f, "{}", #text)? },
+            Node::InnerText(inner_text) => quote! { write!(f, "{}", #inner_text)? },
             Node::Comment(comment) => quote! {},
             Node::ExtendsDirective(path) => quote! {},
             Node::RenderDirective(name) => RenderDirectiveCompiler::compile(&name),
@@ -66,7 +66,7 @@ impl Compiler {
             Node::RenderBody => quote! {},
             Node::Component(name, parameters, body) => quote! {},
             Node::ChildContent => quote! {},
-            Node::Raw(body) => quote! { write ! (f, "{}", # body)? },
+            Node::Raw(body) => quote! { write!(f, "{}", #body)? },
             Node::UseDirective(name, path, component) => UseDirectiveCompiler::compile(self, name, path, component),
         }
     }

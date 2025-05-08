@@ -68,14 +68,5 @@ mod tests {
 
         print!("{}", s);
     }
-
-    #[test]
-    fn tryx() {
-        // write! (f, "{}", "<h1>Hey</h1>\\r\\n\\r\\n") ? ; ; ;
-        // let x = 5; let y = 10;
-        // println! ("{}", x + y); ;
-        // write! (f, "{}", " this is just a text ") ? ;
-        // write!(f, "{:?}", x) ? ; ;
-        // write! (f, "{:?}", 3+5) ? ;
-    }
+    
 }
