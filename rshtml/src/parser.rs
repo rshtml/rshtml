@@ -52,10 +52,6 @@ impl RsHtmlParser {
         let mut nodes = Vec::new();
         for pair in pairs {
             match pair.as_rule() {
-                Rule::template_content => {
-                    let inner_nodes = self.build_nodes_from_pairs(pair.into_inner())?;
-                    nodes.extend(inner_nodes);
-                }
                 Rule::extends_directive | Rule::comment_block | Rule::block | Rule::text | Rule::inner_text => {
                     nodes.push(self.build_ast_node(pair)?);
                 }
