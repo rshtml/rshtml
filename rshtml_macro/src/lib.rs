@@ -34,7 +34,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
     let config = get_config_from_toml();
     let compiled_ast_tokens = parse_and_compile_ast(&template_name, config);
 
-    //dbg!("DEBUG: Generated write_calls TokenStream:\n{:#?}", compiled_ast_tokens.to_string());
+    //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
     let generated_code = quote! {
         impl ::std::fmt::Display for #struct_name {

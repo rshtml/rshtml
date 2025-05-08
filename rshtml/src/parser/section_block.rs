@@ -15,7 +15,15 @@ impl IParser for SectionBlockParser {
             pair.as_span(),
         ))?;
 
-        let section_head = section_head_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
+        let section_name_pair = section_head_pair.into_inner().find(|p| p.as_rule() == Rule::rust_identifier).ok_or(Error::new_from_span(
+            ErrorVariant::ParsingError {
+                positives: vec![Rule::rust_identifier],
+                negatives: vec![],
+            },
+            pair.as_span(),
+        ))?;
+
+        let section_head = section_name_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
 
         let inner_pairs = pair.into_inner().find(|x| x.as_rule() == Rule::inner_template).unwrap();
 

@@ -1,11 +1,13 @@
 #![allow(unused_imports, dead_code)]
 
+mod impl_display_test;
+
 use rshtml::config::Config;
 use rshtml::parser;
 use rshtml_macro::RsHtml;
 
 #[derive(Debug, RsHtml)]
-#[rshtml(path = "header.rs.html")]
+#[rshtml(path = "about.rs.html")]
 struct HomePage {
     title: String,
     content: String,
@@ -15,11 +17,17 @@ struct HomePage {
     abc: String,
     def: String,
     inner: String,
+    hey: String,
+    is_ok: bool,
 }
 
 impl HomePage {
     fn my_func(&self) -> String {
         format!("{} {}", self.abc, self.def)
+    }
+
+    fn get_header(&self, title: &str) -> String {
+        format!("Header: {}", title)
     }
 }
 
@@ -47,7 +55,7 @@ mod tests {
 
     #[test]
     fn test_template_format_without_parsing() {
-        let template = fs::read_to_string("src/views/header.rs.html").unwrap();
+        let template = fs::read_to_string("src/views/about.rs.html").unwrap();
         rshtml::parse_without_ast(template);
     }
 
@@ -62,11 +70,12 @@ mod tests {
             abc: "abc".to_string(),
             def: "def".to_string(),
             inner: "inner".to_string(),
+            hey: "hey".to_string(),
+            is_ok: true,
         };
 
         let s = homepage.to_string();
 
         print!("{}", s);
     }
-    
 }

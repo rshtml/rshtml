@@ -14,7 +14,7 @@ impl SectionBlockCompiler {
             token_stream.extend(quote! {#ts;});
         }
 
-        compiler.sections.insert(name.clone(), token_stream.clone());
+        compiler.sections.insert(name.clone(), token_stream);
 
         quote! {}
     }

@@ -2,6 +2,7 @@
 
 mod extends_directive;
 mod match_expr;
+mod render_body;
 mod render_directive;
 mod rust_block;
 mod rust_expr;
@@ -13,6 +14,7 @@ mod use_directive;
 
 use crate::compiler::extends_directive::ExtendsDirectiveCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
+use crate::compiler::render_body::RenderBodyCompiler;
 use crate::compiler::render_directive::RenderDirectiveCompiler;
 use crate::compiler::rust_block::RustBlockCompiler;
 use crate::compiler::rust_expr::RustExprCompiler;
@@ -31,7 +33,17 @@ use std::str::FromStr;
 
 pub fn parse_and_compile_ast(template_path: &str, config: Config) -> TokenStream {
     let node = rshtml::parse(template_path, config);
-    Compiler::new().compile(&node)
+    let mut compiler = Compiler::new();
+    let ts = compiler.compile(&node);
+
+    if let Some(layout) = compiler.layout.clone() {
+        compiler.section_body = Some(ts.clone());
+        let layout_ts = compiler.compile(&layout);
+
+        return layout_ts;
+    }
+
+    ts
 }
 
 struct Compiler {
@@ -40,6 +52,7 @@ struct Compiler {
     layout_directive: PathBuf,
     layout: Option<Node>,
     sections: HashMap<String, TokenStream>,
+    section_body: Option<TokenStream>,
 }
 
 impl Compiler {
@@ -50,6 +63,7 @@ impl Compiler {
             layout_directive: PathBuf::new(),
             layout: None,
             sections: HashMap::new(),
+            section_body: None,
         }
     }
 
@@ -67,7 +81,7 @@ impl Compiler {
             Node::InnerText(inner_text) => quote! { write!(f, "{}", #inner_text)? },
             Node::Comment(comment) => quote! {},
             Node::ExtendsDirective(path, layout) => ExtendsDirectiveCompiler::compile(self, path, layout),
-            Node::RenderDirective(name) => RenderDirectiveCompiler::compile(&name),
+            Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, &name),
             Node::RustBlock(contents) => RustBlockCompiler::compile(self, contents),
             Node::RustExprSimple(expr) => RustExprSimpleCompiler::compile(expr),
             Node::RustExprParen(expr) => RustExprParenCompiler::compile(expr),
@@ -75,7 +89,7 @@ impl Compiler {
             Node::RustExpr(exprs) => RustExprCompiler::compile(self, exprs),
             Node::SectionDirective(name, content) => SectionDirectiveCompiler::compile(self, name, content),
             Node::SectionBlock(name, content) => SectionBlockCompiler::compile(self, name, content),
-            Node::RenderBody => quote! {},
+            Node::RenderBody => RenderBodyCompiler::compile(self),
             Node::Component(name, parameters, body) => quote! {},
             Node::ChildContent => quote! {},
             Node::Raw(body) => quote! { write!(f, "{}", #body)? },

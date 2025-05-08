@@ -210,7 +210,7 @@ extends_directive = {
 // region @section directive and block @section('section_name'), @section content { ... }
 
 section_block = { &(section_head ~ WHITESPACE* ~ "{") ~ section_head ~ WHITESPACE* ~ "{" ~ inner_template ~ "}" }
-section_head = @{ "section" ~ WHITESPACE+ ~ rust_identifier }
+section_head = ${ "section" ~ WHITESPACE+ ~ rust_identifier }
 
 // one line section
 section_directive = {

@@ -1,6 +1,6 @@
-﻿@extends('layout.html')
+﻿@extends('layout.rs.html')
 
-@section('header', my_func("hello"))
+@section('header', self.get_header("hello"))
 
 @section('title','About Page')
 
@@ -8,10 +8,10 @@ what is going on
 
 @section footer {
     <p>Footer content goes here.</p>
-    what is going on dude @hey
+    what is going on dude @self.hey
     <p>Footer content goes here.</p>
 
-    @if myvar {
+    @if self.my_var == "my var" {
         <p>MyVar is true</p>
     } else {
         <p>MyVar is false</p>
@@ -20,17 +20,7 @@ what is going on
 
 <h1>About Page</h1>
 
-@{
-    let myVar: 'static &str = "true";
-    let myVar2 = false;
-    let items = vec![1, 2, 3, 4, 5];
-
-    if myVar {
-        println!("{}, {:?}", '}', "{");
-    }
-}
-
-@if myVar {
+@if self.is_ok {
     <p>We hope you find what you're looking for.</p>
 }
 

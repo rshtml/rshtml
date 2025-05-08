@@ -6,7 +6,10 @@
     @* this comment is in layout *@
 </head>
 <body>
-@if isOk {
+
+@render("header")
+
+@if self.is_ok {
     @render_body
 } else {
     <h1>Something went wrong</h1>
@@ -18,6 +21,8 @@
 @for i in 0..10 {
     <p>Item @i</p>
 }
+
+@render("footer")
 
 </body>
 </html>
