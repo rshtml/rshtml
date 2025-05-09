@@ -27,7 +27,10 @@ impl IParser for UseDirectiveParser {
             .filter(|name| name.ends_with(".rs.html"))
             .ok_or(Error::new_from_span(
                 ErrorVariant::CustomError {
-                    message: format!("Failed to derive component name from import path extension: '{:#?}'. Expected format like 'name.rs.html'.", import_path),
+                    message: format!(
+                        "Failed to derive component name from import path extension: '{:#?}'. Expected format like 'name.rs.html'.",
+                        import_path
+                    ),
                 },
                 pair_span,
             ))?;
@@ -47,7 +50,9 @@ impl IParser for UseDirectiveParser {
                 ))?,
         };
 
-        let component = parser.read_template(&import_path_str).unwrap();
+        let component = parser
+            .read_template(&import_path_str)
+            .or_else(|err| Err(Error::new_from_span(ErrorVariant::CustomError { message: err }, pair_span)))?;
         let component_node = parser.parse_template(&component)?;
 
         let use_directive = Ok(Node::UseDirective(component_name.clone(), import_path.to_path_buf(), Box::new(component_node)));

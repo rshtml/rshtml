@@ -31,6 +31,8 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+// TODO: Manage from_str errors
+
 pub fn parse_and_compile_ast(template_path: &str, config: Config) -> TokenStream {
     let node = rshtml::parse(template_path, config);
     let mut compiler = Compiler::new();

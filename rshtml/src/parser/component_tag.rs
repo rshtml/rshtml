@@ -11,19 +11,30 @@ impl IParser for ComponentTagParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
         let pair_span = pair.as_span();
         let mut inner_pairs = pair.into_inner();
-        let component_name = inner_pairs.find(|p| p.as_rule() == Rule::component_tag_name).unwrap().as_str().to_string();
+        let component_name_pair = inner_pairs.find(|p| p.as_rule() == Rule::component_tag_name).ok_or(Error::new_from_span(
+            ErrorVariant::ParsingError {
+                positives: vec![Rule::component_tag_name],
+                negatives: vec![],
+            },
+            pair_span,
+        ))?;
+        let component_name = component_name_pair.as_str().to_string();
 
         let component_parameter_pairs = inner_pairs.clone().filter(|p| p.as_rule() == Rule::attribute);
 
         let mut component_parameters = Vec::new();
         for pair in component_parameter_pairs {
-            let pair_name = pair.clone().into_inner().find(|p| p.as_rule() == Rule::attribute_name).ok_or(Error::new_from_span(
-                ErrorVariant::ParsingError {
-                    positives: vec![Rule::attribute_name],
-                    negatives: vec![],
-                },
-                pair_span,
-            ))?;
+            let pair_name = pair
+                .clone()
+                .into_inner()
+                .find(|p| p.as_rule() == Rule::attribute_name)
+                .ok_or(Error::new_from_span(
+                    ErrorVariant::ParsingError {
+                        positives: vec![Rule::attribute_name],
+                        negatives: vec![],
+                    },
+                    pair_span,
+                ))?;
 
             let value = match pair.clone().into_inner().find(|p| p.as_rule() != Rule::attribute_name) {
                 Some(pair_value) => ComponentParser::build_component_parameter_value(parser, pair_value)?,
