@@ -1,5 +1,6 @@
 #![allow(unused_variables, unused_imports)]
 
+mod component;
 mod extends_directive;
 mod match_expr;
 mod render_body;
@@ -12,6 +13,7 @@ mod section_block;
 mod section_directive;
 mod use_directive;
 
+use crate::compiler::component::ComponentCompiler;
 use crate::compiler::extends_directive::ExtendsDirectiveCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
 use crate::compiler::render_body::RenderBodyCompiler;
@@ -30,7 +32,6 @@ use rshtml::config::Config;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::FromStr;
-
 // TODO: Manage from_str errors
 
 pub fn parse_and_compile_ast(template_path: &str, config: Config) -> TokenStream {
@@ -92,8 +93,8 @@ impl Compiler {
             Node::SectionDirective(name, content) => SectionDirectiveCompiler::compile(self, name, content),
             Node::SectionBlock(name, content) => SectionBlockCompiler::compile(self, name, content),
             Node::RenderBody => RenderBodyCompiler::compile(self),
-            Node::Component(name, parameters, body) => quote! {},
-            Node::ChildContent => quote! {},
+            Node::Component(name, parameters, body) => ComponentCompiler::compile(self, name, parameters, body),
+            Node::ChildContent => quote! {child_content(f)?;},
             Node::Raw(body) => quote! { write!(f, "{}", #body)? },
             Node::UseDirective(name, path, component) => UseDirectiveCompiler::compile(self, name, path, component),
         }
