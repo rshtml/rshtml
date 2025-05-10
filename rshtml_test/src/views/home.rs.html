@@ -1,8 +1,6 @@
-﻿<h1>Hey</h1>
-
+﻿
 @use "Card.rs.html" as Card
-
-@use "Card.rs.html"
+@use "Card2.rs.html"
 
 @{
   let x = 5;
@@ -16,7 +14,7 @@
 @(3+5)
 @("Hello, world!")
 
-<Card prop="okayy" prop2/>
+<Card title="okayy" footer/>
 
 @raw {
   @if (x > 5) { print("@}"); } ... @}
@@ -35,7 +33,7 @@
   <p>myvar is false</p>
 }
 
-<Card prop=@i prop2=false prop3="hey" prop4={<p>what is this</p>}>
+<Card title=@x footer=false prop3="hey" prop4={<p>what is this</p>}>
   <p>hello</p>
   <p>world</p>
   @if true {
@@ -49,14 +47,14 @@
 @match self.card_count {
   0 => <div>i</div>,
   1 => {
-        <div>hell @self.card_count looo</div>
-        <p>hello world</p>
+    <div>hell @self.card_count looo</div>
+    <p>hello world</p>
 
-        @if self.card_count > 0 {
-          <p>Count is greater than 0</p>
-        } else {
-          <p>Count is not greater than 0</p>
-        }
+    @if self.card_count > 0 {
+      <p>Count is greater than 0</p>
+    } else {
+      <p>Count is not greater than 0</p>
+    }
   },
   2 => <p>hel,_..loo</p>,
   _ => <p>aa=>,{..@@}a</p>,
@@ -67,13 +65,13 @@
   <p>Welcome to the home page.</p>
   <hr>
 
-  @Card(){}
+  @Card2(card2: "card 2"){}
 
   @Card(title: "Card Title", footer: "Card Footer"){}
 
   <!-- {<p>Card Footer</p>} -->
 
-  @Card(title: "Card Title", footer: {<p>Footer content</p>}, isok:true, c:'c', d: @myVar, e: @(5i32)) {
+  @Card(title: "Card Title", footer: {<p>Footer content</p>}, isok:true, c:'c', d: @self.my_var.as_str(), e: @(5i32)) {
       <p>This is the content of the card.</p>
   }
 

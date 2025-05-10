@@ -7,7 +7,7 @@ use rshtml::parser;
 use rshtml_macro::RsHtml;
 
 #[derive(Debug, RsHtml)]
-#[rshtml(path = "cards.rs.html")]
+//#[rshtml(path = "cards.rs.html")]
 struct HomePage {
     title: String,
     content: String,

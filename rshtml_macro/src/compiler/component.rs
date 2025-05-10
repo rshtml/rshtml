@@ -22,16 +22,19 @@ impl ComponentCompiler {
                 ComponentParameterValue::Number(value) => quote! {let #name_ts = #value;},
                 ComponentParameterValue::String(value) => quote! {let #name_ts = #value;},
                 ComponentParameterValue::RustExprParen(value) => {
-                    let expr_ts = compiler.compile(&Node::RustExprParen(value.clone()));
-                    quote! {let #name = #expr_ts;}
+                    let expr_ts = TokenStream::from_str(value).unwrap();
+                    quote! {let #name_ts = #expr_ts;}
                 }
                 ComponentParameterValue::RustExprSimple(value) => {
-                    let expr_ts = compiler.compile(&Node::RustExprSimple(value.clone()));
-                    quote! {let #name = #expr_ts;}
+                    let expr_ts = TokenStream::from_str(value).unwrap();
+                    quote! {let #name_ts = #expr_ts;}
                 }
                 ComponentParameterValue::Block(value) => {
                     let block_ts = compiler.compile(&Node::Template(value.clone()));
-                    quote! {let #name = {#block_ts};}
+                    quote! {
+                        let mut #name_ts = String::new();
+                        (|f: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#block_ts Ok(())})(&mut #name_ts)?;
+                    }
                 }
             };
 
@@ -47,6 +50,6 @@ impl ComponentCompiler {
 
         token_stream.extend(component_ts);
 
-        token_stream
+        quote! {{ #token_stream }}
     }
 }
