@@ -7,13 +7,14 @@ pub mod viewer;
 
 use crate::config::Config;
 use crate::parser::{RsHtmlParser, Rule};
+use eyre::{Result, eyre};
 pub use node::Node;
 use pest::Parser;
 use proc_macro2::TokenStream;
 use std::path::PathBuf;
 
-pub fn parse_and_compile(template_path: &str, config: Config) -> TokenStream {
-    let node = parse(template_path, config);
+pub fn parse_and_compile(template_path: &str, config: Config) -> Result<TokenStream> {
+    let node = parse(template_path, config)?;
     let mut compiler = compiler::Compiler::new();
     let ts = compiler.compile(&node);
 
@@ -21,19 +22,19 @@ pub fn parse_and_compile(template_path: &str, config: Config) -> TokenStream {
         compiler.section_body = Some(ts.clone());
         let layout_ts = compiler.compile(&layout);
 
-        return layout_ts;
+        return Ok(layout_ts);
     }
 
-    ts
+    Ok(ts)
 }
 
-pub fn parse(path: &str, config: Config) -> Node {
+pub fn parse(path: &str, config: Config) -> Result<Node> {
     let mut base_path = PathBuf::from(&config.views_base_path);
     base_path.push(path);
 
-    let template = std::fs::read_to_string(base_path).unwrap_or_else(|err| panic!("Error reading template: {:?}, path: {}", err, path));
+    let template = std::fs::read_to_string(base_path).map_err(|err| eyre!("Error reading template: {:?}, path: {}", err, path))?;
 
-    parser::start_parser(&template, config).unwrap_or_else(|err| panic!("Error parsing template: {:?}", err))
+    parser::start_parser(&template, config).map_err(|err| eyre!("Error parsing template: {:?}", err))
 }
 
 pub fn parse_without_ast(template: String) {

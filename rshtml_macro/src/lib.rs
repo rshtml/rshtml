@@ -28,7 +28,10 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
     };
 
     let config = Config::load_from_toml_or_default();
-    let compiled_ast_tokens = parse_and_compile(&template_name, config);
+    let compiled_ast_tokens = parse_and_compile(&template_name, config).unwrap_or_else(|report| {
+        dbg!("DEBUG: Error:\n{}", report.to_string());
+        proc_macro2::TokenStream::new()
+    });
 
     //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
