@@ -1,7 +1,5 @@
 #![allow(unused_imports, dead_code)]
 
-mod impl_display_test;
-
 use rshtml::config::Config;
 use rshtml::parser;
 use rshtml_macro::RsHtml;
