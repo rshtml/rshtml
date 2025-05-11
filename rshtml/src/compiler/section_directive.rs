@@ -3,7 +3,6 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use crate::Node;
 use crate::node::SectionDirectiveContent;
-use std::str::FromStr;
 
 pub struct SectionDirectiveCompiler;
 

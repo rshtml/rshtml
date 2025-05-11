@@ -1,6 +1,5 @@
 use crate::compiler::Compiler;
 use proc_macro2::TokenStream;
-use quote::quote;
 
 pub struct RenderDirectiveCompiler;
 

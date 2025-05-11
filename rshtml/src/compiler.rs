@@ -24,14 +24,11 @@ use crate::compiler::rust_expr_simple::RustExprSimpleCompiler;
 use crate::compiler::section_block::SectionBlockCompiler;
 use crate::compiler::section_directive::SectionDirectiveCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
-use crate::config::Config;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::str::FromStr;
 
-// TODO: in rust block, process the texts @: and <text></text>
 // TODO: Manage from_str errors
 
 pub struct Compiler {
@@ -67,7 +64,7 @@ impl Compiler {
             }
             Node::Text(text) => quote! { write!(f, "{}", #text)? },
             Node::InnerText(inner_text) => quote! { write!(f, "{}", #inner_text)? },
-            Node::Comment(comment) => quote! {},
+            Node::Comment(_) => quote! {},
             Node::ExtendsDirective(path, layout) => ExtendsDirectiveCompiler::compile(self, path, layout),
             Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, &name),
             Node::RustBlock(contents) => RustBlockCompiler::compile(self, contents),

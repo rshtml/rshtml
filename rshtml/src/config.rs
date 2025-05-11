@@ -30,6 +30,56 @@ impl Config {
 
         self
     }
+
+    pub fn load_from_toml_or_default() -> Self {
+        #[derive(Deserialize, Debug, Clone)]
+        pub struct MetadataConfig {
+            pub views_base_path: Option<String>,
+            pub layout: Option<String>,
+        }
+
+        #[derive(Deserialize, Debug)]
+        struct Metadata {
+            rshtml: Option<MetadataConfig>,
+        }
+
+        #[derive(Deserialize, Debug)]
+        struct Package {
+            metadata: Option<Metadata>,
+        }
+
+        #[derive(Deserialize, Debug)]
+        struct Manifest {
+            package: Option<Package>,
+        }
+
+        let mut config = Self::default();
+
+        if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+            let cargo_toml_path = Path::new(&manifest_dir).join("Cargo.toml");
+            if let Ok(content) = std::fs::read_to_string(cargo_toml_path) {
+                match toml::from_str::<Manifest>(&content) {
+                    Ok(manifest) => {
+                        if let Some(pkg) = manifest.package {
+                            if let Some(metadata) = pkg.metadata {
+                                if let Some(toml_config) = metadata.rshtml {
+                                    if let Some(path_str) = toml_config.views_base_path {
+                                        config.set_views_base_path(path_str);
+                                    }
+                                    if let Some(layout_str) = toml_config.layout {
+                                        config.set_layout(layout_str);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+        }
+
+        config
+    }
 }
 
 impl Default for Config {

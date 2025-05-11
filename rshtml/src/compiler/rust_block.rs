@@ -1,8 +1,8 @@
+use crate::Node;
 use crate::compiler::Compiler;
+use crate::node::{RustBlockContent, TextBlockItem, TextLineItem};
 use proc_macro2::TokenStream;
 use quote::quote;
-use crate::Node;
-use crate::node::RustBlockContent;
 use std::str::FromStr;
 
 pub struct RustBlockCompiler;
@@ -20,10 +20,10 @@ impl RustBlockCompiler {
                 RustBlockContent::TextLine(items) => {
                     for item in items {
                         match item {
-                            crate::node::TextLineItem::Text(text) => {
+                            TextLineItem::Text(text) => {
                                 token_stream.extend(quote! { write!(f, "{}", #text)?; });
                             }
-                            crate::node::TextLineItem::RustExprSimple(expr) => {
+                            TextLineItem::RustExprSimple(expr) => {
                                 let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone()));
                                 token_stream.extend(quote! {#rxs_ts;});
                             }
@@ -33,10 +33,10 @@ impl RustBlockCompiler {
                 RustBlockContent::TextBlock(items) => {
                     for item in items {
                         match item {
-                            crate::node::TextBlockItem::Text(text) => {
+                            TextBlockItem::Text(text) => {
                                 token_stream.extend(quote! { write!(f, "{}", #text)?; });
                             }
-                            crate::node::TextBlockItem::RustExprSimple(expr) => {
+                            TextBlockItem::RustExprSimple(expr) => {
                                 let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone()));
                                 token_stream.extend(quote! {#rxs_ts;});
                             }
