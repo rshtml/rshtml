@@ -1,8 +1,8 @@
 use crate::compiler::Compiler;
 use proc_macro2::TokenStream;
 use quote::quote;
-use rshtml::Node;
-use rshtml::node::{ComponentParameter, ComponentParameterValue};
+use crate::Node;
+use crate::node::{ComponentParameter, ComponentParameterValue};
 use std::str::FromStr;
 
 pub struct ComponentCompiler;

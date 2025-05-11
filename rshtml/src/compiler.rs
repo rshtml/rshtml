@@ -1,5 +1,3 @@
-#![allow(unused_variables, unused_imports)]
-
 mod component;
 mod extends_directive;
 mod match_expr;
@@ -13,6 +11,7 @@ mod section_block;
 mod section_directive;
 mod use_directive;
 
+use crate::Node;
 use crate::compiler::component::ComponentCompiler;
 use crate::compiler::extends_directive::ExtendsDirectiveCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
@@ -25,41 +24,27 @@ use crate::compiler::rust_expr_simple::RustExprSimpleCompiler;
 use crate::compiler::section_block::SectionBlockCompiler;
 use crate::compiler::section_directive::SectionDirectiveCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
+use crate::config::Config;
 use proc_macro2::TokenStream;
 use quote::quote;
-use rshtml::Node;
-use rshtml::config::Config;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::FromStr;
+
+// TODO: in rust block, process the texts @: and <text></text>
 // TODO: Manage from_str errors
 
-pub fn parse_and_compile_ast(template_path: &str, config: Config) -> TokenStream {
-    let node = rshtml::parse(template_path, config);
-    let mut compiler = Compiler::new();
-    let ts = compiler.compile(&node);
-
-    if let Some(layout) = compiler.layout.clone() {
-        compiler.section_body = Some(ts.clone());
-        let layout_ts = compiler.compile(&layout);
-
-        return layout_ts;
-    }
-
-    ts
-}
-
-struct Compiler {
+pub struct Compiler {
     use_directives: Vec<(String, PathBuf)>,
     components: HashMap<String, Node>,
     layout_directive: PathBuf,
-    layout: Option<Node>,
+    pub layout: Option<Node>,
     sections: HashMap<String, TokenStream>,
-    section_body: Option<TokenStream>,
+    pub section_body: Option<TokenStream>,
 }
 
 impl Compiler {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Compiler {
             use_directives: Vec::new(),
             components: HashMap::new(),
@@ -70,7 +55,7 @@ impl Compiler {
         }
     }
 
-    fn compile(&mut self, node: &Node) -> TokenStream {
+    pub fn compile(&mut self, node: &Node) -> TokenStream {
         let mut token_stream = TokenStream::new();
         match node {
             Node::Template(nodes) => {

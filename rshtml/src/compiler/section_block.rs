@@ -1,7 +1,7 @@
 use crate::compiler::Compiler;
 use proc_macro2::TokenStream;
 use quote::quote;
-use rshtml::Node;
+use crate::Node;
 
 pub struct SectionBlockCompiler;
 

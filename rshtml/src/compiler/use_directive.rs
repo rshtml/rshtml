@@ -1,7 +1,7 @@
 use crate::compiler::Compiler;
 use proc_macro2::TokenStream;
 use quote::quote;
-use rshtml::Node;
+use crate::Node;
 use std::path::PathBuf;
 
 pub struct UseDirectiveCompiler;

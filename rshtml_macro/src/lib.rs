@@ -1,9 +1,7 @@
-mod compiler;
-
-use crate::compiler::parse_and_compile_ast;
 use proc_macro::TokenStream;
 use quote::quote;
 use rshtml::config::Config;
+use rshtml::parse_and_compile_ast;
 use serde::Deserialize;
 use std::path::Path;
 use syn::{DeriveInput, Expr, Lit, Meta, parse_macro_input};
@@ -62,7 +60,10 @@ fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<Optio
                             }
                         }
 
-                        Err(syn::Error::new_spanned(name_value.value, "Expected a string literal for the `path` argument, e.g., path = \"...\""))
+                        Err(syn::Error::new_spanned(
+                            name_value.value,
+                            "Expected a string literal for the `path` argument, e.g., path = \"...\"",
+                        ))
                     } else {
                         Err(syn::Error::new_spanned(name_value.path, "Expected argument name `path`, e.g., path = \"...\""))
                     }

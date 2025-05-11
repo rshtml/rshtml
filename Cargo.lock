@@ -308,6 +308,8 @@ version = "0.1.0"
 dependencies = [
  "pest",
  "pest_derive",
+ "proc-macro2",
+ "quote",
  "regex",
  "serde",
 ]

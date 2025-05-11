@@ -1,8 +1,8 @@
 use crate::compiler::Compiler;
 use proc_macro2::TokenStream;
 use quote::quote;
-use rshtml::Node;
-use rshtml::node::SectionDirectiveContent;
+use crate::Node;
+use crate::node::SectionDirectiveContent;
 use std::str::FromStr;
 
 pub struct SectionDirectiveCompiler;
