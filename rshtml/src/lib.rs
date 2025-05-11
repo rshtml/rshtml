@@ -10,8 +10,46 @@ use crate::parser::{RsHtmlParser, Rule};
 use eyre::{Result, eyre};
 pub use node::Node;
 use pest::Parser;
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, TokenStream};
+use quote::{quote, quote_spanned};
 use std::path::PathBuf;
+
+pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStream {
+    let config = Config::load_from_toml_or_default();
+    let compiled_ast_tokens = match parse_and_compile(&template_name, config) {
+        Ok(tokens) => tokens,
+        Err(report) => {
+            let error_message = format!(
+                "RsHtml template processing failed for struct `{}` with template `{}`:\n{}",
+                struct_name, template_name, report
+            );
+
+            return quote_spanned! {
+                struct_name.span() => compile_error!(#error_message);
+            }
+            .into();
+        }
+    };
+
+    //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
+
+    let generated_code = quote! {
+        impl ::std::fmt::Display for #struct_name {
+             fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+
+                #compiled_ast_tokens
+
+                Ok(())
+             }
+        }
+    };
+
+    if let Err(err) = syn::parse_str::<syn::ItemImpl>(&generated_code.to_string()) {
+        eprintln!("`generated_code`: err to generate code: {:?}", err);
+    }
+
+    TokenStream::from(generated_code)
+}
 
 pub fn parse_and_compile(template_path: &str, config: Config) -> Result<TokenStream> {
     let node = parse(template_path, config)?;

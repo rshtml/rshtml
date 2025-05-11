@@ -1,8 +1,6 @@
 use proc_macro::TokenStream;
-use quote::quote;
-use rshtml::config::Config;
-use rshtml::parse_and_compile;
-use syn::{DeriveInput, Expr, Lit, Meta, parse_macro_input};
+use rshtml::process_template;
+use syn::{parse_macro_input, DeriveInput, Expr, Lit, Meta};
 
 #[proc_macro_derive(RsHtml, attributes(rshtml))]
 pub fn rshtml_derive(input: TokenStream) -> TokenStream {
@@ -27,26 +25,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
         }
     };
 
-    let config = Config::load_from_toml_or_default();
-    let compiled_ast_tokens = parse_and_compile(&template_name, config).unwrap_or_else(|report| {
-        dbg!("DEBUG: Error:\n{}", report.to_string());
-        proc_macro2::TokenStream::new()
-    });
-
-    //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
-
-    let generated_code = quote! {
-        impl ::std::fmt::Display for #struct_name {
-             fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-
-                #compiled_ast_tokens
-
-                Ok(())
-             }
-        }
-    };
-
-    TokenStream::from(generated_code)
+    TokenStream::from(process_template(template_name, struct_name))
 }
 
 fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<Option<String>> {
