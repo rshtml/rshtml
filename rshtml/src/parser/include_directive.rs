@@ -8,7 +8,7 @@ pub struct IncludeDirectiveParser;
 impl IParser for IncludeDirectiveParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
         let pair_span = pair.as_span();
-        
+
         let path_pair = pair.into_inner().find(|p| p.as_rule() == Rule::string_line).ok_or(Error::new_from_span(
             ErrorVariant::CustomError {
                 message: "Error: Expected a path to the included file".to_string(),
@@ -20,17 +20,17 @@ impl IParser for IncludeDirectiveParser {
 
         let view_path = parser.config.views_base_path.join(&path);
 
-        let included_content = match std::fs::read_to_string(&view_path) {
-            Ok(content) => content,
-            Err(e) => {
-                return Err(Error::new_from_span(
-                    ErrorVariant::CustomError {
-                        message: format!("Error reading included file '{}': {}", path, e),
-                    },
-                    path_pair.as_span(),
-                ));
-            }
-        };
+        // let included_content = match std::fs::read_to_string(&view_path) {
+        //     Ok(content) => content,
+        //     Err(e) => {
+        //         return Err(Error::new_from_span(
+        //             ErrorVariant::CustomError {
+        //                 message: format!("Error reading included file '{}': {}", path, e),
+        //             },
+        //             path_pair.as_span(),
+        //         ));
+        //     }
+        // };
 
         let canonical_path = view_path.canonicalize().unwrap_or_default().to_string_lossy().to_string();
 
@@ -43,10 +43,25 @@ impl IParser for IncludeDirectiveParser {
             ));
         }
 
-        let mut included_templates = parser.included_templates.clone();
-        included_templates.insert(canonical_path);
+        //let mut included_templates = parser.included_templates.clone();
+        //included_templates.insert(canonical_path);
+        parser.included_templates.insert(canonical_path.clone());
 
-        let inner_template = parser.parse_template(included_content.clone().as_str())?;
+        let inner_template = match parser.parse_template(&path) {
+            Ok(node) => node,
+            Err(err) => {
+                let include_template_error = Error::new_from_span(
+                    ErrorVariant::CustomError {
+                        message: format!("Error parsing included file '{}': {}", path, err),
+                    },
+                    pair_span,
+                );
+
+                return Err(include_template_error);
+            }
+        };
+
+        parser.included_templates.remove(&canonical_path);
 
         let nodes = match inner_template {
             Node::Template(nodes) => nodes,

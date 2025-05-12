@@ -18,10 +18,11 @@ impl IParser for ExtendsDirectiveParser {
         ))?;
         let path_str = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
 
-        let layout = parser
-            .read_template(&path_str)
-            .or_else(|err| Err(Error::new_from_span(ErrorVariant::CustomError { message: err }, span)))?;
-        let layout_node = parser.parse_template(&layout)?;
+        // let layout = parser
+        //     .read_template(&path_str)
+        //     .or_else(|err| Err(Error::new_from_span(ErrorVariant::CustomError { message: err }, span)))?;
+        let layout_node = parser.parse_template(&path_str)?;
+        // TODO: manage error like include directive management
 
         Ok(Node::ExtendsDirective(PathBuf::from(path_str), Box::new(layout_node)))
     }

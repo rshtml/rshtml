@@ -35,10 +35,9 @@ use crate::parser::text::TextParser;
 use crate::parser::use_directive::UseDirectiveParser;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::{Pair, Pairs};
-use pest::{Parser, Position};
+use pest::{Parser, Position, Span};
 use pest_derive::Parser;
 use std::collections::HashSet;
-use std::path::PathBuf;
 
 #[derive(Parser)]
 #[grammar = "rshtml.pest"]
@@ -48,6 +47,13 @@ pub struct RsHtmlParser {
 }
 
 impl RsHtmlParser {
+    pub fn new() -> Self {
+        Self {
+            included_templates: HashSet::new(),
+            config: Config::default(),
+        }
+    }
+
     fn build_nodes_from_pairs(&mut self, pairs: Pairs<Rule>) -> Result<Vec<Node>, Error<Rule>> {
         let mut nodes = Vec::new();
         for pair in pairs {
@@ -98,8 +104,17 @@ impl RsHtmlParser {
         }
     }
 
-    fn parse_template(&mut self, input: &str) -> Result<Node, Error<Rule>> {
-        let mut pairs = Self::parse(Rule::template, input)?;
+    fn parse_template(&mut self, path: &str) -> Result<Node, Error<Rule>> {
+        let input = self.read_template(path).map_err(|err| {
+            Error::new_from_span(
+                ErrorVariant::CustomError {
+                    message: format!("Error reading template: {:?}, path: {}", err, path),
+                },
+                Span::new(path, 0, 0).unwrap(),
+            )
+        })?;
+
+        let mut pairs = Self::parse(Rule::template, &input)?;
         let template_pair = pairs.next().ok_or(Error::new_from_pos(
             ErrorVariant::CustomError {
                 message: "Error: Empty template".to_string(),
@@ -123,29 +138,16 @@ impl RsHtmlParser {
     }
 
     fn read_template(&self, path: &str) -> Result<String, String> {
-        let mut base_path = PathBuf::from(&self.config.views_base_path);
-        base_path.push(path);
-
-        let template = std::fs::read_to_string(&base_path).map_err(|err| format!("Error reading template: {:?}, path: {}", err, path))?;
+        let view_path = self.config.views_base_path.join(path);
+        let template = std::fs::read_to_string(&view_path).map_err(|err| format!("Error reading template: {:?}, path: {}", err, path))?;
 
         Ok(template)
     }
-}
 
-pub fn start_parser(input: &str, config: Config) -> Result<Node, Error<Rule>> {
-    let mut rshtml_parser = RsHtmlParser {
-        config,
-        included_templates: HashSet::new(),
-    };
-
-    rshtml_parser.parse_template(input)
-}
-
-pub fn run(input: &str, config: Config) -> Result<(Pairs<Rule>, Node), Error<Rule>> {
-    let node = start_parser(input, config)?;
-    let pairs = RsHtmlParser::parse(Rule::template, input)?;
-
-    Ok((pairs.clone(), node))
+    pub fn run(&mut self, path: &str, config: Config) -> Result<Node, Error<Rule>> {
+        self.config = config;
+        self.parse_template(path)
+    }
 }
 
 pub trait IParser {

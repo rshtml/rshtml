@@ -50,10 +50,11 @@ impl IParser for UseDirectiveParser {
                 ))?,
         };
 
-        let component = parser
-            .read_template(&import_path_str)
-            .or_else(|err| Err(Error::new_from_span(ErrorVariant::CustomError { message: err }, pair_span)))?;
-        let component_node = parser.parse_template(&component)?;
+        // let component = parser
+        //     .read_template(&import_path_str)
+        //     .or_else(|err| Err(Error::new_from_span(ErrorVariant::CustomError { message: err }, pair_span)))?;
+        let component_node = parser.parse_template(&import_path_str)?;
+        // TODO: manage error like include directive management
 
         let use_directive = Ok(Node::UseDirective(component_name.clone(), import_path.to_path_buf(), Box::new(component_node)));
 

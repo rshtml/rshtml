@@ -33,19 +33,25 @@ impl HomePage {
 mod tests {
     use super::*;
     use chrono::prelude::*;
+    use pest::Parser;
     use rshtml::parser::{RsHtmlParser, Rule};
-    use rshtml::{Node, ast_viewer, viewer};
+    use rshtml::{ast_viewer, node::Node, process_template, viewer};
     use std::fs;
+    use syn::__private::Span;
 
     #[test]
     fn test_template_format() {
-        let views = vec!["layout.rs.html", "index.rs.html", "about.rs.html", "home.rs.html", "header.rs.html", "bar.rs.html"];
-        let view_name = views[4];
-        let config = Config::default();
-        let template = fs::read_to_string(config.views_base_path.join(view_name)).unwrap();
-        let (_pairs, ast) = parser::run(template.as_str(), config).unwrap();
+        let views = vec![
+            "layout.rs.html",
+            "index.rs.html",
+            "about.rs.html",
+            "home.rs.html",
+            "header.rs.html",
+            "bar.rs.html",
+        ];
 
-        //viewer::execute_pairs(pairs, 0, true);
+        let ast = RsHtmlParser::new().run(views[4], Config::default()).unwrap();
+
         ast_viewer::view_node(&ast, 0);
 
         assert!(matches!(ast, Node::Template(_)));
@@ -54,7 +60,9 @@ mod tests {
     #[test]
     fn test_template_format_without_parsing() {
         let template = fs::read_to_string("src/views/about.rs.html").unwrap();
-        rshtml::parse_without_ast(template);
+        let pairs = RsHtmlParser::parse(Rule::template, template.as_str()).unwrap();
+
+        viewer::execute_pairs(pairs, 0, true);
     }
 
     #[test]
@@ -75,5 +83,11 @@ mod tests {
         let s = homepage.to_string();
 
         print!("{}", s);
+    }
+
+    #[test]
+    pub fn test_process() {
+        let ident = syn::Ident::new("HomePage", Span::call_site());
+        process_template("home.rs.html".to_string(), &ident);
     }
 }
