@@ -16,6 +16,7 @@ mod text;
 mod use_directive;
 
 use crate::config::Config;
+use crate::error::rename_rules;
 use crate::node::*;
 use crate::parser::block::BlockParser;
 use crate::parser::comment_block::CommentBlockParser;
@@ -146,7 +147,7 @@ impl RsHtmlParser {
 
     pub fn run(&mut self, path: &str, config: Config) -> Result<Node, Error<Rule>> {
         self.config = config;
-        self.parse_template(path)
+        self.parse_template(path).map_err(|err| rename_rules(err))
     }
 }
 

@@ -1,15 +1,15 @@
 pub mod ast_viewer;
 pub mod compiler;
 pub mod config;
+mod error;
 pub mod node;
 pub mod parser;
 pub mod viewer;
 
 use crate::config::Config;
-use crate::parser::{RsHtmlParser, Rule};
+use crate::parser::RsHtmlParser;
 use eyre::Result;
 use node::Node;
-use pest::error::Error;
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
 
@@ -20,7 +20,9 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
         Err(report) => {
             let error_message = format!(
                 "Template processing failed for struct `{}` with template `{}`:\n{}",
-                struct_name, template_name, report.to_string()
+                struct_name,
+                template_name,
+                report.to_string()
             );
 
             return quote_spanned! { struct_name.span() => compile_error!(#error_message); }.into();
@@ -62,11 +64,4 @@ fn parse_and_compile(template_path: &str, config: Config) -> Result<TokenStream>
     }
 
     Ok(ts)
-}
-
-#[allow(dead_code)]
-#[derive(thiserror::Error, Debug)]
-#[error("RsHtmlError")]
-enum RsHtmlError {
-    ParserError(Error<Rule>),
 }

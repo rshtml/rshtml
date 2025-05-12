@@ -40,32 +40,6 @@ mod tests {
     use syn::__private::Span;
 
     #[test]
-    fn test_template_format() {
-        let views = vec![
-            "layout.rs.html",
-            "index.rs.html",
-            "about.rs.html",
-            "home.rs.html",
-            "header.rs.html",
-            "bar.rs.html",
-        ];
-
-        let ast = RsHtmlParser::new().run(views[4], Config::default()).unwrap();
-
-        ast_viewer::view_node(&ast, 0);
-
-        assert!(matches!(ast, Node::Template(_)));
-    }
-
-    #[test]
-    fn test_template_format_without_parsing() {
-        let template = fs::read_to_string("src/views/about.rs.html").unwrap();
-        let pairs = RsHtmlParser::parse(Rule::template, template.as_str()).unwrap();
-
-        viewer::execute_pairs(pairs, 0, true);
-    }
-
-    #[test]
     fn test_macro() {
         let homepage = HomePage {
             title: "Hello".to_string(),

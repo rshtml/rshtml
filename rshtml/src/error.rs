@@ -1,0 +1,68 @@
+use crate::parser::Rule;
+use pest::error::Error;
+
+#[allow(dead_code)]
+#[derive(thiserror::Error, Debug)]
+#[error("RsHtmlError")]
+enum RsHtmlError {
+    ParserError(Error<Rule>),
+}
+
+pub fn rename_rules(err: Error<Rule>) -> Error<Rule> {
+    err.renamed_rules(|rule| match rule {
+        Rule::EOI => "EOI".to_string(),
+        Rule::WHITESPACE => "WHITESPACE".to_string(),
+        Rule::rust_identifier => "rust identifier".to_string(),
+        Rule::template => "template".to_string(),
+        Rule::template_content => "template content".to_string(),
+        Rule::inner_template => "template content".to_string(),
+        Rule::tag_template => "template content".to_string(),
+        Rule::text => "html, text".to_string(),
+        Rule::inner_text => "html, text".to_string(),
+        Rule::comment_block => "comment".to_string(),
+        Rule::comment_content => "comment".to_string(),
+        Rule::block => "statement".to_string(),
+        Rule::rust_expr => "statement: if, for ..".to_string(),
+        Rule::rust_expr_head => "valid expression".to_string(),
+        Rule::rust_expr_simple => "expression".to_string(),
+        Rule::rust_block => "rust block".to_string(),
+        Rule::rust_block_content => "rust block".to_string(),
+        Rule::rust_code => "rust code".to_string(),
+        Rule::text_line_directive => "text line".to_string(),
+        Rule::text_line => "text line".to_string(),
+        Rule::text_block_tag => "text block".to_string(),
+        Rule::text_block => "text block".to_string(),
+        Rule::rust_expr_parenthesized => "rust expression in parentheses".to_string(),
+        Rule::rust_expr_paren => "rust expression in parentheses".to_string(),
+        Rule::match_expr => "match expression".to_string(),
+        Rule::match_expr_head => "match expression".to_string(),
+        Rule::match_expr_arm => "match expression arm".to_string(),
+        Rule::match_expr_arm_head => "match expression arm".to_string(),
+        Rule::match_inner_text => "html, text".to_string(),
+        Rule::string_line => "string literal".to_string(),
+        Rule::include_directive => "include directive".to_string(),
+        Rule::extends_directive => "extends directive".to_string(),
+        Rule::section_block => "section block".to_string(),
+        Rule::section_head => "section name".to_string(),
+        Rule::section_directive => "section directive".to_string(),
+        Rule::render_directive => "render directive".to_string(),
+        Rule::render_body_directive => "render body directive".to_string(),
+        Rule::child_content_directive => "child content directive".to_string(),
+        Rule::component => "component".to_string(),
+        Rule::component_parameter => "component parameter".to_string(),
+        Rule::bool => "bool".to_string(),
+        Rule::number => "number".to_string(),
+        Rule::string => "string literal".to_string(),
+        Rule::component_tag => "component tag".to_string(),
+        Rule::attributes => "attributes".to_string(),
+        Rule::attribute => "attribute".to_string(),
+        Rule::attribute_name => "attribute name".to_string(),
+        Rule::attribute_value => "attribute value".to_string(),
+        Rule::component_tag_identifier => "component tag name".to_string(),
+        Rule::component_tag_name => "component tag name".to_string(),
+        Rule::raw_block => "raw block".to_string(),
+        Rule::raw_content => "raw content".to_string(),
+        Rule::use_directive => "use directive".to_string(),
+        other => format!("{:?}", other),
+    })
+}
