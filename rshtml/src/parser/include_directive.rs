@@ -20,18 +20,6 @@ impl IParser for IncludeDirectiveParser {
 
         let view_path = parser.config.views_base_path.join(&path);
 
-        // let included_content = match std::fs::read_to_string(&view_path) {
-        //     Ok(content) => content,
-        //     Err(e) => {
-        //         return Err(Error::new_from_span(
-        //             ErrorVariant::CustomError {
-        //                 message: format!("Error reading included file '{}': {}", path, e),
-        //             },
-        //             path_pair.as_span(),
-        //         ));
-        //     }
-        // };
-
         let canonical_path = view_path.canonicalize().unwrap_or_default().to_string_lossy().to_string();
 
         if parser.included_templates.contains(&canonical_path) {
@@ -43,8 +31,6 @@ impl IParser for IncludeDirectiveParser {
             ));
         }
 
-        //let mut included_templates = parser.included_templates.clone();
-        //included_templates.insert(canonical_path);
         parser.included_templates.insert(canonical_path.clone());
 
         let inner_template = match parser.parse_template(&path) {

@@ -19,11 +19,9 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
         Ok(tokens) => tokens,
         Err(report) => {
             let error_message = format!(
-                "RsHtml template processing failed for struct `{}` with template `{}`:\n{}",
+                "Template processing failed for struct `{}` with template `{}`:\n{}",
                 struct_name, template_name, report.to_string()
             );
-
-            //dbg!(&error_message);
 
             return quote_spanned! { struct_name.span() => compile_error!(#error_message); }.into();
         }
