@@ -1,10 +1,10 @@
-pub mod ast_viewer;
-pub mod compiler;
-pub mod config;
+mod compiler;
+mod config;
 mod error;
-pub mod node;
-pub mod parser;
-pub mod viewer;
+mod node;
+mod parser;
+#[cfg(test)]
+mod tests;
 
 use crate::config::Config;
 use crate::parser::RsHtmlParser;

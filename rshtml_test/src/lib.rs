@@ -1,7 +1,5 @@
 #![allow(unused_imports, dead_code)]
 
-use rshtml::config::Config;
-use rshtml::parser;
 use rshtml_macro::RsHtml;
 
 #[derive(Debug, RsHtml)]
@@ -34,8 +32,6 @@ mod tests {
     use super::*;
     use chrono::prelude::*;
     use pest::Parser;
-    use rshtml::parser::{RsHtmlParser, Rule};
-    use rshtml::{ast_viewer, node::Node, process_template, viewer};
     use std::fs;
     use syn::__private::Span;
 
@@ -57,11 +53,5 @@ mod tests {
         let s = homepage.to_string();
 
         print!("{}", s);
-    }
-
-    #[test]
-    pub fn test_process() {
-        let ident = syn::Ident::new("HomePage", Span::call_site());
-        process_template("home.rs.html".to_string(), &ident);
     }
 }
