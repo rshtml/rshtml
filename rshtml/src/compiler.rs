@@ -30,7 +30,7 @@ use quote::quote;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-// TODO: Manage from_str errors
+// TODO: Maybe use like syn::parse2::<Expr> for compiler control, and get error from parser
 
 pub struct Compiler {
     use_directives: Vec<(String, PathBuf)>,
