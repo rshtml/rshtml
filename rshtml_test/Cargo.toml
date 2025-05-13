@@ -6,12 +6,10 @@ edition = "2024"
 build = "build.rs"
 
 [dependencies]
-rshtml = { path = "../rshtml" }
 rshtml_macro = { path = "../rshtml_macro" }
 chrono = "0.4.41"
 syn = "2.0.101"
 pest = "2.8.0"
-pest_derive = "2.8.0"
 
 [package.metadata.rshtml]
 views_base_path = "src/views"

@@ -313,8 +313,6 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "pest",
- "pest_derive",
- "rshtml",
  "rshtml_macro",
  "syn",
 ]
