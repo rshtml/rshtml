@@ -24,6 +24,7 @@ use crate::compiler::rust_expr_simple::RustExprSimpleCompiler;
 use crate::compiler::section_block::SectionBlockCompiler;
 use crate::compiler::section_directive::SectionDirectiveCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
+use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashMap;
@@ -52,33 +53,33 @@ impl Compiler {
         }
     }
 
-    pub fn compile(&mut self, node: &Node) -> TokenStream {
+    pub fn compile(&mut self, node: &Node) -> Result<TokenStream> {
         let mut token_stream = TokenStream::new();
         match node {
             Node::Template(nodes) => {
                 for node in nodes {
-                    let ts = self.compile(node);
+                    let ts = self.compile(node)?;
                     token_stream.extend(quote! {#ts;});
                 }
-                token_stream
+                Ok(token_stream)
             }
-            Node::Text(text) => quote! { write!(f, "{}", #text)? },
-            Node::InnerText(inner_text) => quote! { write!(f, "{}", #inner_text)? },
-            Node::Comment(_) => quote! {},
-            Node::ExtendsDirective(path, layout) => ExtendsDirectiveCompiler::compile(self, path, layout),
-            Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, &name),
+            Node::Text(text) => Ok(quote! { write!(f, "{}", #text)? }),
+            Node::InnerText(inner_text) => Ok(quote! { write!(f, "{}", #inner_text)? }),
+            Node::Comment(_) => Ok(quote! {}),
+            Node::ExtendsDirective(path, layout) => Ok(ExtendsDirectiveCompiler::compile(self, path, layout)),
+            Node::RenderDirective(name) => Ok(RenderDirectiveCompiler::compile(self, &name)),
             Node::RustBlock(contents) => RustBlockCompiler::compile(self, contents),
-            Node::RustExprSimple(expr) => RustExprSimpleCompiler::compile(expr),
-            Node::RustExprParen(expr) => RustExprParenCompiler::compile(expr),
+            Node::RustExprSimple(expr) => Ok(RustExprSimpleCompiler::compile(expr)),
+            Node::RustExprParen(expr) => Ok(RustExprParenCompiler::compile(expr)),
             Node::MatchExpr(name, arms) => MatchExprCompiler::compile(self, name, arms),
             Node::RustExpr(exprs) => RustExprCompiler::compile(self, exprs),
             Node::SectionDirective(name, content) => SectionDirectiveCompiler::compile(self, name, content),
             Node::SectionBlock(name, content) => SectionBlockCompiler::compile(self, name, content),
-            Node::RenderBody => RenderBodyCompiler::compile(self),
+            Node::RenderBody => Ok(RenderBodyCompiler::compile(self)),
             Node::Component(name, parameters, body) => ComponentCompiler::compile(self, name, parameters, body),
-            Node::ChildContent => quote! {child_content(f)?;},
-            Node::Raw(body) => quote! { write!(f, "{}", #body)? },
-            Node::UseDirective(name, path, component) => UseDirectiveCompiler::compile(self, name, path, component),
+            Node::ChildContent => Ok(quote! {child_content(f)?;}),
+            Node::Raw(body) => Ok(quote! { write!(f, "{}", #body)? }),
+            Node::UseDirective(name, path, component) => Ok(UseDirectiveCompiler::compile(self, name, path, component)),
         }
     }
 }

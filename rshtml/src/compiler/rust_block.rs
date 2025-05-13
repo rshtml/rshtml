@@ -1,6 +1,7 @@
 use crate::Node;
 use crate::compiler::Compiler;
 use crate::node::{RustBlockContent, TextBlockItem, TextLineItem};
+use anyhow::{Result, anyhow};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::str::FromStr;
@@ -8,13 +9,13 @@ use std::str::FromStr;
 pub struct RustBlockCompiler;
 
 impl RustBlockCompiler {
-    pub fn compile(compiler: &mut Compiler, contents: &Vec<RustBlockContent>) -> TokenStream {
+    pub fn compile(compiler: &mut Compiler, contents: &Vec<RustBlockContent>) -> Result<TokenStream> {
         let mut token_stream = TokenStream::new();
 
         for content in contents {
             match content {
                 RustBlockContent::Code(code) => {
-                    let code_ts = TokenStream::from_str(code).unwrap();
+                    let code_ts = TokenStream::from_str(code).map_err(|err| anyhow!("Lex Error: {}", err))?;
                     token_stream.extend(quote! { #code_ts });
                 }
                 RustBlockContent::TextLine(items) => {
@@ -24,7 +25,7 @@ impl RustBlockCompiler {
                                 token_stream.extend(quote! { write!(f, "{}", #text)?; });
                             }
                             TextLineItem::RustExprSimple(expr) => {
-                                let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone()));
+                                let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone()))?;
                                 token_stream.extend(quote! {#rxs_ts;});
                             }
                         }
@@ -37,19 +38,19 @@ impl RustBlockCompiler {
                                 token_stream.extend(quote! { write!(f, "{}", #text)?; });
                             }
                             TextBlockItem::RustExprSimple(expr) => {
-                                let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone()));
+                                let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone()))?;
                                 token_stream.extend(quote! {#rxs_ts;});
                             }
                         }
                     }
                 }
                 RustBlockContent::NestedBlock(nested_contents) => {
-                    let nested_ts = Self::compile(compiler, nested_contents);
+                    let nested_ts = Self::compile(compiler, nested_contents)?;
                     token_stream.extend(quote! { {#nested_ts} });
                 }
             }
         }
 
-        token_stream
+        Ok(token_stream)
     }
 }
