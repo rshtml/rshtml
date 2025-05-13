@@ -8,7 +8,7 @@ mod tests;
 
 use crate::config::Config;
 use crate::parser::RsHtmlParser;
-use eyre::Result;
+use anyhow::Result;
 use node::Node;
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
@@ -17,12 +17,12 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     let config = Config::load_from_toml_or_default();
     let compiled_ast_tokens = match parse_and_compile(&template_name, config) {
         Ok(tokens) => tokens,
-        Err(report) => {
+        Err(err) => {
             let error_message = format!(
                 "Template processing failed for struct `{}` with template `{}`:\n{}",
                 struct_name,
                 template_name,
-                report.to_string()
+                err.to_string()
             );
 
             return quote_spanned! { struct_name.span() => compile_error!(#error_message); }.into();

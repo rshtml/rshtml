@@ -9,7 +9,7 @@ pest_derive = "2.8.0"
 serde = { version = "1.0.219", features = ["derive"] }
 quote = "1.0.40"
 proc-macro2 = "1.0.95"
-eyre = "0.6.12"
+anyhow = "1.0.98"
 toml = "0.8.22"
 syn = { version = "2.0.101", features = ["full"] }
 thiserror = "2.0.12"
