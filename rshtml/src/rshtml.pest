@@ -349,26 +349,5 @@ child_content_directive = @{
     7. maybe add source mapping for better error messages, sourcemap crate
     8. for better error messages like use pest::error::Error::renamed_rules
     9. control the imports for components
-    10. maybe do this:
-    #[derive(RsHtml(path="home.rs.html"))] // The view name can also be derived from the struct name. adds display implementation
-    struct HomePage {
-        user: User,
-    }
-
-    // macro do this automatically, maybe we can add render function to the struct
-    impl Display for HomePage {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "<!DOCTYPE html><html><head><title>")?;
-            write!(f, "{}", html_escape::encode_text(&self.user.name))?;
-            write!(f, "{}", self.child_component_data)?; // component call maybe
-            write!(f, "</title></head><body>")?;
-            //maybe we can add #cfg('debug') to add debug information, like error points in views
-            if self.user.is_admin {
-                write!(f, "<p>Admin Panel</p>")?;
-            }
-
-            write!(f, "</body></html>")?;
-            Ok(())
-         }
-    }
+    10. maybe @csrf directive for form protection
 */
