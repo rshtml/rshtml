@@ -13,3 +13,8 @@ anyhow = "1.0.98"
 toml = "0.8.22"
 syn = { version = "2.0.101", features = ["full"] }
 thiserror = "2.0.12"
+
+[dev-dependencies]
+trybuild = "1.0.105"
+tempfile = "3.20.0"
+chrono = "0.4.41"
