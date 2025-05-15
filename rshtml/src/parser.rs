@@ -10,8 +10,11 @@ mod raw_block;
 mod render_directive;
 mod rust_block;
 mod rust_expr;
+mod rust_expr_paren;
+mod rust_expr_simple;
 mod section_block;
 mod section_directive;
+mod template;
 mod text;
 mod use_directive;
 
@@ -30,8 +33,11 @@ use crate::parser::raw_block::RawBlockParser;
 use crate::parser::render_directive::RenderDirectiveParser;
 use crate::parser::rust_block::RustBlockParser;
 use crate::parser::rust_expr::RustExprParser;
+use crate::parser::rust_expr_paren::RustExprParenParser;
+use crate::parser::rust_expr_simple::RustExprSimpleParser;
 use crate::parser::section_block::SectionBlockParser;
 use crate::parser::section_directive::SectionDirectiveParser;
+use crate::parser::template::TemplateParser;
 use crate::parser::text::TextParser;
 use crate::parser::use_directive::UseDirectiveParser;
 use pest::error::{Error, ErrorVariant};
@@ -75,7 +81,7 @@ impl RsHtmlParser {
 
     fn build_ast_node(&mut self, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
         match pair.as_rule() {
-            Rule::template => Ok(Node::Template(self.build_nodes_from_pairs(pair.into_inner())?)),
+            Rule::template => TemplateParser::parse(self, pair),
             Rule::text => TextParser::parse(self, pair),
             Rule::inner_text => InnerTextParser::parse(self, pair),
             Rule::comment_block => CommentBlockParser::parse(self, pair),
@@ -85,8 +91,8 @@ impl RsHtmlParser {
             Rule::render_body_directive => Ok(Node::RenderBody),
             Rule::extends_directive => ExtendsDirectiveParser::parse(self, pair),
             Rule::rust_block => RustBlockParser::parse(self, pair),
-            Rule::rust_expr_simple => Ok(Node::RustExprSimple(pair.as_str().to_string())),
-            Rule::rust_expr_paren => Ok(Node::RustExprParen(pair.as_str().to_string())),
+            Rule::rust_expr_simple => RustExprSimpleParser::parse(self, pair),
+            Rule::rust_expr_paren => RustExprParenParser::parse(self, pair),
             Rule::rust_expr => RustExprParser::parse(self, pair),
             Rule::match_expr => MatchExprParser::parse(self, pair),
             Rule::section_directive => SectionDirectiveParser::parse(self, pair),

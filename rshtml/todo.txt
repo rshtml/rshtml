@@ -19,8 +19,9 @@ for include,use vs:
     parser.template_stack.push((path.clone(), pair_span.start(), pair_span.end()));
 
 for node:
-    pub struct NSpan {
-        pub templates: Vec<(String, usize, usize)>,
+    #[derive(Debug, Clone, PartialEq)]
+    pub struct Span {
+        pub template: String,
         pub start: usize,
         pub end: usize,
     }
