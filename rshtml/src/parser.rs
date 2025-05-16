@@ -44,15 +44,13 @@ use pest::error::{Error, ErrorVariant};
 use pest::iterators::{Pair, Pairs};
 use pest::{Parser, Position, Span};
 use pest_derive::Parser;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 #[derive(Parser)]
 #[grammar = "rshtml.pest"]
 pub struct RsHtmlParser {
     included_templates: HashSet<String>,
     config: Config,
-
-    pub parsed_templates: HashMap<String, String>,
 }
 
 impl RsHtmlParser {
@@ -60,7 +58,6 @@ impl RsHtmlParser {
         Self {
             included_templates: HashSet::new(),
             config: Config::default(),
-            parsed_templates: HashMap::new(),
         }
     }
 
@@ -132,8 +129,6 @@ impl RsHtmlParser {
             Position::new("Template", 0).unwrap(),
         ))?;
 
-        self.add_parsed_template(path, &input);
-
         if template_pair.as_rule() == Rule::template {
             let ast = self.build_ast_node(template_pair)?;
             Ok(ast)
@@ -154,12 +149,6 @@ impl RsHtmlParser {
         let template = std::fs::read_to_string(&view_path).map_err(|err| format!("Error reading template: {:?}, path: {}", err, path))?;
 
         Ok(template)
-    }
-
-    fn add_parsed_template(&mut self, path: &str, template: &str) {
-        if !self.parsed_templates.contains_key(path) {
-            self.parsed_templates.insert(path.to_owned(), template.to_owned());
-        }
     }
 
     pub fn run(&mut self, path: &str, config: Config) -> Result<Node, Error<Rule>> {
