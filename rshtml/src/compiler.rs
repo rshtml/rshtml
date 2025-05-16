@@ -39,10 +39,12 @@ pub struct Compiler {
     pub layout: Option<Node>,
     sections: HashMap<String, TokenStream>,
     pub section_body: Option<TokenStream>,
+
+    parsed_templates: HashMap<String, String>,
 }
 
 impl Compiler {
-    pub fn new() -> Self {
+    pub fn new(parsed_templates: HashMap<String, String>) -> Self {
         Compiler {
             use_directives: Vec::new(),
             components: HashMap::new(),
@@ -50,6 +52,8 @@ impl Compiler {
             layout: None,
             sections: HashMap::new(),
             section_body: None,
+
+            parsed_templates,
         }
     }
 

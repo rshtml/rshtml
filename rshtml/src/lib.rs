@@ -53,7 +53,7 @@ fn parse_and_compile(template_path: &str, config: Config) -> Result<TokenStream>
     let mut rshtml_parser = RsHtmlParser::new();
     let node = rshtml_parser.run(template_path, config)?;
 
-    let mut compiler = compiler::Compiler::new();
+    let mut compiler = compiler::Compiler::new(rshtml_parser.parsed_templates);
     let ts = compiler.compile(&node)?;
 
     if let Some(layout) = compiler.layout.clone() {
