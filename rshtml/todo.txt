@@ -1,14 +1,6 @@
-for tests.rs:
-
 for rshtml_parser:
     parsed_templates: HashMap<String, String>,
     template_stack: Vec<(String, usize, usize)>,
-
-for parse_template:
-    if !self.parsed_templates.contains_key(path) {
-        self.parsed_templates.insert(path.to_string(), input.clone());
-    }
-
 
 for include,use vs:
     parser.template_stack.push((path.clone(), pair_span.start(), pair_span.end()));
