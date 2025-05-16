@@ -1,9 +1,4 @@
 for tests.rs:
-#[test]
-pub fn test_process_simple() {
-    let ident = syn::Ident::new("HomePage", Span::call_site());
-    process_template("home.rs.html".to_string(), &ident);
-}
 
 for rshtml_parser:
     parsed_templates: HashMap<String, String>,
