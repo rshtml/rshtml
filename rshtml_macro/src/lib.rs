@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use rshtml::process_template;
+use rshtml_core::process_template;
 use syn::{parse_macro_input, DeriveInput, Expr, Lit, Meta};
 
 #[proc_macro_derive(RsHtml, attributes(rshtml))]

@@ -8,4 +8,4 @@ proc-macro = true
 
 [dependencies]
 syn = { version = "2.0.27", features = ["full"] }
-rshtml = { path = "../rshtml" }
+rshtml_core = { path = "../rshtml_core" }

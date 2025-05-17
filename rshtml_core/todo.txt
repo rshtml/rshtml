@@ -12,3 +12,6 @@ for node:
         pub start: usize,
         pub end: usize,
     }
+
+for functions:
+let f = rshtml::functions::Functions{compiler: rshtml::compiler::Compiler::new()};
