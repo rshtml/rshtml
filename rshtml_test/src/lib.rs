@@ -1,6 +1,6 @@
 #![allow(unused_imports, dead_code)]
 
-use rshtml_macro::RsHtml;
+use rshtml::RsHtml;
 
 #[derive(Debug, RsHtml)]
 //#[rshtml(path = "about.rs.html")]

@@ -329,6 +329,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74765f6d916ee2faa39bc8e68e4f3ed8949b48cccdac59983d287a7cb71ce9c5"
 
 [[package]]
+name = "rshtml"
+version = "0.1.0"
+dependencies = [
+ "rshtml_core",
+ "rshtml_macro",
+]
+
+[[package]]
 name = "rshtml_core"
 version = "0.1.0"
 dependencies = [
@@ -360,7 +368,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "pest",
- "rshtml_macro",
+ "rshtml",
  "syn",
 ]
 

@@ -1,4 +1,4 @@
 [workspace]
-members = ["rshtml_core", "rshtml_macro", "rshtml_test"]
+members = ["rshtml", "rshtml_core", "rshtml_macro", "rshtml_test"]
 
 resolver = "2"

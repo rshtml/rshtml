@@ -1,0 +1,8 @@
+[package]
+name = "rshtml"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rshtml_macro = { path = "../rshtml_macro" }
+rshtml_core = { path = "../rshtml_core" }
