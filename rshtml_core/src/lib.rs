@@ -1,6 +1,7 @@
 mod compiler;
 mod config;
 mod error;
+pub mod functions;
 mod node;
 mod parser;
 #[cfg(test)]
