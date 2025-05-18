@@ -16,6 +16,12 @@
     <p>Please try again later.</p>
 }
 
+@if rs.is_section_defined("content") {
+    <p>section content defined</p>
+} else {
+    <p>section content not defined</p>
+}
+
 @render("content")
 
 @for i in 0..10 {
