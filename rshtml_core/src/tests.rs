@@ -65,6 +65,8 @@ pub fn test_process() -> std::io::Result<()> {
     let ts = process_template("home.rs.html".to_string(), &ident);
 
     let test_code_str = quote! {
+        use rshtml_core::functions as rshtml;
+
         struct HomePage {
             title: String,
             content: String,

@@ -43,7 +43,7 @@ impl ComponentCompiler {
         }
 
         let body_ts = compiler.compile(&Node::Template(body.clone()))?;
-        let body_ts = quote! {let mut child_content = |f: &mut ::std::fmt::Formatter<'_>| -> ::std::fmt::Result {#body_ts  Ok(())};};
+        let body_ts = quote! {let child_content = |f: &mut ::std::fmt::Formatter<'_>| -> ::std::fmt::Result {#body_ts  Ok(())};};
 
         token_stream.extend(body_ts);
 

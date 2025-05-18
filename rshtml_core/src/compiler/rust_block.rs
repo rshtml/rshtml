@@ -26,7 +26,7 @@ impl RustBlockCompiler {
                             }
                             TextLineItem::RustExprSimple(expr) => {
                                 let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone()))?;
-                                token_stream.extend(quote! {#rxs_ts;});
+                                token_stream.extend(quote! {#rxs_ts});
                             }
                         }
                     }
@@ -39,7 +39,7 @@ impl RustBlockCompiler {
                             }
                             TextBlockItem::RustExprSimple(expr) => {
                                 let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone()))?;
-                                token_stream.extend(quote! {#rxs_ts;});
+                                token_stream.extend(quote! {#rxs_ts});
                             }
                         }
                     }

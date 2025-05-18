@@ -15,7 +15,7 @@ impl MatchExprCompiler {
             let mut token_stream = TokenStream::new();
             for node in arm_nodes {
                 let ts = compiler.compile(node)?;
-                token_stream.extend(quote! {#ts;});
+                token_stream.extend(quote! {#ts});
             }
             let arm_head = TokenStream::from_str(arm_name).map_err(|err| anyhow!("Lex Error: {}", err))?;
             let arm_ts = quote! {
