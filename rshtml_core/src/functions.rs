@@ -19,4 +19,8 @@ impl Functions {
     pub fn t(&self, word: &str) -> &str {
         todo!()
     }
+
+    pub fn json<T>(&self, t: T) -> &str {
+        todo!()
+    }
 }
