@@ -5,11 +5,16 @@ pub fn functions(layout: String, sections: Vec<String>) -> Functions {
 pub struct Functions {
     pub layout: String,
     sections: Vec<String>,
+    pushed_texts: Vec<String>,
 }
 
 impl Functions {
     fn new(layout: String, sections: Vec<String>) -> Self {
-        Self { layout, sections }
+        Self {
+            layout,
+            sections,
+            pushed_texts: Vec::new(),
+        }
     }
 
     pub fn is_section_defined(&self, section_name: &str) -> bool {
@@ -22,5 +27,16 @@ impl Functions {
 
     pub fn json<T>(&self, t: T) -> &str {
         todo!()
+    }
+
+    pub fn push(&mut self, text: String) {
+        self.pushed_texts.push(text);
+    }
+
+    pub fn stack(&self) -> String {
+        self.pushed_texts.iter().fold(String::new(), |mut x, y| {
+            x.push_str(y);
+            x
+        })
     }
 }
