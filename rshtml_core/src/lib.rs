@@ -16,6 +16,7 @@ use quote::{quote, quote_spanned};
 
 pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStream {
     let config = Config::load_from_toml_or_default();
+    let layout = config.layout.clone();
     let compiled_ast_tokens = match parse_and_compile(&template_name, config) {
         Ok(tokens) => tokens,
         Err(err) => {
@@ -35,6 +36,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     let generated_code = quote! {
         impl ::std::fmt::Display for #struct_name {
              fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                let rs = rshtml::functions(#layout.to_string(), vec!["content".to_string()]);
 
                 #compiled_ast_tokens
 
