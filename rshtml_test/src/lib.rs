@@ -3,7 +3,7 @@
 use rshtml::RsHtml;
 
 #[derive(Debug, RsHtml)]
-//#[rshtml(path = "about.rs.html")]
+#[rshtml(path = "about.rs.html")]
 struct HomePage {
     title: String,
     content: String,

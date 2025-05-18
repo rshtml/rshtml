@@ -17,7 +17,7 @@ use quote::{quote, quote_spanned};
 pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStream {
     let config = Config::load_from_toml_or_default();
     let layout = config.layout.clone();
-    let compiled_ast_tokens = match parse_and_compile(&template_name, config) {
+    let (compiled_ast_tokens, sections) = match parse_and_compile(&template_name, config) {
         Ok(tokens) => tokens,
         Err(err) => {
             let error_message = format!(
@@ -36,7 +36,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     let generated_code = quote! {
         impl ::std::fmt::Display for #struct_name {
              fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                let rs = rshtml::functions(#layout.to_string(), vec!["content".to_string()]);
+                let rs = rshtml::functions(#layout.to_string(), #sections);
 
                 #compiled_ast_tokens
 
@@ -52,7 +52,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     TokenStream::from(generated_code)
 }
 
-fn parse_and_compile(template_path: &str, config: Config) -> Result<TokenStream> {
+fn parse_and_compile(template_path: &str, config: Config) -> Result<(TokenStream, TokenStream)> {
     let mut rshtml_parser = RsHtmlParser::new();
     let node = rshtml_parser.run(template_path, config)?;
 
@@ -63,8 +63,8 @@ fn parse_and_compile(template_path: &str, config: Config) -> Result<TokenStream>
         compiler.section_body = Some(ts.clone());
         let layout_ts = compiler.compile(&layout)?;
 
-        return Ok(layout_ts);
+        return Ok((layout_ts, compiler.section_names()));
     }
 
-    Ok(ts)
+    Ok((ts, compiler.section_names()))
 }

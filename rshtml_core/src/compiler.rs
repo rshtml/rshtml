@@ -82,4 +82,11 @@ impl Compiler {
             Node::UseDirective(name, path, component) => Ok(UseDirectiveCompiler::compile(self, name, path, component)),
         }
     }
+
+    pub fn section_names(&self) -> TokenStream {
+        let mut token_stream = TokenStream::new();
+        self.sections.keys().for_each(|x| token_stream.extend(quote! {#x.to_string(),}));
+
+        quote! {vec![#token_stream]}
+    }
 }
