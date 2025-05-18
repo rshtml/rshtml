@@ -1,5 +1,5 @@
 pub fn functions(layout: String, sections: Vec<String>) -> Functions {
-    Functions { layout, sections }
+    Functions::new(layout, sections)
 }
 
 pub struct Functions {
@@ -8,7 +8,15 @@ pub struct Functions {
 }
 
 impl Functions {
+    fn new(layout: String, sections: Vec<String>) -> Self {
+        Self { layout, sections }
+    }
+
     pub fn is_section_defined(&self, section_name: &str) -> bool {
         self.sections.contains(&section_name.to_string())
+    }
+
+    pub fn t(&self, word: &str) -> &str {
+        todo!()
     }
 }
