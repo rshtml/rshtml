@@ -19,16 +19,19 @@ impl Functions {
         }
     }
 
-    pub fn is_section_defined(&self, section_name: &str) -> bool {
+    pub fn has_section(&self, section_name: &str) -> bool {
         self.sections.contains(&section_name.to_string())
     }
 
-    pub fn t(&self, word: &str) -> &str {
-        todo!()
+    pub fn json<T: Serialize>(&self, value: &T) -> String {
+        serde_json::to_string(value).unwrap_or_else(|err| {
+            dbg!("DEBUG: JSON error: {}", err);
+            String::new()
+        })
     }
 
-    pub fn json<T: Serialize>(&self, value: &T) -> String {
-        serde_json::to_string(value).unwrap_or(String::new())
+    pub fn t(&self, word: &str) -> String {
+        todo!()
     }
 
     pub fn push(&mut self, text: String) {
