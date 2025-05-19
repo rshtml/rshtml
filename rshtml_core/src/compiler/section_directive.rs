@@ -10,7 +10,7 @@ pub struct SectionDirectiveCompiler;
 impl SectionDirectiveCompiler {
     pub fn compile(compiler: &mut Compiler, name: &String, content: &SectionDirectiveContent) -> Result<TokenStream> {
         let content_ts = match content {
-            SectionDirectiveContent::Text(text) => quote! { write!(f, "{}", #text)?; },
+            SectionDirectiveContent::Text(text) => quote! { write!(__f__, "{}", #text)?; },
             SectionDirectiveContent::RustExprSimple(expr) => compiler.compile(&Node::RustExprSimple(expr.clone()))?,
         };
 

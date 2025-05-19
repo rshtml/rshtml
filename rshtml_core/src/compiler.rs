@@ -63,8 +63,8 @@ impl Compiler {
                 }
                 Ok(token_stream)
             }
-            Node::Text(text) => Ok(quote! { write!(f, "{}", #text)?; }),
-            Node::InnerText(inner_text) => Ok(quote! { write!(f, "{}", #inner_text)?; }),
+            Node::Text(text) => Ok(quote! { write!(__f__, "{}", #text)?; }),
+            Node::InnerText(inner_text) => Ok(quote! { write!(__f__, "{}", #inner_text)?; }),
             Node::Comment(_) => Ok(quote! {}),
             Node::ExtendsDirective(path, layout) => Ok(ExtendsDirectiveCompiler::compile(self, path, layout)),
             Node::RenderDirective(name) => Ok(RenderDirectiveCompiler::compile(self, &name)),
@@ -77,8 +77,8 @@ impl Compiler {
             Node::SectionBlock(name, content) => SectionBlockCompiler::compile(self, name, content),
             Node::RenderBody => Ok(RenderBodyCompiler::compile(self)),
             Node::Component(name, parameters, body) => ComponentCompiler::compile(self, name, parameters, body),
-            Node::ChildContent => Ok(quote! {child_content(f)?;}),
-            Node::Raw(body) => Ok(quote! { write!(f, "{}", #body)?; }),
+            Node::ChildContent => Ok(quote! {child_content(__f__)?;}),
+            Node::Raw(body) => Ok(quote! { write!(__f__, "{}", #body)?; }),
             Node::UseDirective(name, path, component) => Ok(UseDirectiveCompiler::compile(self, name, path, component)),
         }
     }

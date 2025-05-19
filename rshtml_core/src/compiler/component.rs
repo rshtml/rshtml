@@ -34,7 +34,7 @@ impl ComponentCompiler {
                     let block_ts = compiler.compile(&Node::Template(value.clone()))?;
                     quote! {
                         let mut #name_ts = String::new();
-                        (|f: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#block_ts Ok(())})(&mut #name_ts)?;
+                        (|__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#block_ts Ok(())})(&mut #name_ts)?;
                     }
                 }
             };
@@ -43,7 +43,7 @@ impl ComponentCompiler {
         }
 
         let body_ts = compiler.compile(&Node::Template(body.clone()))?;
-        let body_ts = quote! {let child_content = |f: &mut ::std::fmt::Formatter<'_>| -> ::std::fmt::Result {#body_ts  Ok(())};};
+        let body_ts = quote! {let child_content = |__f__: &mut ::std::fmt::Formatter<'_>| -> ::std::fmt::Result {#body_ts  Ok(())};};
 
         token_stream.extend(body_ts);
 

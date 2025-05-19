@@ -35,7 +35,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
 
     let generated_code = quote! {
         impl ::std::fmt::Display for #struct_name {
-             fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+             fn fmt(&self, __f__: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
                 let rs = rshtml::functions(#layout.to_string(), #sections);
 
                 #compiled_ast_tokens

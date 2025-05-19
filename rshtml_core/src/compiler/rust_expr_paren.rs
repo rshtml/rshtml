@@ -8,7 +8,7 @@ impl RustExprParenCompiler {
     pub fn compile(expr: &str) -> TokenStream {
         let expr_ts = TokenStream::from_str(expr).unwrap();
         quote! {
-            write!(f, "{}", #expr_ts)?;
+            write!(__f__, "{}", #expr_ts)?;
         }
     }
 }
