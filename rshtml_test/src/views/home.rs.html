@@ -1,5 +1,4 @@
-﻿
-@use "Card.rs.html" as Card
+﻿@use "Card.rs.html" as Card
 @use "Card2.rs.html"
 
 @{
@@ -9,10 +8,29 @@
   @: this is just a text @x   ttt
 
   <text>this is @y    textttt </text>
+
+  fn inline_function() -> String {
+    "inline function".to_string()
+  }
+
+  let classes = ["class1", "class2"];
 }
+
+@rs.time("2023-1:30:00Z")
+@rs.time("2023-11-20T10:30:00Z").pretty()
+@rs.time("2023-11-20T10:30:00Z").pretty().format("%b %d, %Y")
+@rs.time("2023-11-20T10:30:00Z").date()
+@rs.time("2023-11-20T10:30:00Z").time()
+
+@inline_function()
+
+<div @rs.class(&classes)>
+  classed div
+</div>
 
 <script type="text/javascript">
   let users = @rs.json(&self.users);
+  @rs.json_let("users_let", &self.users);
 </script>
 
 @(3+5)
