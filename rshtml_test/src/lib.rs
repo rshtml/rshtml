@@ -1,20 +1,27 @@
 #![allow(unused_imports, dead_code)]
 
 use rshtml::RsHtml;
+use serde::Serialize;
 
 #[derive(Debug, RsHtml)]
-#[rshtml(path = "about.rs.html")]
+//#[rshtml(path = "about.rs.html")]
 struct HomePage {
     title: String,
     content: String,
     card_count: usize,
     my_var: String,
-    users: Vec<String>,
     abc: String,
     def: String,
     inner: String,
     hey: String,
     is_ok: bool,
+    users: Vec<User>,
+}
+
+#[derive(Serialize, Debug)]
+struct User {
+    name: String,
+    age: usize,
 }
 
 impl HomePage {
@@ -37,17 +44,37 @@ mod tests {
 
     #[test]
     fn test_macro() {
+        
+        let users = vec![
+            User {
+                name: "abc".to_string(),
+                age: 10,
+            },
+            User {
+                name: "def".to_string(),
+                age: 11,
+            },
+            User {
+                name: "hjk".to_string(),
+                age: 12,
+            },
+            User {
+                name: "lmo".to_string(),
+                age: 13,
+            },
+        ];
+
         let homepage = HomePage {
             title: "Hello".to_string(),
             content: "World".to_string(),
             card_count: 1,
             my_var: "This is my var".to_string(),
-            users: vec!["John".to_string(), "Jane".to_string()],
             abc: "abc".to_string(),
             def: "def".to_string(),
             inner: "inner".to_string(),
             hey: "hey".to_string(),
             is_ok: true,
+            users,
         };
 
         let s = homepage.to_string();

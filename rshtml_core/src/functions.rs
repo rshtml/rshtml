@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 pub fn functions(layout: String, sections: Vec<String>) -> Functions {
     Functions::new(layout, sections)
 }
@@ -25,8 +27,8 @@ impl Functions {
         todo!()
     }
 
-    pub fn json<T>(&self, t: T) -> &str {
-        todo!()
+    pub fn json<T: Serialize>(&self, value: &T) -> String {
+        serde_json::to_string(value).unwrap_or(String::new())
     }
 
     pub fn push(&mut self, text: String) {
@@ -36,6 +38,7 @@ impl Functions {
     pub fn stack(&self) -> String {
         self.pushed_texts.iter().fold(String::new(), |mut x, y| {
             x.push_str(y);
+            x.push('\n');
             x
         })
     }

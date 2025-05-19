@@ -347,6 +347,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
+ "serde_json",
  "syn",
  "tempfile",
  "thiserror",
@@ -369,6 +370,7 @@ dependencies = [
  "chrono",
  "pest",
  "rshtml",
+ "serde",
  "syn",
 ]
 
