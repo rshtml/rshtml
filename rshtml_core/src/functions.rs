@@ -1,4 +1,5 @@
 mod time;
+mod t;
 
 use serde::Serialize;
 
@@ -47,10 +48,6 @@ impl Functions {
 
     pub fn css(&self, css: &[(&str, &str)]) -> String {
         format!("style=\"{}\"", css.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<_>>().join("; "))
-    }
-    
-    pub fn t(&self, word: &str) -> String {
-        todo!()
     }
 
     pub fn push(&mut self, text: &str) {

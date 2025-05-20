@@ -11,7 +11,9 @@ chrono = "0.4.41"
 syn = "2.0.101"
 pest = "2.8.0"
 serde = { version = "1.0.219", features = ["derive"] }
+unic-langid = "0.9.6"
 
 [package.metadata.rshtml]
 views_base_path = "src/views"
 layout = "layout.rs.html"
+locale = "tr-TR"

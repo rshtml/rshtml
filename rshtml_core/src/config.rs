@@ -5,14 +5,16 @@ use std::path::{Path, PathBuf};
 pub struct Config {
     pub views_base_path: PathBuf,
     pub layout: String,
+    pub locale: String,
 }
 
 #[allow(dead_code)]
 impl Config {
-    pub fn new<P: AsRef<Path>>(views_base_path: P, layout: String) -> Self {
+    pub fn new<P: AsRef<Path>>(views_base_path: P, layout: String, locale: String) -> Self {
         Config {
             views_base_path: views_base_path.as_ref().to_path_buf(),
             layout,
+            locale,
         }
     }
 
@@ -31,11 +33,18 @@ impl Config {
         self
     }
 
+    pub fn set_locale(&mut self, locale_str: String) -> &mut Self {
+        self.locale = locale_str;
+
+        self
+    }
+
     pub fn load_from_toml_or_default() -> Self {
         #[derive(Deserialize, Debug, Clone)]
         pub struct MetadataConfig {
             pub views_base_path: Option<String>,
             pub layout: Option<String>,
+            pub locale: Option<String>,
         }
 
         #[derive(Deserialize, Debug)]
@@ -69,6 +78,9 @@ impl Config {
                                     if let Some(layout_str) = toml_config.layout {
                                         config.set_layout(layout_str);
                                     }
+                                    if let Some(locale_str) = toml_config.locale {
+                                        config.set_locale(locale_str);
+                                    }
                                 }
                             }
                         }
@@ -90,6 +102,7 @@ impl Default for Config {
         Config {
             views_base_path: base_path,
             layout: String::from("layout.rs.html"),
+            locale: String::from("en-US"),
         }
     }
 }
