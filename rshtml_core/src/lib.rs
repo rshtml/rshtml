@@ -17,6 +17,9 @@ use quote::{quote, quote_spanned};
 pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStream {
     let config = Config::load_from_toml_or_default();
     let layout = config.layout.clone();
+    let locales_base_path = config.locales_base_path.clone();
+    let locales_base_path = locales_base_path.to_string_lossy().into_owned();
+
     let (compiled_ast_tokens, sections) = match parse_and_compile(&template_name, config) {
         Ok(tokens) => tokens,
         Err(err) => {
@@ -33,10 +36,12 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
 
     //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
+    // TODO: functions must be outside of Display because of so that it is not created every time it is run
+
     let generated_code = quote! {
         impl ::std::fmt::Display for #struct_name {
              fn fmt(&self, __f__: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                let rs = rshtml::functions(#layout.to_string(), #sections);
+                let rs = rshtml::functions(#layout.to_string(), #sections, #locales_base_path);
 
                 #compiled_ast_tokens
 

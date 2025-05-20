@@ -1,24 +1,27 @@
-mod time;
 mod t;
+mod time;
 
+use crate::functions::t::Translator;
 use serde::Serialize;
 
-pub fn functions(layout: String, sections: Vec<String>) -> Functions {
-    Functions::new(layout, sections)
+pub fn functions(layout: String, sections: Vec<String>, locales_base_path: &str) -> Functions {
+    Functions::new(layout, sections, locales_base_path)
 }
 
 pub struct Functions {
     pub layout: String,
     sections: Vec<String>,
     pushed_texts: Vec<String>,
+    translator: Translator,
 }
 
 impl Functions {
-    fn new(layout: String, sections: Vec<String>) -> Self {
+    fn new(layout: String, sections: Vec<String>, locales_base_path: &str) -> Self {
         Self {
             layout,
             sections,
             pushed_texts: Vec::new(),
+            translator: Translator::new(locales_base_path),
         }
     }
 

@@ -454,7 +454,6 @@ dependencies = [
  "rshtml",
  "serde",
  "syn",
- "unic-langid",
 ]
 
 [[package]]
