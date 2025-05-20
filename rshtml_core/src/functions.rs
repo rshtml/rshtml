@@ -45,6 +45,10 @@ impl Functions {
         format!("class=\"{}\"", classes.join(" "))
     }
 
+    pub fn css(&self, css: &[(&str, &str)]) -> String {
+        format!("style=\"{}\"", css.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<_>>().join("; "))
+    }
+    
     pub fn t(&self, word: &str) -> String {
         todo!()
     }

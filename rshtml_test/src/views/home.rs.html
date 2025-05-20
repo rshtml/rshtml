@@ -14,6 +14,8 @@
   }
 
   let classes = ["class1", "class2"];
+
+  let styles = [("border","solid 1px red"), ("font-size","12px")];
 }
 
 @rs.time("2023-1:30:00Z")
@@ -26,6 +28,10 @@
 
 <div @rs.class(&classes)>
   classed div
+</div>
+
+<div @rs.css(&styles)>
+  styled div
 </div>
 
 <script type="text/javascript">
