@@ -1,10 +1,11 @@
 use crate::functions::Functions;
-use anyhow::{anyhow, Result};
-use fluent::{FluentBundle, FluentResource};
+use anyhow::{Result, anyhow};
+use fluent::FluentResource;
+use fluent::concurrent::FluentBundle;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use unic_langid::{langid, LanguageIdentifier};
+use unic_langid::{LanguageIdentifier, langid};
 
 impl Functions {
     pub fn t(&self, word: &str) -> String {
@@ -50,7 +51,7 @@ impl Translator {
 
             let lang_id = lang_code_str.parse::<LanguageIdentifier>()?;
 
-            let mut bundle = FluentBundle::new(vec![lang_id.clone()]);
+            let mut bundle = FluentBundle::new_concurrent(vec![lang_id.clone()]);
             let mut ftl_files_found = false;
 
             for file in fs::read_dir(&lang_path)? {
