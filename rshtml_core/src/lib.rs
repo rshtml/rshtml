@@ -41,7 +41,13 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     let generated_code = quote! {
         impl ::std::fmt::Display for #struct_name {
              fn fmt(&self, __f__: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                let rs = rshtml::functions(#layout.to_string(), #sections, #locales_base_path);
+                //let rs = rshtml::functions(#layout.to_string(), #sections, #locales_base_path);
+
+                let rs = rshtml::__F__.get_or_init(|| {
+                        let mut hm = ::std::collections::HashMap::new();
+                        hm.insert(::std::any::TypeId::of::<#struct_name>(), rshtml::Functions::new(#layout.to_string(), #sections, #locales_base_path));
+                        hm
+                        }).get(&::std::any::TypeId::of::<#struct_name>()).unwrap();
 
                 #compiled_ast_tokens
 

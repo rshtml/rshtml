@@ -1,5 +1,6 @@
 #![allow(unused_imports, dead_code)]
 
+use rshtml::Functions;
 use rshtml::RsHtml;
 use serde::Serialize;
 
