@@ -3,16 +3,7 @@ mod time;
 
 use crate::functions::t::Translator;
 use serde::Serialize;
-use std::any::TypeId;
-use std::collections::HashMap;
 use std::string::ToString;
-use std::sync::OnceLock;
-
-pub static __F__: OnceLock<HashMap<TypeId, Functions>> = OnceLock::new();
-
-// pub fn functions(layout: String, sections: Vec<String>, locales_base_path: &str) -> Functions {
-//     Functions::new(layout, sections, locales_base_path)
-// }
 
 pub struct Functions {
     pub layout: String,
