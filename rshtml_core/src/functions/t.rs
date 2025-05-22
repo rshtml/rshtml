@@ -24,16 +24,15 @@ pub struct Translator {
 }
 
 impl Translator {
-    pub fn new(locales_base_path: &str) -> Self {
+    pub fn new(locales_base_path: &str, locale_lang: &str) -> Self {
         let bundles = Self::load(Path::new(locales_base_path)).unwrap_or_else(|err| {
             eprintln!("Locale Error: {}", err);
             HashMap::new()
         });
 
-        Self {
-            bundles,
-            current_lang: langid!("en-US"),
-        }
+        let current_lang = LanguageIdentifier::from_str(locale_lang).unwrap_or(langid!("en-US"));
+
+        Self { bundles, current_lang }
     }
 
     pub fn load(locales_path: &Path) -> Result<HashMap<LanguageIdentifier, FluentBundle<FluentResource>>> {

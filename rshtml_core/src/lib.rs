@@ -19,6 +19,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     let layout = config.layout.clone();
     let locales_base_path = config.locales_base_path.clone();
     let locales_base_path = locales_base_path.to_string_lossy().into_owned();
+    let locale_lang = config.locale_lang.clone();
 
     let (compiled_ast_tokens, sections) = match parse_and_compile(&template_name, config) {
         Ok(tokens) => tokens,
@@ -36,11 +37,9 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
 
     //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
-    // TODO: functions must be outside of Display because of so that it is not created every time it is run
-
     let generated_code = quote! {
         const _ : () = {
-            static __rs__: ::std::sync::LazyLock<::std::sync::RwLock<rshtml::Functions>> = ::std::sync::LazyLock::new(|| ::std::sync::RwLock::new(rshtml::Functions::new(#layout.to_string(), #sections, #locales_base_path)));
+            static __rs__: ::std::sync::LazyLock<::std::sync::RwLock<rshtml::Functions>> = ::std::sync::LazyLock::new(|| ::std::sync::RwLock::new(rshtml::Functions::new(#layout.to_string(), #sections, #locales_base_path, #locale_lang)));
 
             impl ::std::fmt::Display for #struct_name {
                  fn fmt(&self, __f__: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {

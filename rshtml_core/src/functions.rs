@@ -13,12 +13,12 @@ pub struct Functions {
 }
 
 impl Functions {
-    pub fn new(layout: String, sections: Vec<String>, locales_base_path: &str) -> Self {
+    pub fn new(layout: String, sections: Vec<String>, locales_base_path: &str, locale_lang: &str) -> Self {
         Self {
             layout,
             sections,
             pushed_texts: Vec::new(),
-            translator: Translator::new(locales_base_path),
+            translator: Translator::new(locales_base_path, locale_lang),
         }
     }
 
