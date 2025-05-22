@@ -5,9 +5,14 @@ use fluent::concurrent::FluentBundle;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use std::str::FromStr;
 use unic_langid::{LanguageIdentifier, langid};
 
 impl Functions {
+    pub fn set_lang(&mut self, lang: &str) {
+        self.translator.set_current_lang(lang);
+    }
+
     pub fn t(&self, word: &str) -> String {
         self.translator.translate(word)
     }
@@ -98,5 +103,9 @@ impl Translator {
         }
         // Çeviri bulunamadı veya hata oldu
         format!("MISSING:{}", key)
+    }
+
+    pub fn set_current_lang(&mut self, lang: &str) {
+        self.current_lang = LanguageIdentifier::from_str(lang).unwrap_or(langid!("en-US"))
     }
 }

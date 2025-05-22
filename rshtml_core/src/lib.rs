@@ -35,15 +35,16 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     };
 
     //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
-   
+
     // TODO: functions must be outside of Display because of so that it is not created every time it is run
 
     let generated_code = quote! {
         const _ : () = {
-            static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions::new(#layout.to_string(), #sections, #locales_base_path));
+            static __rs__: ::std::sync::LazyLock<::std::sync::RwLock<rshtml::Functions>> = ::std::sync::LazyLock::new(|| ::std::sync::RwLock::new(rshtml::Functions::new(#layout.to_string(), #sections, #locales_base_path)));
 
             impl ::std::fmt::Display for #struct_name {
                  fn fmt(&self, __f__: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                    let mut rs = __rs__.write().unwrap();
                     //let rs = rshtml::functions(#layout.to_string(), #sections, #locales_base_path);
 
                     // let rs = rshtml::__F__.get_or_init(|| {
