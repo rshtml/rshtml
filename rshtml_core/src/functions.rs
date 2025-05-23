@@ -4,12 +4,13 @@ mod time;
 use crate::functions::t::Translator;
 use serde::Serialize;
 use std::string::ToString;
+use std::sync::RwLock;
 
 pub struct Functions {
     pub layout: String,
     sections: Vec<String>,
     pushed_texts: Vec<String>,
-    translator: Translator,
+    translator: RwLock<Translator>,
 }
 
 impl Functions {
@@ -18,7 +19,7 @@ impl Functions {
             layout,
             sections,
             pushed_texts: Vec::new(),
-            translator: Translator::new(locales_base_path, locale_lang),
+            translator: RwLock::new(Translator::new(locales_base_path, locale_lang)),
         }
     }
 

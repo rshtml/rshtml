@@ -9,12 +9,21 @@ use std::str::FromStr;
 use unic_langid::{LanguageIdentifier, langid};
 
 impl Functions {
-    pub fn set_lang(&mut self, lang: &str) {
-        self.translator.set_current_lang(lang);
+    pub fn set_lang(&self, lang: &str) {
+        match self.translator.write() {
+            Ok(mut translator) => translator.set_current_lang(lang),
+            Err(err) => eprintln!("Error setting language: {}", err),
+        }
     }
 
     pub fn t(&self, word: &str) -> String {
-        self.translator.translate(word)
+        match self.translator.read() {
+            Ok(translator) => translator.translate(word),
+            Err(err) => {
+                eprintln!("Error in translate: {}", err);
+                String::new()
+            }
+        }
     }
 }
 

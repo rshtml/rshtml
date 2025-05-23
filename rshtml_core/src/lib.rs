@@ -39,15 +39,11 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
 
     let generated_code = quote! {
         const _ : () = {
-            static __rs__: ::std::sync::LazyLock<::std::sync::RwLock<rshtml::Functions>> = ::std::sync::LazyLock::new(|| ::std::sync::RwLock::new(rshtml::Functions::new(#layout.to_string(), #sections, #locales_base_path, #locale_lang)));
+            static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions::new(#layout.to_string(), #sections, #locales_base_path, #locale_lang));
 
             impl ::std::fmt::Display for #struct_name {
                  fn fmt(&self, __f__: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                    let mut rs = __rs__.write().map_err(|err| {
-                        eprintln!("ERROR: RsHtml functions was panicked: {err:?}");
-                        std::fmt::Error
-                    })?;
-
+                    
                     #compiled_ast_tokens
 
                     Ok(())
