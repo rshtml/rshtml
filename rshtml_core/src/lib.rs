@@ -44,7 +44,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
             impl ::std::fmt::Display for #struct_name {
                  fn fmt(&self, __f__: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
                     let mut rs = __rs__.write().map_err(|err| {
-                        eprintln!("ERROR: RsHtml functions was poisoned during Display::fmt!: {err:?}");
+                        eprintln!("ERROR: RsHtml functions was panicked: {err:?}");
                         std::fmt::Error
                     })?;
 
