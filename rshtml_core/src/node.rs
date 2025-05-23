@@ -29,7 +29,7 @@ pub enum SectionDirectiveContent {
 #[derive(Debug, PartialEq, Clone)]
 pub enum ComponentParameterValue {
     Bool(bool),
-    Number(String), // convert int or float
+    Number(String), // TODO: convert int or float
     String(String),
     RustExprParen(String),
     RustExprSimple(String),
