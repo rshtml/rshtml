@@ -43,6 +43,11 @@ fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: 
 }
 
 #[test]
+pub fn test_empty() -> std::io::Result<()> {
+    prepare("EmptyPage", "empty.rs.html", quote! {}, quote! {})
+}
+
+#[test]
 pub fn test_if_else() -> std::io::Result<()> {
     prepare(
         "IfElsePage",
@@ -64,6 +69,8 @@ pub fn test_process() -> std::io::Result<()> {
     let ts = process_template("home.rs.html".to_string(), &ident);
 
     let test_code_str = quote! {
+        #![allow(unused_variables, unused_imports, unused_mut, dead_code)]
+
         use rshtml_core::functions as rshtml;
 
         struct HomePage {

@@ -6,12 +6,8 @@ use crate::node::Node;
 use crate::parser::{RsHtmlParser, Rule};
 use crate::process_template;
 use pest::Parser;
-use quote::quote;
 use std::fs;
-use std::fs::File;
-use std::io::Write;
 use syn::__private::Span;
-use tempfile::tempdir;
 
 #[test]
 fn test_template_format() {
@@ -40,7 +36,7 @@ fn test_template_format() {
 
 #[test]
 fn test_template_format_without_parsing() {
-    let template = fs::read_to_string("tests/views/home.rs.html").unwrap();
+    let template = fs::read_to_string("views/home.rs.html").unwrap();
     let pairs = match RsHtmlParser::parse(Rule::template, template.as_str()) {
         Ok(pairs) => pairs,
         Err(err) => {
