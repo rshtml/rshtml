@@ -13,7 +13,7 @@ pest = "2.8.0"
 serde = { version = "1.0.219", features = ["derive"] }
 
 [package.metadata.rshtml]
-views_base_path = "src/views"
+views_base_path = "views"
 layout = "layout.rs.html"
-locales_base_path = "src/locales"
+locales_base_path = "locales"
 locale_lang = "tr-TR"
