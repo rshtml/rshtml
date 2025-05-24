@@ -6,6 +6,7 @@ mod node;
 mod parser;
 #[cfg(test)]
 mod tests;
+pub mod traits;
 
 use crate::config::Config;
 use crate::parser::RsHtmlParser;
@@ -37,18 +38,42 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
 
     //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
+    // let generated_code = quote! {
+    //     #[allow(non_upper_case_globals)]
+    //     const _ : () = {
+    //         static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions::new(#layout.to_string(), #sections, #locales_base_path, #locale_lang));
+    //
+    //         impl ::std::fmt::Display for #struct_name {
+    //              fn fmt(&self, __f__: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+    //
+    //                 #compiled_ast_tokens
+    //
+    //                 Ok(())
+    //              }
+    //         }
+    //     };
+    // };
+
+    // TODO: calculate text size in compiler and use it in render for string capacity
+
     let generated_code = quote! {
         #[allow(non_upper_case_globals)]
         const _ : () = {
             static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions::new(#layout.to_string(), #sections, #locales_base_path, #locale_lang));
 
-            impl ::std::fmt::Display for #struct_name {
-                 fn fmt(&self, __f__: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+            impl rshtml::traits::RsHtml for #struct_name {
+                fn fmt(&mut self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
 
                     #compiled_ast_tokens
 
                     Ok(())
-                 }
+                }
+
+                fn render(&mut self) -> String {
+                    let mut buf = String::with_capacity(1024);
+                    self.fmt(&mut buf).unwrap();
+                    buf
+                }
             }
         };
     };

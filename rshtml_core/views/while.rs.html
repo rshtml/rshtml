@@ -1,3 +1,11 @@
 @while self.count < 10 {
+    <p> Counter is: @self.count </p>
     @self.increment()
+}
+
+@({ self.count = 1; "" })
+
+@while self.count < 10 {
+    <p> Counter is: @self.count </p>
+    @({ self.count += 1; "" })
 }

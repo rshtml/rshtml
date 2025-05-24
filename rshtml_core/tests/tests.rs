@@ -13,7 +13,12 @@ fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: 
     let ts = process_template(template_path.to_string(), &ident);
 
     let test_code_str = quote! {
-        use rshtml_core::functions as rshtml;
+        pub use rshtml_core::traits::*;
+        
+        mod rshtml {
+            pub use rshtml_core::functions::*;
+            pub use rshtml_core::traits;
+        }
 
         struct #struct_name_ts {
             #fields
@@ -26,11 +31,11 @@ fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: 
         #ts
 
         fn main() {
-            let page = #struct_name_ts {
+            let mut page = #struct_name_ts {
                 #values
             };
 
-            println!("{}", page.to_string());
+            println!("{}", page.render());
         }
     }
     .to_string();

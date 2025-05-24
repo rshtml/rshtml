@@ -1,8 +1,8 @@
 #![allow(unused_imports, dead_code)]
 
-use rshtml::Functions;
 use rshtml::RsHtml;
 use serde::Serialize;
+use std::fmt::Write;
 
 #[derive(Debug, RsHtml)]
 //#[rshtml(path = "about.rs.html")]
@@ -40,12 +40,12 @@ mod tests {
     use super::*;
     use chrono::prelude::*;
     use pest::Parser;
+    use rshtml::traits::RsHtml;
     use std::fs;
     use syn::__private::Span;
 
     #[test]
     fn test_macro() {
-        
         let users = vec![
             User {
                 name: "abc".to_string(),
@@ -65,7 +65,7 @@ mod tests {
             },
         ];
 
-        let homepage = HomePage {
+        let mut homepage = HomePage {
             title: "Hello".to_string(),
             content: "World".to_string(),
             card_count: 1,
@@ -78,7 +78,7 @@ mod tests {
             users,
         };
 
-        let s = homepage.to_string();
+        let s = homepage.render();
 
         print!("{}", s);
     }
