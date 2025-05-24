@@ -1,13 +1,6 @@
 use crate::parser::Rule;
 use pest::error::Error;
 
-#[allow(dead_code)]
-#[derive(thiserror::Error, Debug)]
-#[error("RsHtmlError")]
-enum RsHtmlError {
-    ParserError(Error<Rule>),
-}
-
 pub fn rename_rules(err: Error<Rule>) -> Error<Rule> {
     err.renamed_rules(|rule| match rule {
         Rule::EOI => "EOI".to_string(),
