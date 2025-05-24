@@ -7,7 +7,7 @@ use std::str::FromStr;
 use syn::__private::Span;
 use tempfile::tempdir;
 
-fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: TokenStream) -> std::io::Result<()> {
+fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: TokenStream, functions: TokenStream) -> std::io::Result<()> {
     let struct_name_ts = TokenStream::from_str(struct_name).unwrap();
     let ident = syn::Ident::new(struct_name, Span::call_site());
     let ts = process_template(template_path.to_string(), &ident);
@@ -17,6 +17,10 @@ fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: 
 
         struct #struct_name_ts {
             #fields
+        }
+
+        impl #struct_name_ts {
+            #functions
         }
 
         #ts
@@ -44,7 +48,7 @@ fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: 
 
 #[test]
 pub fn test_empty() -> std::io::Result<()> {
-    prepare("EmptyPage", "empty.rs.html", quote! {}, quote! {})
+    prepare("EmptyPage", "empty.rs.html", quote! {}, quote! {}, quote! {})
 }
 
 #[test]
@@ -60,6 +64,7 @@ pub fn test_if_else() -> std::io::Result<()> {
             is_ok: true,
             count: 10,
         },
+        quote! {},
     )
 }
 
@@ -73,6 +78,28 @@ pub fn test_for() -> std::io::Result<()> {
         },
         quote! {
             users: vec!["Alice".to_string(), "Bob".to_string()],
+        },
+        quote! {},
+    )
+}
+
+// TODO: develop a trait for render, dont use Display directly because of mutability.
+#[test]
+pub fn test_while() -> std::io::Result<()> {
+    prepare(
+        "WhilePage",
+        "while.rs.html",
+        quote! {
+            count: i32,
+        },
+        quote! {
+            count: 1,
+        },
+        quote! {
+            fn increment(&mut self) -> String {
+                self.count += 1;
+                "".to_string()
+            }
         },
     )
 }
@@ -90,7 +117,13 @@ pub fn test_match() -> std::io::Result<()> {
             value: 10,
             data: Some("Hello".to_string()),
         },
+        quote! {},
     )
+}
+
+#[test]
+pub fn test_comment() -> std::io::Result<()> {
+    prepare("CommentPage", "comment.rs.html", quote! {}, quote! {}, quote! {})
 }
 
 #[test]
