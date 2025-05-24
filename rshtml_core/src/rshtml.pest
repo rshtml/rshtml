@@ -40,7 +40,7 @@ block = !{
 
 // endregion
 
-// region --- Rust Expression Blocks (@if, @for, etc.) ---
+// region --- Rust Expression Blocks (@if, @for, @while etc.) ---
 
 rust_expr = {
     (rust_expr_head ~  WHITESPACE* ~ "{" ~ inner_template ~ "}")+
