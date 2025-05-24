@@ -73,6 +73,36 @@ pub fn test_for() -> std::io::Result<()> {
         },
         quote! {
             users: vec!["Alice".to_string(), "Bob".to_string()],
-        }
+        },
     )
+}
+
+#[test]
+pub fn test_match() -> std::io::Result<()> {
+    prepare(
+        "MatchPage",
+        "match.rs.html",
+        quote! {
+            value: i32,
+            data: Option<String>,
+        },
+        quote! {
+            value: 10,
+            data: Some("Hello".to_string()),
+        },
+    )
+}
+
+#[test]
+fn test_test() {
+    struct MyData {}
+
+    impl MyData {
+        fn to_string(&self) -> String {
+            todo!()
+        }
+    }
+
+    let x = MyData {};
+    println!("{}", x.to_string());
 }

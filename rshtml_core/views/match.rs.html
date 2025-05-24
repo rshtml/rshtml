@@ -1,0 +1,24 @@
+@match self.value {
+    0 => <p>this is zero</p>,
+    1 => <p>this is one</p>,
+    2 => <p>this is two</p>,
+    _ => <p>this is bigger than two</p>,
+}
+
+@match &self.data {
+    Some(s) => {<p>this is data @s</p>},
+    None => <p>this is none</p>,
+}
+
+@match self.value {
+    0 => {<p>this is zero: @self.value</p>},
+    1 => <p>this is one</p>,
+    2 => self.value,
+    _ => <p>this is bigger than two</p>,
+}
+
+@match self.value {
+    0 | 1 => self.value,
+    2 => <p>this is two</p>,
+    _ => <p>this is bigger than two</p>,
+}
