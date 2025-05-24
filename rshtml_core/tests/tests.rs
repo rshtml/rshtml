@@ -14,7 +14,7 @@ fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: 
 
     let test_code_str = quote! {
         pub use rshtml_core::traits::*;
-        
+
         mod rshtml {
             pub use rshtml_core::functions::*;
             pub use rshtml_core::traits;
@@ -88,7 +88,6 @@ pub fn test_for() -> std::io::Result<()> {
     )
 }
 
-// TODO: develop a trait for render, dont use Display directly because of mutability.
 #[test]
 pub fn test_while() -> std::io::Result<()> {
     prepare(
