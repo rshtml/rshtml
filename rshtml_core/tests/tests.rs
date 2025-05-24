@@ -64,6 +64,20 @@ pub fn test_if_else() -> std::io::Result<()> {
 }
 
 #[test]
+pub fn test_for() -> std::io::Result<()> {
+    prepare(
+        "ForPage",
+        "for.rs.html",
+        quote! {
+            users: Vec<String>,
+        },
+        quote! {
+            users: vec!["Alice".to_string(), "Bob".to_string()],
+        }
+    )
+}
+
+#[test]
 pub fn test_process() -> std::io::Result<()> {
     let ident = syn::Ident::new("HomePage", Span::call_site());
     let ts = process_template("home.rs.html".to_string(), &ident);

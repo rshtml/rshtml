@@ -332,7 +332,8 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: dont process component tags in html comments
+// TODO 1: support the continue and break keyword in for loops
+// TODO 2: dont process component tags in html comments
 
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
