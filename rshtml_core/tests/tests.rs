@@ -261,6 +261,31 @@ pub fn test_raw_block() -> std::io::Result<()> {
 }
 
 #[test]
+pub fn test_component() -> std::io::Result<()> {
+    prepare(
+        "ComponentPage",
+        "component.rs.html",
+        quote! {
+            value: i32,
+            title: String,
+            data: String,
+        },
+        quote! {
+            value: 10,
+            title: "Component".to_string(),
+            data: "Hello".to_string(),
+        },
+        quote! {
+            fn my_func(&self) -> String {
+                let mut hold = "Func".to_string();
+                hold.push_str(self.data.clone().as_str());
+                hold
+            }
+        },
+    )
+}
+
+#[test]
 fn test_test() {
     "Func".to_string().push_str("Func");
     struct MyData {

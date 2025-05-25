@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    @use "Card.rs.html" as Card
+    @use "SideBar.rs.html"
+
+    <meta charset="UTF-8">
+    <title>@self.title</title>
+</head>
+<body>
+    this is card:
+    <Card title="hello" footer = @self.value>
+        this is card content
+    </Card>
+
+    <br/>
+    <hr/>
+    <br/>
+
+    <SideBar content = {
+             this is content:
+            <p>heyy</p>
+            <p>value: @self.value</p>
+             }
+            _unused ="unused"
+    />
+
+    @Card(title: "Card Title", footer: "Card Footer"){}
+
+    @Card(title: 4.53, footer: 543){
+        <p>hellooo</p>
+        @self.title
+    }
+
+</body>
+</html>
