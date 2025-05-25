@@ -1,0 +1,22 @@
+<div>
+  <h1>Raw block page</h1>
+
+  @raw {
+    <p>this is raw block @self.value</p>
+    @self.my_func()
+  }
+
+  @raw {
+    @if (x > 5) { print("@}"); } ... @}
+
+    @self.data
+
+    <h2>{{ message }}</h2>
+    <p>Count value: {{ count }}</p>
+
+    {{-- Buttons and event listeners --}}
+    <button v-on:click="increment">Inc (+)</button>
+    <button @click="decrement">Dec (-)</button>
+  }
+
+</div>

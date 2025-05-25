@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>@render("title")</title>
+</head>
+<body>
+    <div> this is extends layout @self.data</div>
+    <p>my func: @self.my_func()</p>
+
+    @render_body
+
+    <div>heyyy</div>
+    <p>oooooo</p>
+
+    @render("footer")
+</body>
+</html>

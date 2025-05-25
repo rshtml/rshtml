@@ -1,0 +1,15 @@
+@extends("layout.rs.html")
+
+<div>
+    extends content @self.value
+</div>
+
+@section('title', "extends title")
+
+@section footer {
+    <p>extends footer</p>
+    <div>
+        @self.data
+        @self.value
+    </div>
+}

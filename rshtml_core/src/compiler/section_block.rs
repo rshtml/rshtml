@@ -12,7 +12,7 @@ impl SectionBlockCompiler {
 
         for node in content {
             let ts = compiler.compile(node)?;
-            token_stream.extend(quote! {#ts;});
+            token_stream.extend(quote! {#ts});
         }
 
         compiler.sections.insert(name.clone(), token_stream);
