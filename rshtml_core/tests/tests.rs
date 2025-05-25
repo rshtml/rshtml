@@ -131,15 +131,81 @@ pub fn test_comment() -> std::io::Result<()> {
 }
 
 #[test]
+pub fn test_simple_expression() -> std::io::Result<()> {
+    prepare(
+        "SimpleExpressionPage",
+        "simple_expression.rs.html",
+        quote! {
+            value: i32,
+            data: Option<String>,
+        },
+        quote! {
+            value: 10,
+            data: Some("Hello".to_string()),
+        },
+        quote! {
+            fn my_func(&self) -> String {
+                "my func".to_string()
+            }
+        },
+    )
+}
+
+#[test]
+pub fn test_parentheses_expression() -> std::io::Result<()> {
+    prepare(
+        "ParenthesesExpressionPage",
+        "parentheses_expression.rs.html",
+        quote! {
+            value: i32,
+            data: String,
+        },
+        quote! {
+            value: 10,
+            data: "Hello".to_string(),
+        },
+        quote! {},
+    )
+}
+
+#[test]
+pub fn test_code_block() -> std::io::Result<()> {
+    prepare(
+        "CodeBlockPage",
+        "code_block.rs.html",
+        quote! {
+            value: i32,
+            data: String,
+        },
+        quote! {
+            value: 10,
+            data: "Hello".to_string(),
+        },
+        quote! {
+            fn my_func(&self) -> String {
+                let mut hold = "Func".to_string();
+                hold.push_str(self.data.clone().as_str());
+                hold
+            }
+        },
+    )
+}
+
+#[test]
 fn test_test() {
-    struct MyData {}
+    "Func".to_string().push_str("Func");
+    struct MyData {
+        data: Option<String>,
+    }
 
     impl MyData {
         fn to_string(&self) -> String {
-            todo!()
+            self.data.as_deref().unwrap_or_else(|| "").to_string()
         }
     }
 
-    let x = MyData {};
+    let x = &MyData {
+        data: Some("Hello".to_string()),
+    };
     println!("{}", x.to_string());
 }
