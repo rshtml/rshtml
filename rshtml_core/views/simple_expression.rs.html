@@ -1,6 +1,9 @@
 <div>
     <p>value: @self.value</p>
+    <p>value: @&self.value</p>
+    <p>value: @&&self.value</p>
     <p>data: @self.data.as_deref().unwrap_or_else(|| "Hii").to_string()</p>
+    <p>data: @self.data.as_deref().unwrap_or_else(|| &"Hii").to_string()</p>
     <p>my func: this is @self.my_func().to_uppercase()</p>
     <p>my func: this is@self.my_func()also it is</p>
 </div>

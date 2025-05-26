@@ -60,11 +60,12 @@ rust_expr_simple = @{
     ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body"|"raw"|"use")
     ~ WHITESPACE+
     )
-    ~ rust_identifier ~ chain_segment*
+    ~ "&"* ~ rust_identifier ~ chain_segment*
 }
 
 chain_segment = {
-    (".") ~ rust_identifier
+    "&" ~ rust_identifier
+    | "." ~ rust_identifier
     | "::" ~ rust_identifier
     | ("(" ~ nested_content* ~ ")")
     | ("[" ~ nested_content* ~ "]")
@@ -355,9 +356,8 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: support rust expr paren in match arm, also support text and rust expr simple and parent in one line
-// TODO 2: support & dereference operator for rust expr simple
-// TODO 3: dont process component tags in html comments
+// TODO 1: in match arm, support text and rust expr simple and parent in one line
+// TODO 2: dont process component tags in html comments
 
 // TODO 4: manage layout system in dir and use like views = [{path="views/home", layout="layout.rs.html"},
 // {path="views/auth", layout="layout.rs.html"}]
