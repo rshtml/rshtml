@@ -174,6 +174,7 @@ match_expr_arm = {
     ("{" ~ inner_template ~ "}")
     | continue_directive
     | break_directive
+    | rust_expr_parenthesized
     | rust_expr_simple
     | match_inner_text
     )
@@ -182,7 +183,7 @@ match_expr_arm = {
 
 match_expr_arm_head = @{ (!("@" | "=>") ~ ANY)+ }
 
-match_inner_text = @{ ( "@@}" | "@@{" | "@@" | (!(NEWLINE | "@" | ("," ~ WHITESPACE* ~ "}") | "}") ~ ANY) )+ }
+match_inner_text = @{ ( "@@}" | "@@{" | "@@" | (!(NEWLINE | "@" | ("," ~ (" " | "\t" )* ~ NEWLINE) | ("," ~ WHITESPACE* ~ "}") | "}") ~ ANY) )+ }
 
 // endregion
 
@@ -354,7 +355,7 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: support rust expr paren and continue, break in match arm, also support text and rust expr simple and parent in one line
+// TODO 1: support rust expr paren in match arm, also support text and rust expr simple and parent in one line
 // TODO 2: support & dereference operator for rust expr simple
 // TODO 3: dont process component tags in html comments
 

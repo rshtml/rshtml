@@ -49,6 +49,7 @@ impl IParser for MatchExprParser {
                 Rule::inner_template => parser.build_nodes_from_pairs(match_expr_arm_value.into_inner())?,
                 Rule::continue_directive => vec![Node::ContinueDirective],
                 Rule::break_directive => vec![Node::BreakDirective],
+                Rule::rust_expr_paren => vec![parser.build_ast_node(match_expr_arm_value)?],
                 Rule::rust_expr_simple => vec![parser.build_ast_node(match_expr_arm_value)?],
                 Rule::match_inner_text => vec![Node::InnerText(
                     match_expr_arm_value.as_str().replace("@@", "@").replace("@@{", "{").replace("@@}", "}"),

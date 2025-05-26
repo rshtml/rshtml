@@ -22,3 +22,15 @@
     2 => <p>this is two</p>,
     _ => <p>this is bigger than two</p>,
 }
+
+@for i in 0..10 {
+    @match i {
+        0 | 1 => (i * 3),
+        2 => continue,
+        3 => <p>this is three</p>,
+        4 => 555,
+        9 => {},
+        10 => break,
+        _ => i,
+    }
+}
