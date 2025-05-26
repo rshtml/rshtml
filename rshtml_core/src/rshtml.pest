@@ -179,18 +179,16 @@ match_inner_text = @{ ( "@@}" | "@@{" | "@@" | (!(NEWLINE | "@" | ("," ~ WHITESP
 
 // endregion
 
-// region --- Rust continue and break directives for the loops
+// region --- Rust @continue and @break directives for the loops
 
 continue_directive = @{
-    &"continue"
-    ~ "continue"
-    ~ &(WHITESPACE+)
+    "continue"
+    ~ WHITESPACE+
 }
 
 break_directive = @{
-    &"break"
-    ~ "break"
-    ~ &(WHITESPACE+)
+    "break"
+    ~ WHITESPACE+
 }
 
 

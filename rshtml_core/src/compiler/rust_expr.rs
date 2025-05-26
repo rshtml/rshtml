@@ -16,12 +16,6 @@ impl RustExprCompiler {
             for inner_node in inner_nodes {
                 let its = compiler.compile(inner_node)?;
                 inner_ts.extend(quote! {#its});
-
-                // TODO: re-evaluate this place and if it does not cause erroneous results, it should stay
-                match inner_node {
-                    Node::ContinueDirective | Node::BreakDirective => break,
-                    _ => (),
-                };
             }
 
             let expr_code = TokenStream::from_str(expr).map_err(|err| anyhow!("Lex Error: {}", err))?;
