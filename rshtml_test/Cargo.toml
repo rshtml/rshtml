@@ -3,8 +3,6 @@ name = "rshtml_test"
 version = "0.1.0"
 edition = "2024"
 
-build = "build.rs"
-
 [dependencies]
 rshtml = { path = "../rshtml" }
 chrono = "0.4.41"

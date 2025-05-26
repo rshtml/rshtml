@@ -337,20 +337,18 @@ child_content_directive = @{
 // TODO 3: support & dereference operator for rust expr simple
 // TODO 4: dont process component tags in html comments
 
+// TODO 5: manage layout system in dir and use like views = [{path="views/home", layout="layout.rs.html"},
+// {path="views/auth", layout="layout.rs.html"}]
+// TODO 6: remove rs prefix for function and use directly like @time()
+
+// TODO 998: try to add source mapping or something for better error messages
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
 // TODO After: (Rust Time)
 /*
     1. Adding html escapes during rendering also a directive that can print without escape is required
-    2. IsRenderSectionDefined or hasSection like method must be defined
     3. define _layout = "layout.rs.html" support in rust block to set view layout. maybe remove extends directive after this
-    4. add class, checked, selected, disabled, readonly, required functions to use in html attributes or json like functions for js
     5. define push/stack functions for asset management
-    6. maybe define @t function for translation Internationalization (i18n) / Localization (i10n)
-        // @t('welcome_message') or @t('items_found', { 'count': item_count }), t(key: &str, params: Option<HashMap<&str, &str>>)
-        // fluent-rs, gettext, serde
     7. maybe add source mapping for better error messages, sourcemap crate
-    8. for better error messages like use pest::error::Error::renamed_rules
-    9. control the imports for components
-    10. maybe @csrf directive for form protection
+    10. maybe @csrf directive or function for form protection
 */
