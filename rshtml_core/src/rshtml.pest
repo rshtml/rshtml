@@ -170,7 +170,14 @@ match_expr_head = @{
 match_expr_arm = {
     match_expr_arm_head ~ WHITESPACE*
     ~ "=>" ~ WHITESPACE*
-    ~ (("{" ~ inner_template ~ "}") | rust_expr_simple | (match_inner_text)) ~ WHITESPACE* ~ ","?
+    ~ (
+    ("{" ~ inner_template ~ "}")
+    | continue_directive
+    | break_directive
+    | rust_expr_simple
+    | match_inner_text
+    )
+    ~ WHITESPACE* ~ ","?
 }
 
 match_expr_arm_head = @{ (!("@" | "=>") ~ ANY)+ }
@@ -183,12 +190,12 @@ match_inner_text = @{ ( "@@}" | "@@{" | "@@" | (!(NEWLINE | "@" | ("," ~ WHITESP
 
 continue_directive = @{
     "continue"
-    ~ WHITESPACE+
+    ~ WHITESPACE*
 }
 
 break_directive = @{
     "break"
-    ~ WHITESPACE+
+    ~ WHITESPACE*
 }
 
 
