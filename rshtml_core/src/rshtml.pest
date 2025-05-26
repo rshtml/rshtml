@@ -33,7 +33,7 @@ block = !{
     "@" ~ (
         (raw_block | render_directive | include_directive | section_directive | section_block
         | render_body_directive | child_content_directive | component | use_directive)
-        | (rust_block | rust_expr | rust_expr_parenthesized | match_expr | rust_expr_simple)
+        | (rust_block | rust_expr | rust_expr_parenthesized | match_expr | continue_directive | break_directive |rust_expr_simple)
         )
     )
 }
@@ -176,6 +176,23 @@ match_expr_arm = {
 match_expr_arm_head = @{ (!("@" | "=>") ~ ANY)+ }
 
 match_inner_text = @{ ( "@@}" | "@@{" | "@@" | (!(NEWLINE | "@" | ("," ~ WHITESPACE* ~ "}") | "}") ~ ANY) )+ }
+
+// endregion
+
+// region --- Rust continue and break directives for the loops
+
+continue_directive = @{
+    &"continue"
+    ~ "continue"
+    ~ &(WHITESPACE+)
+}
+
+break_directive = @{
+    &"break"
+    ~ "break"
+    ~ &(WHITESPACE+)
+}
+
 
 // endregion
 
@@ -332,7 +349,7 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: support rust expr paren in match arm, also support text and rust expr simple and parent in one line
+// TODO 1: support rust expr paren and continue, break in match arm, also support text and rust expr simple and parent in one line
 // TODO 2: support the continue and break keyword in for loops
 // TODO 3: support & dereference operator for rust expr simple
 // TODO 4: dont process component tags in html comments

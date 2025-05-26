@@ -177,5 +177,11 @@ pub fn view_node(node: &Node, indent: usize) {
             println!("- Component:");
             view_node(&*component, indent + 2);
         }
+        Node::ContinueDirective => {
+            println!("- ContinueDirective");
+        }
+        Node::BreakDirective => {
+            println!("- BreakDirective");
+        }
     }
 }

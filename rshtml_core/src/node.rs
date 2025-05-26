@@ -63,4 +63,6 @@ pub enum Node {
     ChildContent,                                          // @child_content (component child content)
     Raw(String),                                           // @raw {} (raw content)
     UseDirective(String, PathBuf, Box<Node>),              // @use "component.rs.html" as Component
+    ContinueDirective,                                     // @continue for the loops
+    BreakDirective,                                        // @break for the loops
 }

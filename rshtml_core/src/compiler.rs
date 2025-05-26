@@ -80,6 +80,8 @@ impl Compiler {
             Node::ChildContent => Ok(quote! {child_content(__f__)?;}),
             Node::Raw(body) => Ok(quote! { write!(__f__, "{}", #body)?; }),
             Node::UseDirective(name, path, component) => Ok(UseDirectiveCompiler::compile(self, name, path, component)),
+            Node::ContinueDirective => Ok(quote! {continue;}),
+            Node::BreakDirective => Ok(quote! {break;}),
         }
     }
 

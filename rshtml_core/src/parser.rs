@@ -102,6 +102,8 @@ impl RsHtmlParser {
             Rule::child_content_directive => Ok(Node::ChildContent),
             Rule::raw_block => RawBlockParser::parse(self, pair),
             Rule::use_directive => UseDirectiveParser::parse(self, pair),
+            Rule::continue_directive => Ok(Node::ContinueDirective),
+            Rule::break_directive => Ok(Node::BreakDirective),
             rule => Err(Error::new_from_span(
                 ErrorVariant::CustomError {
                     message: format!("Error: Unknown rule: {:?}", rule),

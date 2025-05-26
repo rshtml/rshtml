@@ -286,6 +286,31 @@ pub fn test_component() -> std::io::Result<()> {
 }
 
 #[test]
+pub fn test_continue_break() -> std::io::Result<()> {
+    prepare(
+        "ContinueBreakPage",
+        "continue_break.rs.html",
+        quote! {
+            value: i32,
+            data: String,
+            users: Vec<String>,
+        },
+        quote! {
+            value: 10,
+            data: "Hello".to_string(),
+            users: vec!["Alice".to_string(), "Bob".to_string(), "John".to_string()],
+        },
+        quote! {
+            fn my_func(&self) -> String {
+                let mut hold = "Func".to_string();
+                hold.push_str(self.data.clone().as_str());
+                hold
+            }
+        },
+    )
+}
+
+#[test]
 fn test_test() {
     "Func".to_string().push_str("Func");
     struct MyData {
