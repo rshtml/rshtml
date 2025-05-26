@@ -348,13 +348,12 @@ child_content_directive = @{
 /// endregion Code blocks and code transfers
 
 // TODO 1: support rust expr paren and continue, break in match arm, also support text and rust expr simple and parent in one line
-// TODO 2: support the continue and break keyword in for loops
-// TODO 3: support & dereference operator for rust expr simple
-// TODO 4: dont process component tags in html comments
+// TODO 2: support & dereference operator for rust expr simple
+// TODO 3: dont process component tags in html comments
 
-// TODO 5: manage layout system in dir and use like views = [{path="views/home", layout="layout.rs.html"},
+// TODO 4: manage layout system in dir and use like views = [{path="views/home", layout="layout.rs.html"},
 // {path="views/auth", layout="layout.rs.html"}]
-// TODO 6: remove rs prefix for function and use directly like @time()
+// TODO 5: remove rs prefix for function and use directly like @time()
 
 // TODO 998: try to add source mapping or something for better error messages
 // TODO 999: Maybe add @client {...} support for client side codes and templates
