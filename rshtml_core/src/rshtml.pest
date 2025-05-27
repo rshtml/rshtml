@@ -221,7 +221,7 @@ include_directive = {
 
 // endregion
 
-// region @extends directive @extends('layout.html')
+// region @extends directive @extends('layout.rs.html')
 
 extends_directive = {
     "@" ~ "extends" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
@@ -356,8 +356,7 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: manage layout system in dir and use like views = [{path="views/home", layout="layout.rs.html"},
-// {path="views/auth", layout="layout.rs.html"}]
+// TODO 1: use @extends or @extends(), its mean is use default layout, or use @extends("layout.rs.html")
 // TODO 2: remove rs prefix for function and use directly like @time()
 
 // TODO 998: try to add source mapping or something for better error messages
