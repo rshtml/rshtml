@@ -224,9 +224,9 @@ include_directive = {
 // region @extends directive @extends('layout.rs.html')
 
 extends_directive = {
-    "@" ~ "extends" ~ WHITESPACE* ~ "(" ~ WHITESPACE*
-        ~ string_line
-    ~ WHITESPACE* ~ ")"
+    "@" ~ "extends" ~ WHITESPACE* ~ ("(" ~ WHITESPACE*
+        ~ string_line?
+    ~ WHITESPACE* ~ ")")?
 }
 
 // endregion

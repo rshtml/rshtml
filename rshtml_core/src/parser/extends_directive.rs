@@ -10,13 +10,10 @@ impl IParser for ExtendsDirectiveParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
         let pair_span = pair.as_span();
 
-        let path_pair = pair.into_inner().find(|p| p.as_rule() == Rule::string_line).ok_or(Error::new_from_span(
-            ErrorVariant::CustomError {
-                message: "No path found".into(),
-            },
-            pair_span,
-        ))?;
-        let path_str = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
+        let mut path_str = parser.config.views.1.clone();
+        if let Some(path_pair) = pair.into_inner().find(|p| p.as_rule() == Rule::string_line) {
+            path_str = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
+        }
 
         let layout_node = match parser.parse_template(&path_str) {
             Ok(node) => node,
