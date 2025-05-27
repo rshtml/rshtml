@@ -3,60 +3,49 @@ use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
-    pub views_base_path: PathBuf,
-    pub layout: String,
-    pub locales_base_path: PathBuf,
-    pub locale_lang: String,
+    pub views: (PathBuf, String),   // base_path, layout
+    pub locales: (PathBuf, String), // base_path, default_lang
 }
 
 #[allow(dead_code)]
 impl Config {
-    pub fn new<P: AsRef<Path>>(views_base_path: P, layout: String, locales_base_path: P, locale_lang: String) -> Self {
-        Config {
-            views_base_path: views_base_path.as_ref().to_path_buf(),
-            layout,
-            locales_base_path: locales_base_path.as_ref().to_path_buf(),
-            locale_lang,
-        }
+    pub fn new<P: AsRef<Path>>(views: (PathBuf, String), locales: (PathBuf, String)) -> Self {
+        Config { views, locales }
     }
 
-    pub fn set_views_base_path(&mut self, path_str: String) -> &mut Self {
+    pub fn set_views(&mut self, views: (String, String)) {
         let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
-        let mut base_path = PathBuf::from(manifest_dir);
-        base_path.push(path_str);
-        self.views_base_path = base_path;
 
-        self
+        let mut base_path = PathBuf::from(&manifest_dir);
+        base_path.push(views.0);
+        self.views = (base_path, views.1);
     }
 
-    pub fn set_layout(&mut self, layout_str: String) -> &mut Self {
-        self.layout = layout_str;
-
-        self
-    }
-
-    pub fn set_locales_base_path(&mut self, locale_str: String) -> &mut Self {
+    pub fn set_locales(&mut self, locales: (String, String)) {
         let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
-        let mut base_path = PathBuf::from(manifest_dir);
-        base_path.push(locale_str);
-        self.locales_base_path = base_path;
 
-        self
-    }
-
-    pub fn set_locale_lang(&mut self, locale_lang: String) -> &mut Self {
-        self.locale_lang = locale_lang;
-
-        self
+        let mut base_path = PathBuf::from(&manifest_dir);
+        base_path.push(locales.0);
+        self.locales = (base_path, locales.1);
     }
 
     pub fn load_from_toml_or_default() -> Self {
         #[derive(Deserialize, Debug, Clone)]
+        pub struct Views {
+            pub path: String,
+            pub layout: String,
+        }
+
+        #[derive(Deserialize, Debug, Clone)]
+        pub struct Locales {
+            pub path: String,
+            pub lang: String,
+        }
+
+        #[derive(Deserialize, Debug, Clone)]
         pub struct MetadataConfig {
-            pub views_base_path: Option<String>,
-            pub layout: Option<String>,
-            pub locales_base_path: Option<String>,
-            pub locale_lang: Option<String>,
+            pub views: Option<Views>,
+            pub locales: Option<Locales>,
         }
 
         #[derive(Deserialize, Debug)]
@@ -84,17 +73,11 @@ impl Config {
                         if let Some(pkg) = manifest.package {
                             if let Some(metadata) = pkg.metadata {
                                 if let Some(toml_config) = metadata.rshtml {
-                                    if let Some(path_str) = toml_config.views_base_path {
-                                        config.set_views_base_path(path_str);
+                                    if let Some(views) = toml_config.views {
+                                        config.set_views((views.path, views.layout));
                                     }
-                                    if let Some(layout_str) = toml_config.layout {
-                                        config.set_layout(layout_str);
-                                    }
-                                    if let Some(locale_str) = toml_config.locales_base_path {
-                                        config.set_locales_base_path(locale_str);
-                                    }
-                                    if let Some(locale_lang_str) = toml_config.locale_lang {
-                                        config.set_locale_lang(locale_lang_str);
+                                    if let Some(locales) = toml_config.locales {
+                                        config.set_locales((locales.path, locales.lang));
                                     }
                                 }
                             }
@@ -119,10 +102,8 @@ impl Default for Config {
         locales_base_path.push("locales");
 
         Config {
-            views_base_path,
-            layout: String::from("layout.rs.html"),
-            locales_base_path,
-            locale_lang: String::from("en-US"),
+            views: (views_base_path.clone(), String::from("layout.rs.html")),
+            locales: (locales_base_path.clone(), String::from("en-US")),
         }
     }
 }

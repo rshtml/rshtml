@@ -432,7 +432,6 @@ dependencies = [
  "serde_json",
  "syn",
  "tempfile",
- "thiserror",
  "toml",
  "trybuild",
  "unic-langid",

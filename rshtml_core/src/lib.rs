@@ -19,11 +19,10 @@ use std::path::Path;
 
 pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStream {
     let config = Config::load_from_toml_or_default();
-    let views_base_path = config.views_base_path.clone();
-    let layout = config.layout.clone();
-    let locales_base_path = config.locales_base_path.clone();
+    let (views_base_path,layout) = config.views.clone();
+    let (locales_base_path, locale_lang) = config.locales.clone();
     let locales_base_path = locales_base_path.to_string_lossy().into_owned();
-    let locale_lang = config.locale_lang.clone();
+    
 
     let (compiled_ast_tokens, sections) = match parse_and_compile(&template_name, config) {
         Ok(tokens) => tokens,
@@ -40,22 +39,6 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     };
 
     //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
-
-    // let generated_code = quote! {
-    //     #[allow(non_upper_case_globals)]
-    //     const _ : () = {
-    //         static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions::new(#layout.to_string(), #sections, #locales_base_path, #locale_lang));
-    //
-    //         impl ::std::fmt::Display for #struct_name {
-    //              fn fmt(&self, __f__: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-    //
-    //                 #compiled_ast_tokens
-    //
-    //                 Ok(())
-    //              }
-    //         }
-    //     };
-    // };
 
     // TODO: calculate text size in compiler and use it in render for string capacity
 
@@ -80,8 +63,6 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
             }
         };
     };
-
-    //walk_dir(config.views_base_path);
 
     if views_base_path.is_dir() {
         walk_dir(&views_base_path);

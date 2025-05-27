@@ -18,7 +18,7 @@ impl IParser for IncludeDirectiveParser {
 
         let path = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
 
-        let view_path = parser.config.views_base_path.join(&path);
+        let view_path = parser.config.views.0.join(&path);
 
         let canonical_path = view_path.canonicalize().unwrap_or_default().to_string_lossy().to_string();
 

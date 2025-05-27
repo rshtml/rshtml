@@ -147,8 +147,9 @@ impl RsHtmlParser {
     }
 
     fn read_template(&self, path: &str) -> Result<String, String> {
-        let view_path = self.config.views_base_path.join(path);
-        let template = std::fs::read_to_string(&view_path).map_err(|err| format!("Error reading template: {:?}, path: {}", err, path))?;
+        let view_path = self.config.views.0.join(path);
+        let template =
+            std::fs::read_to_string(&view_path).map_err(|err| format!("Error reading template: {:?}, path: {}", err, view_path.to_string_lossy()))?;
 
         Ok(template)
     }

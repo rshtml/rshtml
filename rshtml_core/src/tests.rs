@@ -55,3 +55,10 @@ pub fn test_process_simple() {
     let ident = syn::Ident::new("HomePage", Span::call_site());
     process_template("continue_break.rs.html".to_string(), &ident);
 }
+
+#[test]
+pub fn test_config() {
+    let config = Config::default();
+    assert!(config.views.0.ends_with("views"));
+    assert_eq!(config.views.1, "layout.rs.html".to_string());
+}
