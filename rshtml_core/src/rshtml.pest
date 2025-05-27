@@ -357,15 +357,13 @@ child_content_directive = @{
 /// endregion Code blocks and code transfers
 
 // TODO 1: remove rs prefix for function and use directly like @time()
+// TODO 2: 1. Adding html escapes during rendering also a directive that can print without escape is required
 
 // TODO 998: try to add source mapping or something for better error messages
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
 // TODO After: (Rust Time)
 /*
-    1. Adding html escapes during rendering also a directive that can print without escape is required
-    3. define _layout = "layout.rs.html" support in rust block to set view layout. maybe remove extends directive after this
-    5. define push/stack functions for asset management
     7. maybe add source mapping for better error messages, sourcemap crate
     10. maybe @csrf directive or function for form protection
 */
