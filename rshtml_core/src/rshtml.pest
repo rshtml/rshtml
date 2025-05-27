@@ -356,12 +356,9 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: in match arm, support text and rust expr simple and parent in one line
-// TODO 2: dont process component tags in html comments
-
-// TODO 4: manage layout system in dir and use like views = [{path="views/home", layout="layout.rs.html"},
+// TODO 1: manage layout system in dir and use like views = [{path="views/home", layout="layout.rs.html"},
 // {path="views/auth", layout="layout.rs.html"}]
-// TODO 5: remove rs prefix for function and use directly like @time()
+// TODO 2: remove rs prefix for function and use directly like @time()
 
 // TODO 998: try to add source mapping or something for better error messages
 // TODO 999: Maybe add @client {...} support for client side codes and templates
