@@ -7,6 +7,7 @@ mod parser;
 #[cfg(test)]
 mod tests;
 pub mod traits;
+mod escape;
 
 use crate::config::Config;
 use crate::parser::RsHtmlParser;

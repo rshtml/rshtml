@@ -43,8 +43,9 @@
   @rs.json_let("users_let", &self.users);
 </script>
 
+@self.title
 @(3+5)
-@("Hello, world!")
+@("Hello, world! <script>alert('hello')</script>")
 
 <Card title="okayy" footer/>
 
