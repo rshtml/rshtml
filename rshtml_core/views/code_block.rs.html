@@ -1,9 +1,16 @@
 @{
     @: this is rust code blocks text line @self.data and data
 
+    let s = "'<script/>'";
+
+    @: this is escaped: @s
+    @: this is not escaped: @#s
+
     <text>
         this is rust code blocks text block @self.data and data
         heyy @self.my_func()
+        this is escaped: @s
+        this is not escaped: @#s
     </text>
 
     fn inline_function() -> String {

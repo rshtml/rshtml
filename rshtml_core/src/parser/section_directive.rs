@@ -1,6 +1,7 @@
 ﻿use crate::Node;
 use crate::node::SectionDirectiveContent;
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::traits::IsEscaped;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 
@@ -9,7 +10,10 @@ pub struct SectionDirectiveParser;
 impl IParser for SectionDirectiveParser {
     fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
         let pair_span = pair.as_span();
-        let mut pairs = pair.clone().into_inner().filter(|p| p.as_rule() == Rule::string_line || p.as_rule() == Rule::rust_expr_simple);
+        let mut pairs = pair
+            .clone()
+            .into_inner()
+            .filter(|p| p.as_rule() == Rule::string_line || p.as_rule() == Rule::rust_expr_simple);
 
         match (pairs.next(), pairs.next()) {
             (Some(name), Some(value)) => {
@@ -19,8 +23,8 @@ impl IParser for SectionDirectiveParser {
                         SectionDirectiveContent::Text(value)
                     }
                     Rule::rust_expr_simple => {
-                        let value = value.as_str().to_string();
-                        SectionDirectiveContent::RustExprSimple(value)
+                        let value = value.as_str();
+                        SectionDirectiveContent::RustExprSimple(value.escaped_or_raw(), value.is_escaped())
                     }
                     _ => unreachable!(),
                 };

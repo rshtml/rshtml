@@ -4,11 +4,16 @@
 
     @use "Card.rs.html" as Card
     @use "SideBar.rs.html"
+    @use "Navbar.rs.html"
 
     <meta charset="UTF-8">
     <title>@self.title</title>
 </head>
 <body>
+    <Navbar for_escape = @&self.for_escape>
+        heyy
+    </Navbar>
+
     this is card:
     <Card title="hello" footer = @self.value>
         this is card content

@@ -33,7 +33,7 @@ block = !{
     "@" ~ (
         (raw_block | render_directive | include_directive | section_directive | section_block
         | render_body_directive | child_content_directive | component | use_directive)
-        | (rust_block | rust_expr | rust_expr_parenthesized | match_expr | continue_directive | break_directive |rust_expr_simple)
+        | (rust_block | rust_expr | rust_expr_paren | match_expr | continue_directive | break_directive |rust_expr_simple)
         )
     )
 }
@@ -60,7 +60,7 @@ rust_expr_simple = @{
     ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body"|"raw"|"use")
     ~ WHITESPACE+
     )
-    ~ "&"* ~ rust_identifier ~ chain_segment*
+    ~ "#"? ~ "&"* ~ rust_identifier ~ chain_segment*
 }
 
 chain_segment = {
@@ -139,12 +139,8 @@ text_block = @{ ("@@" | !("</text>" | ("@" ~ (rust_expr_simple))) ~ ANY)+ }
 
 // region --- Parenthesized Rust Expressions (@(expressions)) ---
 
-rust_expr_parenthesized = _{
-    "(" ~ rust_expr_paren ~ ")"
-}
-
 rust_expr_paren = @{
-	(nested_expression | (!(")") ~ ANY))*
+	"#"? ~ "(" ~ (nested_expression | (!(")") ~ ANY))* ~ ")"
 }
 
 nested_expression = _{
@@ -165,7 +161,7 @@ match_expr = {
 }
 
 match_expr_head = @{
-    "match" ~ WHITESPACE+ ~ (rust_expr_simple | rust_expr_parenthesized | !("{" | "@" | "}") ~ ANY)+
+    "match" ~ WHITESPACE+ ~ (rust_expr_simple | rust_expr_paren | !("{" | "@" | "}") ~ ANY)+
 }
 
 match_expr_arm = {
@@ -175,7 +171,7 @@ match_expr_arm = {
     ("{" ~ inner_template ~ "}")
     | continue_directive
     | break_directive
-    | rust_expr_parenthesized
+    | rust_expr_paren
     | rust_expr_simple
     | match_inner_text
     )
@@ -264,7 +260,7 @@ render_directive = {
 render_body_directive = @{
     &"render_body"
     ~ "render_body"
-    ~ (&(WHITESPACE+) | ("(" ~ ")"))
+    ~ (&(WHITESPACE+ | EOI) | ("(" ~ ")"))
 }
 
 // endregion
@@ -274,7 +270,7 @@ render_body_directive = @{
 child_content_directive = @{
     &"child_content"
     ~ "child_content"
-    ~ (&(WHITESPACE+) | ("(" ~ ")"))
+    ~ (&(WHITESPACE+ | EOI) | ("(" ~ ")"))
 }
 
 // endregion
@@ -295,7 +291,7 @@ child_content_directive = @{
         bool
         | number
         | string
-        | ("@" ~ rust_expr_parenthesized)
+        | ("@" ~ rust_expr_paren)
         | ("@" ~ rust_expr_simple)
         | ("{" ~ inner_template ~ "}")
         )
@@ -322,7 +318,7 @@ child_content_directive = @{
         bool
         | number
         | string
-        | ("@" ~ rust_expr_parenthesized)
+        | ("@" ~ rust_expr_paren)
         | ("@" ~ rust_expr_simple)
         | ("{" ~ inner_template ~ "}")
     }
@@ -349,7 +345,7 @@ child_content_directive = @{
          &"use"
          ~ "use" ~ WHITESPACE+
          ~ string_line ~ WHITESPACE+
-         ~ ("as" ~ WHITESPACE+ ~ rust_identifier ~ (";" | &(WHITESPACE+)))?
+         ~ ("as" ~ WHITESPACE+ ~ rust_identifier ~ (";" | &(WHITESPACE+ | EOI)))?
         }
 
 // endregion
@@ -357,7 +353,6 @@ child_content_directive = @{
 /// endregion Code blocks and code transfers
 
 // TODO 1: remove rs prefix for function and use directly like @time()
-// TODO 2: develop for without escaped directive maybe like @#my_func(), print it raw
 // TODO 3: maybe @csrf directive or function for form protection
 
 // TODO 998: try to add source mapping or something for better error messages, sourcemap crate

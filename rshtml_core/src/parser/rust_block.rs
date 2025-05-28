@@ -1,6 +1,7 @@
 ﻿use crate::Node;
 use crate::node::{RustBlockContent, TextBlockItem, TextLineItem};
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::traits::IsEscaped;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::{Pair, Pairs};
 
@@ -49,7 +50,8 @@ impl RustBlockParser {
         for item_pair in inner_pair.into_inner() {
             match item_pair.as_rule() {
                 Rule::rust_expr_simple => {
-                    items.push(TextLineItem::RustExprSimple(item_pair.as_str().to_string()));
+                    let item_pair_str = item_pair.as_str();
+                    items.push(TextLineItem::RustExprSimple(item_pair_str.escaped_or_raw(), item_pair_str.is_escaped()));
                 }
                 Rule::text_line => {
                     let text = item_pair.as_str().replace("@@", "@");
@@ -72,7 +74,8 @@ impl RustBlockParser {
         for item_pair in inner_pair.into_inner() {
             match item_pair.as_rule() {
                 Rule::rust_expr_simple => {
-                    items.push(TextBlockItem::RustExprSimple(item_pair.as_str().to_string()));
+                    let item_pair_str = item_pair.as_str();
+                    items.push(TextBlockItem::RustExprSimple(item_pair_str.escaped_or_raw(), item_pair_str.is_escaped()));
                 }
                 Rule::text_block => {
                     let text = item_pair.as_str().replace("@@", "@");

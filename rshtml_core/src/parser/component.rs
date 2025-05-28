@@ -49,7 +49,7 @@ impl IParser for ComponentParser {
                             Rule::number,
                             Rule::string,
                             Rule::rust_expr_simple,
-                            Rule::rust_expr_parenthesized,
+                            Rule::rust_expr_paren,
                             Rule::inner_template,
                         ],
                         negatives: vec![Rule::rust_identifier],

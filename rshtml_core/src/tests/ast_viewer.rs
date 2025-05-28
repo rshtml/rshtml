@@ -8,7 +8,7 @@ fn view_text_line_item(item: &TextLineItem, indent: usize) {
     print_indent(indent);
     match item {
         TextLineItem::Text(text) => println!("- Text: {:?}", text),
-        TextLineItem::RustExprSimple(expr) => println!("- RustExprSimple: {:?}", expr),
+        TextLineItem::RustExprSimple(expr, _) => println!("- RustExprSimple: {:?}", expr),
     }
 }
 
@@ -16,7 +16,7 @@ fn view_text_block_item(item: &TextBlockItem, indent: usize) {
     print_indent(indent);
     match item {
         TextBlockItem::Text(text) => println!("- Text: {:?}", text),
-        TextBlockItem::RustExprSimple(expr) => println!("- RustExprSimple: {:?}", expr),
+        TextBlockItem::RustExprSimple(expr, _) => println!("- RustExprSimple: {:?}", expr),
     }
 }
 
@@ -80,10 +80,10 @@ pub fn view_node(node: &Node, indent: usize) {
                 view_rust_block_content(content, indent + 1);
             }
         }
-        Node::RustExprSimple(expr) => {
+        Node::RustExprSimple(expr, _) => {
             println!("- RustExprSimple: {:?}", expr);
         }
-        Node::RustExprParen(expr) => {
+        Node::RustExprParen(expr, _) => {
             println!("- RustExprParen: {:?}", expr);
         }
         Node::RustExpr(clauses) => {
@@ -117,7 +117,7 @@ pub fn view_node(node: &Node, indent: usize) {
             print_indent(indent + 1);
             match body {
                 SectionDirectiveContent::Text(s) => println!("- StringLine: {:?}", s),
-                SectionDirectiveContent::RustExprSimple(s) => println!("- RustExprSimple: {:?}", s),
+                SectionDirectiveContent::RustExprSimple(s, _) => println!("- RustExprSimple: {:?}", s),
             }
         }
         Node::SectionBlock(section_head, body) => {

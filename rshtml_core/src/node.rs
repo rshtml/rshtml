@@ -3,13 +3,13 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, PartialEq)]
 pub enum TextBlockItem {
     Text(String),
-    RustExprSimple(String),
+    RustExprSimple(String, bool),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TextLineItem {
     Text(String),
-    RustExprSimple(String),
+    RustExprSimple(String, bool),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -23,7 +23,7 @@ pub enum RustBlockContent {
 #[derive(Debug, PartialEq, Clone)]
 pub enum SectionDirectiveContent {
     Text(String),
-    RustExprSimple(String),
+    RustExprSimple(String, bool),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -52,8 +52,8 @@ pub enum Node {
     ExtendsDirective(PathBuf, Box<Node>),                  // extends directive @extends("layout.html")
     RenderDirective(String),                               // yield directive @yield("content")
     RustBlock(Vec<RustBlockContent>),                      // @{ ... } block content (with trim)
-    RustExprSimple(String),                                // @expr ... (simple expression)
-    RustExprParen(String),                                 // @(expr) (expression parentheses)
+    RustExprSimple(String, bool),                          // @expr ... (simple expression)
+    RustExprParen(String, bool),                           // @(expr) (expression parentheses)
     MatchExpr(String, Vec<(String, Vec<Node>)>),           // @match expr { ... => ... }
     RustExpr(Vec<(String, Vec<Node>)>),                    // @if ...  { ... } else { ... } / @for ... { ... }
     SectionDirective(String, SectionDirectiveContent),     // @section("content")

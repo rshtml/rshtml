@@ -25,7 +25,6 @@ pub fn rename_rules(err: Error<Rule>) -> Error<Rule> {
         Rule::text_line => "text line".to_string(),
         Rule::text_block_tag => "text block".to_string(),
         Rule::text_block => "text block".to_string(),
-        Rule::rust_expr_parenthesized => "rust expression in parentheses".to_string(),
         Rule::rust_expr_paren => "rust expression in parentheses".to_string(),
         Rule::match_expr => "match expression".to_string(),
         Rule::match_expr_head => "match expression".to_string(),

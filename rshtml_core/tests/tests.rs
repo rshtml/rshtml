@@ -40,6 +40,8 @@ fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: 
     }
     .to_string();
 
+    eprintln!("{}", test_code_str);
+
     let dir = tempdir()?;
     let file_path = dir.path().join("test.rs");
     let mut file = File::create(&file_path)?;
@@ -138,10 +140,12 @@ pub fn test_simple_expression() -> std::io::Result<()> {
         quote! {
             value: i32,
             data: Option<String>,
+            for_escape: String,
         },
         quote! {
             value: 10,
             data: Some("Hello".to_string()),
+            for_escape: "'<script/>'".to_string(),
         },
         quote! {
             fn my_func(&self) -> String {
@@ -222,10 +226,12 @@ pub fn test_layout() -> std::io::Result<()> {
         quote! {
             value: i32,
             data: String,
+            for_escape: String,
         },
         quote! {
             value: 10,
             data: "Hello".to_string(),
+            for_escape: "'<script/>'".to_string(),
         },
         quote! {
             fn my_func(&self) -> String {
@@ -292,11 +298,13 @@ pub fn test_component() -> std::io::Result<()> {
             value: i32,
             title: String,
             data: String,
+            for_escape: String,
         },
         quote! {
             value: 10,
             title: "Component".to_string(),
             data: "Hello".to_string(),
+            for_escape: "'<script/>'".to_string(),
         },
         quote! {
             fn my_func(&self) -> String {
