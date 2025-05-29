@@ -40,8 +40,6 @@ fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: 
     }
     .to_string();
 
-    eprintln!("{}", test_code_str);
-
     let dir = tempdir()?;
     let file_path = dir.path().join("test.rs");
     let mut file = File::create(&file_path)?;
