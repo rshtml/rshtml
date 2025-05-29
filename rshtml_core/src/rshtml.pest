@@ -352,7 +352,11 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: remove rs prefix for function and use directly like @time()
+// TODO 1: remove rs prefix for function and use directly like @("2023-11-20" | time) or
+// like this @"2023-11-20T10:30:00Z" | time | pretty | format("%b %d, %Y")
+// also define helper functions with  private trait and add Self:: keyword prefix for this functions.
+// ex: @"2023-11-20" | time   to  Self::time("2023-11-20") without escaping
+
 
 // TODO 998: try to add source mapping or something for better error messages, sourcemap crate
 // TODO 999: Maybe add @client {...} support for client side codes and templates
