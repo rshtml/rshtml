@@ -69,8 +69,8 @@ impl Compiler {
             Node::ExtendsDirective(path, layout) => Ok(ExtendsDirectiveCompiler::compile(self, path, layout)),
             Node::RenderDirective(name) => Ok(RenderDirectiveCompiler::compile(self, &name)),
             Node::RustBlock(contents) => RustBlockCompiler::compile(self, contents),
-            Node::RustExprSimple(expr, is_escaped) => Ok(RustExprSimpleCompiler::compile(expr, is_escaped)),
-            Node::RustExprParen(expr, is_escaped) => Ok(RustExprParenCompiler::compile(expr, is_escaped)),
+            Node::RustExprSimple(expr, is_escaped) => Ok(RustExprSimpleCompiler::compile(self,expr, is_escaped)),
+            Node::RustExprParen(expr, is_escaped) => Ok(RustExprParenCompiler::compile(self,expr, is_escaped)),
             Node::MatchExpr(name, arms) => MatchExprCompiler::compile(self, name, arms),
             Node::RustExpr(exprs) => RustExprCompiler::compile(self, exprs),
             Node::SectionDirective(name, content) => SectionDirectiveCompiler::compile(self, name, content),
@@ -90,5 +90,30 @@ impl Compiler {
         self.sections.keys().for_each(|x| token_stream.extend(quote! {#x.to_string(),}));
 
         quote! {vec![#token_stream]}
+    }
+
+    fn escape(&self, input: TokenStream) -> TokenStream {
+        quote! {
+            for c in #input.to_string().chars() {
+                match c {
+                    '&' => write!(__f__, "{}", "&amp;")?,
+                    '<' => write!(__f__, "{}", "&lt;")?,
+                    '>' => write!(__f__, "{}", "&gt;")?,
+                    '"' => write!(__f__, "{}", "&quot;")?,
+                    '\'' => write!(__f__, "{}", "&#39;")?,
+                    '/' => write!(__f__, "{}", "&#x2F;")?,
+                    _ => write!(__f__, "{}", c)?,
+                }
+            }
+        }
+    }
+
+    fn escape_or_raw(&self, expr_ts: TokenStream, is_escaped: &bool) -> TokenStream {
+        if *is_escaped {
+            let escaped = self.escape(quote! {(#expr_ts)});
+            quote! {#escaped}
+        } else {
+            quote! {write!(__f__, "{}", #expr_ts)?;}
+        }
     }
 }

@@ -7,7 +7,6 @@ mod parser;
 #[cfg(test)]
 mod tests;
 pub mod traits;
-mod escape;
 
 use crate::config::Config;
 use crate::parser::RsHtmlParser;
@@ -20,10 +19,9 @@ use std::path::Path;
 
 pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStream {
     let config = Config::load_from_toml_or_default();
-    let (views_base_path,layout) = config.views.clone();
+    let (views_base_path, layout) = config.views.clone();
     let (locales_base_path, locale_lang) = config.locales.clone();
     let locales_base_path = locales_base_path.to_string_lossy().into_owned();
-    
 
     let (compiled_ast_tokens, sections) = match parse_and_compile(&template_name, config) {
         Ok(tokens) => tokens,
