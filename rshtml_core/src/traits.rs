@@ -5,7 +5,7 @@ pub trait RsHtml {
     fn render(&mut self) -> String;
 }
 
-pub trait IsEscaped {
+pub(crate) trait IsEscaped {
     fn is_escaped(&self) -> bool;
     fn escaped_or_raw(&self) -> String;
 }
