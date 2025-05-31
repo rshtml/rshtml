@@ -20,8 +20,6 @@ use std::path::Path;
 pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStream {
     let config = Config::load_from_toml_or_default();
     let (views_base_path, layout) = config.views.clone();
-    let (locales_base_path, locale_lang) = config.locales.clone();
-    let locales_base_path = locales_base_path.to_string_lossy().into_owned();
 
     let (compiled_ast_tokens, sections) = match parse_and_compile(&template_name, config) {
         Ok(tokens) => tokens,
@@ -41,8 +39,6 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
 
     // TODO: calculate text size in compiler and use it in render for string capacity
 
-    let ss = quote! {vec!["content".to_string()]};
-
     let rs = quote! {
         const layout: &str = #layout;
         fn has_section(section: &str) -> bool {#sections.contains(&section)}
@@ -51,7 +47,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     let generated_code = quote! {
         #[allow(non_upper_case_globals)]
         const _ : () = {
-            static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions::new(#layout.to_string(), #ss, #locales_base_path, #locale_lang));
+            static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions{});
 
             #rs
             impl rshtml::traits::RsHtml for #struct_name {

@@ -3,14 +3,13 @@ use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
-    pub views: (PathBuf, String),   // base_path, layout
-    pub locales: (PathBuf, String), // base_path, default_lang
+    pub views: (PathBuf, String), // base_path, layout
 }
 
 #[allow(dead_code)]
 impl Config {
-    pub fn new<P: AsRef<Path>>(views: (PathBuf, String), locales: (PathBuf, String)) -> Self {
-        Config { views, locales }
+    pub fn new<P: AsRef<Path>>(views: (PathBuf, String)) -> Self {
+        Config { views }
     }
 
     pub fn set_views(&mut self, views: (String, String)) {
@@ -21,14 +20,6 @@ impl Config {
         self.views = (base_path, views.1);
     }
 
-    pub fn set_locales(&mut self, locales: (String, String)) {
-        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
-
-        let mut base_path = PathBuf::from(&manifest_dir);
-        base_path.push(locales.0);
-        self.locales = (base_path, locales.1);
-    }
-
     pub fn load_from_toml_or_default() -> Self {
         #[derive(Deserialize, Debug, Clone)]
         pub struct Views {
@@ -37,15 +28,8 @@ impl Config {
         }
 
         #[derive(Deserialize, Debug, Clone)]
-        pub struct Locales {
-            pub path: String,
-            pub lang: String,
-        }
-
-        #[derive(Deserialize, Debug, Clone)]
         pub struct MetadataConfig {
             pub views: Option<Views>,
-            pub locales: Option<Locales>,
         }
 
         #[derive(Deserialize, Debug)]
@@ -76,9 +60,6 @@ impl Config {
                                     if let Some(views) = toml_config.views {
                                         config.set_views((views.path, views.layout));
                                     }
-                                    if let Some(locales) = toml_config.locales {
-                                        config.set_locales((locales.path, locales.lang));
-                                    }
                                 }
                             }
                         }
@@ -103,7 +84,6 @@ impl Default for Config {
 
         Config {
             views: (views_base_path.clone(), String::from("layout.rs.html")),
-            locales: (locales_base_path.clone(), String::from("en-US")),
         }
     }
 }

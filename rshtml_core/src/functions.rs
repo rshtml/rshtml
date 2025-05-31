@@ -1,29 +1,12 @@
 mod t;
 mod time;
 
-use crate::functions::t::Translator;
 use serde::Serialize;
 use std::string::ToString;
-use std::sync::RwLock;
 
-pub struct Functions {
-    pub layout: String,
-    sections: Vec<String>,
-    translator: RwLock<Translator>,
-}
+pub struct Functions;
 
 impl Functions {
-    pub fn new(layout: String, sections: Vec<String>, locales_base_path: &str, locale_lang: &str) -> Self {
-        Self {
-            layout,
-            sections,
-            translator: RwLock::new(Translator::new(locales_base_path, locale_lang)),
-        }
-    }
-
-    pub fn has_section(&self, section_name: &str) -> bool {
-        self.sections.contains(&section_name.to_string())
-    }
 
     pub fn json<T: Serialize>(&self, value: &T) -> String {
         serde_json::to_string(value).unwrap_or_else(|err| {
