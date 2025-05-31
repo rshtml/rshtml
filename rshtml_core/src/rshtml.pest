@@ -86,6 +86,20 @@ expression_boundary = _{
 
 //endregion
 
+// region --- Parenthesized Rust Expressions (@(expressions)) ---
+
+rust_expr_paren = @{
+	"#"? ~ "(" ~ (nested_expression | (!(")") ~ ANY))* ~ ")"
+}
+
+nested_expression = _{
+    ( "(" ~ (nested_expression | (!(")") ~ ANY))* ~ ")" )
+  | ( "[" ~ (nested_expression | (!("]") ~ ANY))* ~ "]" )
+  | ( "{" ~ (nested_expression | (!("}") ~ ANY))*   ~ "}" )
+}
+
+// endregion
+
 // region --- Rust Code Blocks (@{ ... }) ---
 
 rust_block = {
@@ -134,20 +148,6 @@ text_line = @{ ("@@" | !(NEWLINE | ("@" ~ rust_expr_simple)) ~ ANY)+ }
 
 text_block_tag = ${ "<text>" ~ (("@" ~ (rust_expr_simple)) |  text_block)* ~ "</text>" }
 text_block = @{ ("@@" | !("</text>" | ("@" ~ (rust_expr_simple))) ~ ANY)+ }
-
-// endregion
-
-// region --- Parenthesized Rust Expressions (@(expressions)) ---
-
-rust_expr_paren = @{
-	"#"? ~ "(" ~ (nested_expression | (!(")") ~ ANY))* ~ ")"
-}
-
-nested_expression = _{
-    ( "(" ~ (nested_expression | (!(")") ~ ANY))* ~ ")" )
-  | ( "[" ~ (nested_expression | (!("]") ~ ANY))* ~ "]" )
-  | ( "{" ~ (nested_expression | (!("}") ~ ANY))*   ~ "}" )
-}
 
 // endregion
 
@@ -356,6 +356,9 @@ child_content_directive = @{
 // like this @"2023-11-20T10:30:00Z" | time | pretty | format("%b %d, %Y")
 // also define helper functions with  private trait and add Self:: keyword prefix for this functions.
 // ex: @"2023-11-20" | time   to  Self::time("2023-11-20") without escaping
+// code: ~ (WHITESPACE* ~ "|" ~ WHITESPACE* ~ rust_identifier ~ (WHITESPACE* ~ "(" ~ nested_content* ~ ")")?)*
+// add this the end of rust expr simple and paren
+// EX: @(expr) | time or @expr | time
 
 
 // TODO 998: try to add source mapping or something for better error messages, sourcemap crate
