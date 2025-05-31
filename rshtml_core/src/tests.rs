@@ -18,7 +18,7 @@ fn test_template_format() {
         "home.rs.html",
         "header.rs.html",
         "bar.rs.html",
-        "component.rs.html",
+        "simple_expression.rs.html",
     ];
 
     let ast = match RsHtmlParser::new().run(views[6], Config::default()) {
@@ -37,7 +37,7 @@ fn test_template_format() {
 
 #[test]
 fn test_template_format_without_parsing() {
-    let template = fs::read_to_string("views/component.rs.html").unwrap();
+    let template = fs::read_to_string("views/simple_expression.rs.html").unwrap();
     let pairs = match RsHtmlParser::parse(Rule::template, template.as_str()) {
         Ok(pairs) => pairs,
         Err(err) => {
