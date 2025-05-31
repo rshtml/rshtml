@@ -41,11 +41,19 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
 
     // TODO: calculate text size in compiler and use it in render for string capacity
 
+    let ss = quote! {vec!["content".to_string()]};
+
+    let rs = quote! {
+        const layout: &str = #layout;
+        fn has_section(section: &str) -> bool {#sections.contains(&section)}
+    };
+
     let generated_code = quote! {
         #[allow(non_upper_case_globals)]
         const _ : () = {
-            static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions::new(#layout.to_string(), #sections, #locales_base_path, #locale_lang));
+            static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions::new(#layout.to_string(), #ss, #locales_base_path, #locale_lang));
 
+            #rs
             impl rshtml::traits::RsHtml for #struct_name {
                 fn fmt(&mut self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
 

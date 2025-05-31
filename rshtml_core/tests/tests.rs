@@ -340,6 +340,21 @@ pub fn test_continue_break() -> std::io::Result<()> {
 }
 
 #[test]
+pub fn test_rs() -> std::io::Result<()> {
+    prepare(
+        "RsPage",
+        "rs.rs.html",
+        quote! {
+            value: i32,
+        },
+        quote! {
+            value: 10,
+        },
+        quote! {},
+    )
+}
+
+#[test]
 fn test_test() {
     "Func".to_string().push_str("Func");
     struct MyData {

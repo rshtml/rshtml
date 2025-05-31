@@ -87,9 +87,9 @@ impl Compiler {
 
     pub fn section_names(&self) -> TokenStream {
         let mut token_stream = TokenStream::new();
-        self.sections.keys().for_each(|x| token_stream.extend(quote! {#x.to_string(),}));
+        self.sections.keys().for_each(|x| token_stream.extend(quote! {#x,}));
 
-        quote! {vec![#token_stream]}
+        quote! {[#token_stream]}
     }
 
     fn escape(&self, input: TokenStream) -> TokenStream {

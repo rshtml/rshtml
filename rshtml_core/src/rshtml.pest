@@ -360,6 +360,7 @@ child_content_directive = @{
 // add this the end of rust expr simple and paren
 // EX: @(expr) | time or @expr | time
 
+// TODO 2: render("section") must render at the same page with section definition
 
 // TODO 998: try to add source mapping or something for better error messages, sourcemap crate
 // TODO 999: Maybe add @client {...} support for client side codes and templates
