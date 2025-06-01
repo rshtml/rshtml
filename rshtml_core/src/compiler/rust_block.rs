@@ -22,7 +22,8 @@ impl RustBlockCompiler {
                     for item in items {
                         match item {
                             TextLineItem::Text(text) => {
-                                token_stream.extend(quote! { write!(__f__, "{}", #text)?; });
+                                let t_ts = compiler.compile(&Node::Text(text.clone()))?;
+                                token_stream.extend(quote! {#t_ts});
                             }
                             TextLineItem::RustExprSimple(expr, is_escaped) => {
                                 let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone(), is_escaped.clone()))?;
@@ -35,7 +36,8 @@ impl RustBlockCompiler {
                     for item in items {
                         match item {
                             TextBlockItem::Text(text) => {
-                                token_stream.extend(quote! { write!(__f__, "{}", #text)?; });
+                                let t_ts = compiler.compile(&Node::Text(text.clone()))?;
+                                token_stream.extend(quote! {#t_ts});
                             }
                             TextBlockItem::RustExprSimple(expr, is_escaped) => {
                                 let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone(), is_escaped.clone()))?;

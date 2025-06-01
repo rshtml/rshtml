@@ -40,6 +40,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     // TODO: calculate text size in compiler and use it in render for string capacity
 
     let rs = quote! {
+        #[allow(non_upper_case_globals)]
         const layout: &str = #layout;
         fn has_section(section: &str) -> bool {#sections.contains(&section)}
         #[allow(unused_imports)]
