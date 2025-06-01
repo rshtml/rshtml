@@ -21,7 +21,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     let config = Config::load_from_toml_or_default();
     let (views_base_path, layout) = config.views.clone();
 
-    let (compiled_ast_tokens, sections) = match parse_and_compile(&template_name, config) {
+    let (compiled_ast_tokens, sections, text_size) = match parse_and_compile(&template_name, config) {
         Ok(tokens) => tokens,
         Err(err) => {
             let error_message = format!(
@@ -35,9 +35,9 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
         }
     };
 
-    //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
+    let text_size = text_size + ((text_size as f64 * 0.10) as usize).max(32).min(512);
 
-    // TODO: calculate text size in compiler and use it in render for string capacity
+    //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
     let rs = quote! {
         #[allow(non_upper_case_globals)]
@@ -51,7 +51,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
         const _ : () = {
 
             #rs
-            
+
             impl rshtml::traits::RsHtml for #struct_name {
                 fn fmt(&mut self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
 
@@ -61,7 +61,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
                 }
 
                 fn render(&mut self) -> String {
-                    let mut buf = String::with_capacity(1024);
+                    let mut buf = String::with_capacity(#text_size);
                     self.fmt(&mut buf).unwrap();
                     buf
                 }
@@ -76,7 +76,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     TokenStream::from(generated_code)
 }
 
-fn parse_and_compile(template_path: &str, config: Config) -> Result<(TokenStream, TokenStream)> {
+fn parse_and_compile(template_path: &str, config: Config) -> Result<(TokenStream, TokenStream, usize)> {
     let mut rshtml_parser = RsHtmlParser::new();
     let node = rshtml_parser.run(template_path, config)?;
 
@@ -87,10 +87,10 @@ fn parse_and_compile(template_path: &str, config: Config) -> Result<(TokenStream
         compiler.section_body = Some(ts.clone());
         let layout_ts = compiler.compile(&layout)?;
 
-        return Ok((layout_ts, compiler.section_names()));
+        return Ok((layout_ts, compiler.section_names(), compiler.text_size));
     }
 
-    Ok((ts, compiler.section_names()))
+    Ok((ts, compiler.section_names(), compiler.text_size))
 }
 
 fn walk_dir(dir: &Path) {
