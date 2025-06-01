@@ -19,25 +19,25 @@
   let styles = [("border","solid 1px red"), ("font-size","12px")];
 }
 
-@rs.time("2023-1:30:00Z")
-@rs.time("2023-11-20T10:30:00Z").pretty()
-@rs.time("2023-11-20T10:30:00Z").pretty().format("%b %d, %Y")
-@rs.time("2023-11-20T10:30:00Z").date()
-@rs.time("2023-11-20T10:30:00Z").time()
+@time("2023-1:30:00Z")
+@time("2023-11-20T10:30:00Z").pretty()
+@time("2023-11-20T10:30:00Z").pretty().format("%b %d, %Y")
+@time("2023-11-20T10:30:00Z").date()
+@time("2023-11-20T10:30:00Z").time()
 
 @inline_function()
 
-<div @rs.class(&classes)>
+<div @class(&classes)>
   classed div
 </div>
 
-<div @rs.css(&styles)>
+<div @css(&styles)>
   styled div
 </div>
 
 <script type="text/javascript">
-  let users = @rs.json(&self.users);
-  @rs.json_let("users_let", &self.users);
+  let users = @json(&self.users);
+  @json_let("users_let", &self.users);
 </script>
 
 @self.title

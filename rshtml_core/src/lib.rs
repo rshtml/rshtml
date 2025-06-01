@@ -42,12 +42,14 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     let rs = quote! {
         const layout: &str = #layout;
         fn has_section(section: &str) -> bool {#sections.contains(&section)}
+        #[allow(unused_imports)]
+        use rshtml::functions::*;
     };
 
     let generated_code = quote! {
         #[allow(non_upper_case_globals)]
         const _ : () = {
-            static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions{});
+            //static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions{});
 
             #rs
             impl rshtml::traits::RsHtml for #struct_name {

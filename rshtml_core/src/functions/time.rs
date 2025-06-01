@@ -1,4 +1,3 @@
-use crate::functions::Functions;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use std::fmt;
 use std::fmt::{Display, Formatter};
@@ -7,31 +6,29 @@ use std::str::FromStr;
 
 // TODO: icu_datetime = "1" and icu_locid = "1" use for localicazation
 
-impl Functions {
-    pub fn time<T: Display + ?Sized>(&self, value: &T) -> RsDateTime {
-        let value_str = value.to_string();
-        let default_format = "%Y-%m-%d %H:%M:%S".to_string();
+pub fn time<T: Display + ?Sized>(value: &T) -> RsDateTime {
+    let value_str = value.to_string();
+    let default_format = "%Y-%m-%d %H:%M:%S".to_string();
 
-        match DateTime::parse_from_rfc3339(&value_str) {
-            Ok(dt) => return RsDateTime(dt.with_timezone(&Utc), default_format),
-            Err(err) => eprintln!("DEBUG: Time error: {}", err),
-        };
+    match DateTime::parse_from_rfc3339(&value_str) {
+        Ok(dt) => return RsDateTime(dt.with_timezone(&Utc), default_format),
+        Err(err) => eprintln!("DEBUG: Time error: {}", err),
+    };
 
-        match NaiveDateTime::from_str(&value_str) {
-            Ok(ndt) => return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc), default_format),
-            Err(err) => eprintln!("DEBUG: Time error: {}", err),
-        };
+    match NaiveDateTime::from_str(&value_str) {
+        Ok(ndt) => return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc), default_format),
+        Err(err) => eprintln!("DEBUG: Time error: {}", err),
+    };
 
-        match NaiveDate::from_str(&value_str) {
-            Ok(nd) => {
-                let naive_datetime = nd.and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
-                return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(naive_datetime, Utc), default_format);
-            }
-            Err(err) => eprintln!("DEBUG: Time error: {}", err),
-        };
+    match NaiveDate::from_str(&value_str) {
+        Ok(nd) => {
+            let naive_datetime = nd.and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+            return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(naive_datetime, Utc), default_format);
+        }
+        Err(err) => eprintln!("DEBUG: Time error: {}", err),
+    };
 
-        RsDateTime(DateTime::default(), default_format)
-    }
+    RsDateTime(DateTime::default(), default_format)
 }
 
 pub struct RsDateTime(DateTime<Utc>, String);

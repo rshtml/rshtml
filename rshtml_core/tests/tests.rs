@@ -16,7 +16,7 @@ fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: 
         pub use rshtml_core::traits::*;
 
         mod rshtml {
-            pub use rshtml_core::functions::*;
+            pub use rshtml_core::functions;
             pub use rshtml_core::traits;
         }
 
