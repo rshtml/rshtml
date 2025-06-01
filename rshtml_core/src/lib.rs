@@ -47,11 +47,10 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     };
 
     let generated_code = quote! {
-        #[allow(non_upper_case_globals)]
         const _ : () = {
-            //static rs: ::std::sync::LazyLock<rshtml::Functions> = ::std::sync::LazyLock::new(|| rshtml::Functions{});
 
             #rs
+            
             impl rshtml::traits::RsHtml for #struct_name {
                 fn fmt(&mut self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
 

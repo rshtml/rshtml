@@ -4,8 +4,6 @@ use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 use std::str::FromStr;
 
-// TODO: icu_datetime = "1" and icu_locid = "1" use for localicazation
-
 pub fn time<T: Display + ?Sized>(value: &T) -> RsDateTime {
     let value_str = value.to_string();
     let default_format = "%Y-%m-%d %H:%M:%S".to_string();
