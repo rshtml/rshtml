@@ -14,12 +14,11 @@ use anyhow::Result;
 use node::Node;
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
-use std::fs;
-use std::path::Path;
+use std::clone::Clone;
 
 pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStream {
     let config = Config::load_from_toml_or_default();
-    let (views_base_path, layout) = config.views.clone();
+    let (_, layout) = config.views.clone();
 
     let (compiled_ast_tokens, sections, text_size) = match parse_and_compile(&template_name, config) {
         Ok(tokens) => tokens,
@@ -69,10 +68,6 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
         };
     };
 
-    if views_base_path.is_dir() {
-        walk_dir(&views_base_path);
-    }
-
     TokenStream::from(generated_code)
 }
 
@@ -91,21 +86,4 @@ fn parse_and_compile(template_path: &str, config: Config) -> Result<(TokenStream
     }
 
     Ok((ts, compiler.section_names(), compiler.text_size))
-}
-
-fn walk_dir(dir: &Path) {
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if path.is_dir() {
-                    walk_dir(&path);
-                } else if path.is_file() {
-                    if let Some(path_str) = path.to_str() {
-                        println!("cargo:rerun-if-changed={}", path_str);
-                    }
-                }
-            }
-        }
-    }
 }

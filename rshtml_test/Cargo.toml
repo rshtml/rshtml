@@ -12,4 +12,3 @@ serde = { version = "1.0.219", features = ["derive"] }
 
 [package.metadata.rshtml]
 views = { path = "views", layout = "layout.rs.html" }
-locales = { path = "locales", lang = "tr-TR" }
