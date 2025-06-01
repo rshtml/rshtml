@@ -12,3 +12,6 @@ serde = { version = "1.0.219", features = ["derive"] }
 
 [package.metadata.rshtml]
 views = { path = "views", layout = "layout.rs.html" }
+
+[build-dependencies]
+rshtml = { path = "../rshtml" }
