@@ -8,13 +8,13 @@ layout: @layout
 
 has section: @has_section("content")
 
+@section header {
+  <p>section header defined</p>
+}
+
 @if has_section("header") {
   <p>section header defined</p>
   @render("header")
 } else {
   <p>section header not defined</p>
-}
-
-@section header {
-  <p>section header defined</p>
 }
