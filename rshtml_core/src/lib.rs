@@ -59,10 +59,10 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
                     Ok(())
                 }
 
-                fn render(&mut self) -> String {
+                fn render(&mut self) -> Result<String, ::std::fmt::Error> {
                     let mut buf = String::with_capacity(#text_size);
-                    self.fmt(&mut buf).unwrap();
-                    buf
+                    self.fmt(&mut buf)?;
+                    Ok(buf)
                 }
             }
         };

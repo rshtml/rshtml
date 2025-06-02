@@ -78,7 +78,7 @@ mod tests {
             users,
         };
 
-        let s = homepage.render();
+        let s = homepage.render().unwrap();
 
         print!("{}", s);
     }
