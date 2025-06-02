@@ -4,7 +4,7 @@ use rshtml::RsHtml;
 use serde::Serialize;
 use std::fmt::Write;
 
-#[derive(Debug, RsHtml)]
+#[derive(RsHtml)]
 //#[rshtml(path = "about.rs.html")]
 struct HomePage {
     title: String,

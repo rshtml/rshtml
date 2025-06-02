@@ -3,11 +3,12 @@
 RsHtml is a lightweight and flexible template engine for Rust, designed to seamlessly integrate Rust code within HTML templates. It allows developers to write dynamic templates with embedded Rust expressions and logic, making it easier to generate HTML content programmatically.
 
 ## Features
-
-- Embed Rust expressions and blocks directly into HTML templates.
-- Support for conditional rendering (`@if`, `@else`) and loops (`@for`).
-- Customizable syntax for clean and readable templates.
-- Generates efficient Rust code for rendering templates at runtime.
+- Embeds Rust expressions and blocks directly into HTML templates using the @ prefix or HTML-like component syntax (e.g., `<Component/>`).
+- Supports conditional rendering (`@if`, `@else`), loops (`@for`), and pattern matching (`@match`).
+- Supports Rust code blocks (`@{}`), various Rust expression syntaxes (e.g., `@expression`, `@(expression))`, and a broad range of other Rust syntax.
+- Includes a section system, layout system, and component system.
+- Provides helper functions (e.g., `@time()`).
+- Generates efficient Rust code for template rendering at compile time.
 
 ## Syntax Overview
 
@@ -15,8 +16,8 @@ RsHtml is a lightweight and flexible template engine for Rust, designed to seaml
 ```html
 <h1>Welcome to RsHtml</h1>
 
-@if is_logged_in {
-    <p>Hello, @username!</p>
+@if self.is_logged_in {
+    <p>Hello, @self.username!</p>
 } else {
     <p>Please log in to continue.</p>
 }
@@ -34,6 +35,10 @@ RsHtml is a lightweight and flexible template engine for Rust, designed to seaml
     let x = 42;
     let y = x * 2;
     println!("Debug: x = {}, y = {}", x, y);
+
+    @: this is text line and x is @x 
+
+    <text>this is text block and y is @y</text>
 }
 ```
 
@@ -48,46 +53,36 @@ To use RsHtml in your Rust project, add it as a dependency in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rshtml = { path = "path/to/rshtml" }
+rshtml = "0.1.0"
 ```
 
 ## Usage
 
 1. Define your template in an HTML file.
-2. Use the `parse_template` function to parse the template into an Abstract Syntax Tree (AST).
-3. Render the AST or process it as needed.
+2. Use the `RsHtml` derive macro to parse the template.
+3. Render the template with render function.
 
-### Example
+### main.rs
 ```rust
-use rshtml::{parse_template, view_node};
+use rshtml::RsHtml;
+
+#[derive(RsHtml)]
+//#[rshtml(path = "about.rs.html")] // template can change
+// otherwise it take struct name without Page section and make lowercase and adds rs.html
+struct HomePage {
+    title: String,
+}
 
 fn main() {
-    let template = r#"
-        <h1>Hello, @name!</h1>
-        @if is_admin {
-            <p>Welcome, admin!</p>
-        }
-    "#;
-
-    let ast = parse_template(template).expect("Failed to parse template");
-    view_node(&ast, 0); // Visualize the AST
+    let mut homepage = HomePage {
+        title: "Home Page".to_string()
+    };
+    
+    let result = homepage.render().unwrap();
+    
+    print!("{}", s);
 }
 ```
-
-## Development
-
-### Running Tests
-To run the test suite, use:
-```bash
-cargo test
-```
-
-### Debugging Templates
-Use the `view_node` function to visualize the parsed AST for debugging purposes.
-
-## License
-
-This project is licensed under the MIT License.
 
 ## Contributing
 
