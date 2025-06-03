@@ -3,16 +3,16 @@
 RsHtml is a lightweight and flexible template engine for Rust, designed to seamlessly integrate Rust code within HTML templates. It allows developers to write dynamic templates with embedded Rust expressions and logic, making it easier to generate HTML content programmatically.
 
 ## Features
-- Embeds Rust expressions and blocks directly into HTML templates using the @ prefix or HTML-like component syntax (e.g., `<Component/>`).
+- Embeds Rust expressions and blocks directly into HTML templates using the `@` prefix or HTML-like component syntax (e.g., `<Component/>`).
 - Supports conditional rendering (`@if`, `@else`), loops (`@for`), and pattern matching (`@match`).
 - Supports Rust code blocks (`@{}`), various Rust expression syntaxes (e.g., `@expression`, `@(expression))`, and a broad range of other Rust syntax.
 - Includes a section system, layout system, and component system.
 - Provides helper functions (e.g., `@time()`).
-- Generates efficient Rust code for template rendering at compile time.
+- Generates `efficient Rust code` for template rendering at compile time.
 
 ## Syntax Overview
 
-### Basic Example
+### Condition, Iteration, Pattern Matching
 ```html
 <h1>Welcome to RsHtml</h1>
 
@@ -23,10 +23,23 @@ RsHtml is a lightweight and flexible template engine for Rust, designed to seaml
 }
 
 <ul>
-    @for item in items {
+    @for item in self.items {
         <li>@item</li>
     }
 </ul>
+
+@match self.count {
+    0 => <p>this is zero</p>,
+    1 => true,
+    2 => self.count,
+    3 => {
+        <p>this is @self.count</p>
+        @if self.my_var == "rshtml" {
+            <p>rshtml</p>
+        }
+    },
+    _ => <p>other</p>
+}
 ```
 
 ### Rust Code Blocks
@@ -47,6 +60,46 @@ RsHtml is a lightweight and flexible template engine for Rust, designed to seaml
 @* This is a comment and will not appear in the output *@
 ```
 
+### Sections and Layout
+##### Section Page:
+```html
+@section("title", "Home Page")
+
+@section content {
+    <p>content section</p>
+}
+
+<p>default content</p>
+```
+##### Layout Page:
+```html
+@render("title")
+
+@render_layout   @* renders the default content *@
+
+@if has_section("content") {
+    <p>content section defined</p>
+}
+
+@render("content")
+```
+
+### Components
+```html
+@use "Component.rs.html" as Component
+@use "Component.rs.html" @* take Component as name *@
+
+<Component title="home" is_ok=true>
+    <p>child content</p>
+</Component>
+
+@Component(title="home", is_ok=true) {
+    <p>child content</p>
+}
+```
+
+#### And much more ...
+
 ## Installation
 
 To use RsHtml in your Rust project, add it as a dependency in your `Cargo.toml`:
@@ -58,7 +111,7 @@ rshtml = "0.1.0"
 
 ## Usage
 
-1. Define your template in an HTML file.
+1. Define your template in an HTML file (e.g., home.rs.html).
 2. Use the `RsHtml` derive macro to parse the template.
 3. Render the template with render function.
 
@@ -67,9 +120,9 @@ rshtml = "0.1.0"
 use rshtml::RsHtml;
 
 #[derive(RsHtml)]
-//#[rshtml(path = "about.rs.html")] // template can change
+//#[rshtml(path = "about.rs.html")] // template can change from rshtml path param
 // otherwise it take struct name without Page section and make lowercase and adds rs.html
-struct HomePage {
+struct HomePage { // makes home.rs.html
     title: String,
 }
 
