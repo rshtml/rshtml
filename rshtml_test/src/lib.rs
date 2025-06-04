@@ -6,23 +6,23 @@ use std::fmt::Write;
 
 #[derive(RsHtml)]
 //#[rshtml(path = "about.rs.html")]
-struct HomePage {
-    title: String,
-    content: String,
-    card_count: usize,
-    my_var: String,
-    abc: String,
-    def: String,
-    inner: String,
-    hey: String,
-    is_ok: bool,
-    users: Vec<User>,
+pub struct HomePage {
+    pub title: String,
+    pub content: String,
+    pub card_count: usize,
+    pub my_var: String,
+    pub abc: String,
+    pub def: String,
+    pub inner: String,
+    pub hey: String,
+    pub is_ok: bool,
+    pub users: Vec<User>,
 }
 
 #[derive(Serialize, Debug)]
-struct User {
-    name: String,
-    age: usize,
+pub struct User {
+    pub name: String,
+    pub age: usize,
 }
 
 impl HomePage {

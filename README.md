@@ -9,7 +9,7 @@ RsHtml is a lightweight and flexible template engine for Rust, designed to seaml
 - Includes a section system, layout system, and component system.
 - Provides helper functions (e.g., `@time()`).
 - Generates `efficient Rust code` for template rendering at compile time.
-- for more see [documentation, ..](https://mehmetkesik.com)
+- and more.. see [documentation](https://github.com/mehmetkesik/rshtml).
 ## Syntax Overview
 
 ### Condition, Iteration, Pattern Matching
