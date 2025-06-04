@@ -35,7 +35,7 @@ fn prepare(struct_name: &str, template_path: &str, fields: TokenStream, values: 
                 #values
             };
 
-            println!("{}", page.render());
+            println!("{}", page.render().unwrap());
         }
     }
     .to_string();
