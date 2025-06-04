@@ -42,7 +42,7 @@ RsHtml is a lightweight and flexible template engine for Rust, designed to seaml
 ```
 
 ### Rust Code Blocks
-```html
+```razor
 @{
     let x = 42;
     let y = x * 2;
@@ -55,7 +55,7 @@ RsHtml is a lightweight and flexible template engine for Rust, designed to seaml
 ```
 
 ### Comments
-```html
+```razor
 @* This is a comment and will not appear in the output *@
 ```
 
@@ -71,7 +71,7 @@ RsHtml is a lightweight and flexible template engine for Rust, designed to seaml
 <p>default content</p>
 ```
 ##### Layout Page:
-```html
+```razor
 @render("title")
 
 @render_layout   @* renders the default content *@
@@ -84,7 +84,7 @@ RsHtml is a lightweight and flexible template engine for Rust, designed to seaml
 ```
 
 ### Components
-```html
+```razor
 @use "Component.rs.html" as Component
 @use "Component.rs.html" @* take Component as name *@
 
