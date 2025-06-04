@@ -340,15 +340,34 @@ pub fn test_continue_break() -> std::io::Result<()> {
 }
 
 #[test]
-pub fn test_rs() -> std::io::Result<()> {
+pub fn test_no_layout_with_section() -> std::io::Result<()> {
     prepare(
-        "RsPage",
-        "rs.rs.html",
+        "NoLayoutWithSectionPage",
+        "no_layout_with_section.rs.html",
         quote! {
             value: i32,
         },
         quote! {
             value: 10,
+        },
+        quote! {},
+    )
+}
+
+#[test]
+pub fn test_functions() -> std::io::Result<()> {
+    prepare(
+        "FunctionsPage",
+        "functions.rs.html",
+        quote! {
+            value: i32,
+            date: chrono::DateTime<chrono::Utc>,
+            users: Vec<String>,
+        },
+        quote! {
+            value: 10,
+            date: chrono::Utc::now(),
+            users: vec!["Alice".to_string(), "Bob".to_string(), "John".to_string()],
         },
         quote! {},
     )

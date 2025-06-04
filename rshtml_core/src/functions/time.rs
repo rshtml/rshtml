@@ -2,29 +2,35 @@ use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
-use std::str::FromStr;
 
 pub fn time<T: Display + ?Sized>(value: &T) -> RsDateTime {
     let value_str = value.to_string();
+    let value_str = value_str.trim();
     let default_format = "%Y-%m-%d %H:%M:%S".to_string();
+    let mut err_str = String::new();
 
-    match DateTime::parse_from_rfc3339(&value_str) {
+    let dt_result: Result<DateTime<Utc>, _> = value_str.parse();
+    match dt_result {
         Ok(dt) => return RsDateTime(dt.with_timezone(&Utc), default_format),
-        Err(err) => eprintln!("DEBUG: Time error: {}", err),
-    };
+        Err(err) => err_str.push_str(&format!("{}", err)),
+    }
 
-    match NaiveDateTime::from_str(&value_str) {
+    let ndt_result: Result<NaiveDateTime, _> = value_str.parse();
+    match ndt_result {
         Ok(ndt) => return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc), default_format),
-        Err(err) => eprintln!("DEBUG: Time error: {}", err),
-    };
+        Err(_) => {}
+    }
 
-    match NaiveDate::from_str(&value_str) {
+    let nd_result: Result<NaiveDate, _> = value_str.parse();
+    match nd_result {
         Ok(nd) => {
             let naive_datetime = nd.and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
             return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(naive_datetime, Utc), default_format);
         }
-        Err(err) => eprintln!("DEBUG: Time error: {}", err),
-    };
+        Err(_) => {}
+    }
+
+    eprintln!("DEBUG: Time Error: {}", err_str);
 
     RsDateTime(DateTime::default(), default_format)
 }
