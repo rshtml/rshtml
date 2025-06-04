@@ -61,7 +61,7 @@ RsHtml is a lightweight and flexible template engine for Rust, designed to seaml
 
 ### Sections and Layout
 ##### Section Page:
-```html
+```razor
 @section("title", "Home Page")
 
 @section content {
