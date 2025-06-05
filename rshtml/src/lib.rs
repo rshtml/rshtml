@@ -103,7 +103,6 @@
 ///
 /// Example template usage: `@time(&self.my_date)`, `@json(&self.data)`.
 pub use rshtml_core::functions;
-#[doc(hidden)]
 pub use rshtml_core::traits;
 
 /// The primary derive macro for enabling RsHtml templating on a struct.
