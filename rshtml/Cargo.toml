@@ -1,5 +1,6 @@
 [package]
 name = "rshtml"
+documentation = "https://docs.rs/rshtml"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

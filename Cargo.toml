@@ -6,6 +6,7 @@ resolver = "2"
 version = "0.1.0"
 authors = ["Mehmet Kesik <mhmtkskx@gmail.com>"]
 edition = "2024"
+readme = "README.md"
 
 [workspace.dependencies]
 rshtml = { path = "rshtml" }
