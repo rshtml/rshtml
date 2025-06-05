@@ -2,9 +2,10 @@
 name = "rshtml_test"
 version = "0.1.0"
 edition = "2024"
+publish = false
 
 [dependencies]
-rshtml = { path = "../rshtml" }
+rshtml.workspace = true
 chrono = "0.4.41"
 syn = "2.0.101"
 pest = "2.8.0"
@@ -14,4 +15,4 @@ serde = { version = "1.0.219", features = ["derive"] }
 views = { path = "views", layout = "layout.rs.html" }
 
 [build-dependencies]
-rshtml = { path = "../rshtml" }
+rshtml.workspace = true

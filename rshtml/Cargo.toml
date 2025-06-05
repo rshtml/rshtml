@@ -1,8 +1,9 @@
 [package]
 name = "rshtml"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
 
 [dependencies]
-rshtml_macro = { path = "../rshtml_macro" }
-rshtml_core = { path = "../rshtml_core" }
+rshtml_macro.workspace = true
+rshtml_core.workspace = true

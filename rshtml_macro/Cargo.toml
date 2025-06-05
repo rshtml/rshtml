@@ -1,11 +1,12 @@
 [package]
 name = "rshtml_macro"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
 
 [lib]
 proc-macro = true
 
 [dependencies]
 syn = { version = "2.0.27", features = ["full"] }
-rshtml_core = { path = "../rshtml_core" }
+rshtml_core.workspace = true

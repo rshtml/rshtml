@@ -1,3 +1,5 @@
+#![doc(hidden)]
+
 mod compiler;
 pub mod config;
 mod error;
