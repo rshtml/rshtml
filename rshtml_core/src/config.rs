@@ -52,19 +52,16 @@ impl Config {
         if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
             let cargo_toml_path = Path::new(&manifest_dir).join("Cargo.toml");
             if let Ok(content) = std::fs::read_to_string(cargo_toml_path) {
-                match toml::from_str::<Manifest>(&content) {
-                    Ok(manifest) => {
-                        if let Some(pkg) = manifest.package {
-                            if let Some(metadata) = pkg.metadata {
-                                if let Some(toml_config) = metadata.rshtml {
-                                    if let Some(views) = toml_config.views {
-                                        config.set_views((views.path, views.layout));
-                                    }
+                if let Ok(manifest) = toml::from_str::<Manifest>(&content) {
+                    if let Some(pkg) = manifest.package {
+                        if let Some(metadata) = pkg.metadata {
+                            if let Some(toml_config) = metadata.rshtml {
+                                if let Some(views) = toml_config.views {
+                                    config.set_views((views.path, views.layout));
                                 }
                             }
                         }
                     }
-                    Err(_) => {}
                 }
             }
         }

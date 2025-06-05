@@ -4,6 +4,9 @@ documentation = "https://docs.rs/rshtml"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+readme.workspace = true
+repository.workspace = true
+description.workspace = true
 
 [dependencies]
 rshtml_macro.workspace = true

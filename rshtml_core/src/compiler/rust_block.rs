@@ -26,7 +26,7 @@ impl RustBlockCompiler {
                                 token_stream.extend(quote! {#t_ts});
                             }
                             TextLineItem::RustExprSimple(expr, is_escaped) => {
-                                let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone(), is_escaped.clone()))?;
+                                let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone(), *is_escaped))?;
                                 token_stream.extend(quote! {#rxs_ts});
                             }
                         }
@@ -40,7 +40,7 @@ impl RustBlockCompiler {
                                 token_stream.extend(quote! {#t_ts});
                             }
                             TextBlockItem::RustExprSimple(expr, is_escaped) => {
-                                let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone(), is_escaped.clone()))?;
+                                let rxs_ts = compiler.compile(&Node::RustExprSimple(expr.clone(), *is_escaped))?;
                                 token_stream.extend(quote! {#rxs_ts});
                             }
                         }

@@ -18,6 +18,7 @@
 use crate::parser::Rule;
 use pest::iterators::Pairs;
 
+#[allow(clippy::collapsible_else_if)]
 pub fn execute_pairs(pairs: Pairs<Rule>, indent: usize, mut start: bool) {
     let pairs_len = pairs.clone().len();
     for pair in pairs {

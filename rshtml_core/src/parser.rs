@@ -156,7 +156,7 @@ impl RsHtmlParser {
 
     pub fn run(&mut self, path: &str, config: Config) -> Result<Node, Error<Rule>> {
         self.config = config;
-        self.parse_template(path).map_err(|err| rename_rules(err))
+        self.parse_template(path).map_err(rename_rules)
     }
 }
 

@@ -27,16 +27,14 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
         Err(err) => {
             let error_message = format!(
                 "Template processing failed for struct `{}` with template `{}`:\n{}",
-                struct_name,
-                template_name,
-                err.to_string()
+                struct_name, template_name, err
             );
 
-            return quote_spanned! { struct_name.span() => compile_error!(#error_message); }.into();
+            return quote_spanned! { struct_name.span() => compile_error!(#error_message); };
         }
     };
 
-    let text_size = text_size + ((text_size as f64 * 0.10) as usize).max(32).min(512);
+    let text_size = text_size + ((text_size as f64 * 0.10) as usize).clamp(32, 512);
 
     //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
@@ -70,7 +68,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
         };
     };
 
-    TokenStream::from(generated_code)
+    generated_code
 }
 
 fn parse_and_compile(template_path: &str, config: Config) -> Result<(TokenStream, TokenStream, usize)> {

@@ -16,18 +16,14 @@ pub fn time<T: Display + ?Sized>(value: &T) -> RsDateTime {
     }
 
     let ndt_result: Result<NaiveDateTime, _> = value_str.parse();
-    match ndt_result {
-        Ok(ndt) => return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc), default_format),
-        Err(_) => {}
+    if let Ok(ndt) = ndt_result {
+        return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc), default_format);
     }
 
     let nd_result: Result<NaiveDate, _> = value_str.parse();
-    match nd_result {
-        Ok(nd) => {
-            let naive_datetime = nd.and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
-            return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(naive_datetime, Utc), default_format);
-        }
-        Err(_) => {}
+    if let Ok(nd) = nd_result {
+        let naive_datetime = nd.and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+        return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(naive_datetime, Utc), default_format);
     }
 
     eprintln!("DEBUG: Time Error: {}", err_str);

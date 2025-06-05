@@ -7,6 +7,10 @@ version = "0.1.0"
 authors = ["Mehmet Kesik <mhmtkskx@gmail.com>"]
 edition = "2024"
 readme = "README.md"
+repository = "https://github.com/mehmetkesik/rshtml"
+description = "RsHtml: A Template Engine for Seamless HTML and Rust Integration."
+keywords = ["rshtml", "rust", "html", "template", "html_template"]
+#categories =
 
 [workspace.dependencies]
 rshtml = { path = "rshtml" }

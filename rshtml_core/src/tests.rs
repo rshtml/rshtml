@@ -11,21 +11,12 @@ use syn::__private::Span;
 
 #[test]
 fn test_template_format() {
-    let views = vec![
-        "layout.rs.html",
-        "index.rs.html",
-        "about.rs.html",
-        "home.rs.html",
-        "header.rs.html",
-        "bar.rs.html",
-        "simple_expression.rs.html",
-    ];
+    let views = ["simple_expression.rs.html"];
 
-    let ast = match RsHtmlParser::new().run(views[6], Config::default()) {
+    let ast = match RsHtmlParser::new().run(views[0], Config::default()) {
         Ok(ast) => ast,
         Err(err) => {
-            let message = format!("{}", err.to_string());
-            println!("{}", message);
+            println!("{}", err);
             return;
         }
     };
@@ -41,8 +32,7 @@ fn test_template_format_without_parsing() {
     let pairs = match RsHtmlParser::parse(Rule::template, template.as_str()) {
         Ok(pairs) => pairs,
         Err(err) => {
-            let message = format!("{}", err.to_string());
-            println!("{}", message);
+            println!("{}", err);
             return;
         }
     };

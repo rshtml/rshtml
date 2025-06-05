@@ -8,13 +8,13 @@ use quote::quote;
 pub struct SectionDirectiveCompiler;
 
 impl SectionDirectiveCompiler {
-    pub fn compile(compiler: &mut Compiler, name: &String, content: &SectionDirectiveContent) -> Result<TokenStream> {
+    pub fn compile(compiler: &mut Compiler, name: &str, content: &SectionDirectiveContent) -> Result<TokenStream> {
         let content_ts = match content {
             SectionDirectiveContent::Text(text) => compiler.compile(&Node::Text(text.clone()))?,
-            SectionDirectiveContent::RustExprSimple(expr, is_escaped) => compiler.compile(&Node::RustExprSimple(expr.clone(), is_escaped.clone()))?,
+            SectionDirectiveContent::RustExprSimple(expr, is_escaped) => compiler.compile(&Node::RustExprSimple(expr.clone(), *is_escaped))?,
         };
 
-        compiler.sections.insert(name.clone(), content_ts.clone());
+        compiler.sections.insert(name.to_owned(), content_ts.clone());
 
         Ok(quote! {})
     }

@@ -175,7 +175,7 @@ pub fn view_node(node: &Node, indent: usize) {
             println!("- ImportPath: {:#?}", import_path);
             print_indent(indent + 1);
             println!("- Component:");
-            view_node(&*component, indent + 2);
+            view_node(component, indent + 2);
         }
         Node::ContinueDirective => {
             println!("- ContinueDirective");

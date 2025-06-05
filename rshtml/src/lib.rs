@@ -36,7 +36,7 @@
 //!
 //! **2. Define Struct and Template:**
 //!
-//! ```rust
+//! ```ignore
 //! // src/main.rs
 //! use rshtml::RsHtml;
 //!

@@ -7,7 +7,7 @@ use quote::quote;
 pub struct SectionBlockCompiler;
 
 impl SectionBlockCompiler {
-    pub fn compile(compiler: &mut Compiler, name: &String, content: &Vec<Node>) -> Result<TokenStream> {
+    pub fn compile(compiler: &mut Compiler, name: &str, content: &Vec<Node>) -> Result<TokenStream> {
         let mut token_stream = TokenStream::new();
 
         for node in content {
@@ -15,7 +15,7 @@ impl SectionBlockCompiler {
             token_stream.extend(quote! {#ts});
         }
 
-        compiler.sections.insert(name.clone(), token_stream);
+        compiler.sections.insert(name.to_owned(), token_stream);
 
         Ok(quote! {})
     }

@@ -10,7 +10,7 @@ use std::str::FromStr;
 pub struct ComponentCompiler;
 
 impl ComponentCompiler {
-    pub fn compile(compiler: &mut Compiler, name: &str, parameters: &Vec<ComponentParameter>, body: &Vec<Node>) -> Result<TokenStream> {
+    pub fn compile(compiler: &mut Compiler, name: &str, parameters: &Vec<ComponentParameter>, body: &[Node]) -> Result<TokenStream> {
         let component_node = compiler.components.get(name).ok_or(anyhow!("Component {} not found", name))?;
         let component_node = component_node.clone();
 
@@ -49,7 +49,7 @@ impl ComponentCompiler {
             token_stream.extend(parameter_ts);
         }
 
-        let body_ts = compiler.compile(&Node::Template(body.clone()))?;
+        let body_ts = compiler.compile(&Node::Template(body.to_owned()))?;
         let body_ts = quote! {let child_content = |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body_ts  Ok(())};};
 
         token_stream.extend(body_ts);

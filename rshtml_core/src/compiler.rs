@@ -74,7 +74,7 @@ impl Compiler {
             Node::InnerText(inner_text) => InnerTextCompiler::compile(self, inner_text),
             Node::Comment(_) => Ok(quote! {}),
             Node::ExtendsDirective(path, layout) => ExtendsDirectiveCompiler::compile(self, path, layout),
-            Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, &name),
+            Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, name),
             Node::RustBlock(contents) => RustBlockCompiler::compile(self, contents),
             Node::RustExprSimple(expr, is_escaped) => RustExprSimpleCompiler::compile(self, expr, is_escaped),
             Node::RustExprParen(expr, is_escaped) => RustExprParenCompiler::compile(self, expr, is_escaped),

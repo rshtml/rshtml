@@ -64,8 +64,6 @@ impl IParser for UseDirectiveParser {
             }
         };
 
-        let use_directive = Ok(Node::UseDirective(component_name.clone(), import_path.to_path_buf(), Box::new(component_node)));
-
-        use_directive
+        Ok(Node::UseDirective(component_name.clone(), import_path.to_path_buf(), Box::new(component_node)))
     }
 }
