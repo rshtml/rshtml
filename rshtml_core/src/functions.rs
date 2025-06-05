@@ -19,11 +19,3 @@ pub fn json_let<T: Serialize>(name: &str, value: &T) -> String {
 
     format!("let {} = {}", name, json)
 }
-
-pub fn class(classes: &[&str]) -> String {
-    format!("class=\"{}\"", classes.join(" "))
-}
-
-pub fn css(css: &[(&str, &str)]) -> String {
-    format!("style=\"{}\"", css.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<_>>().join("; "))
-}
