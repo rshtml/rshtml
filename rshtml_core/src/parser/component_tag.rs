@@ -8,7 +8,7 @@ use pest::iterators::Pair;
 pub struct ComponentTagParser;
 
 impl IParser for ComponentTagParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
         let mut inner_pairs = pair.into_inner();
         let component_name_pair = inner_pairs.find(|p| p.as_rule() == Rule::component_tag_name).ok_or(Error::new_from_span(

@@ -61,7 +61,7 @@ impl RsHtmlParser {
         }
     }
 
-    fn build_nodes_from_pairs(&mut self, pairs: Pairs<Rule>) -> Result<Vec<Node>, Error<Rule>> {
+    fn build_nodes_from_pairs(&mut self, pairs: Pairs<Rule>) -> Result<Vec<Node>, Box<Error<Rule>>> {
         let mut nodes = Vec::new();
         for pair in pairs {
             match pair.as_rule() {
@@ -79,7 +79,7 @@ impl RsHtmlParser {
         Ok(nodes)
     }
 
-    fn build_ast_node(&mut self, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn build_ast_node(&mut self, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         match pair.as_rule() {
             Rule::template => TemplateParser::parse(self, pair),
             Rule::text => TextParser::parse(self, pair),
@@ -104,16 +104,16 @@ impl RsHtmlParser {
             Rule::use_directive => UseDirectiveParser::parse(self, pair),
             Rule::continue_directive => Ok(Node::ContinueDirective),
             Rule::break_directive => Ok(Node::BreakDirective),
-            rule => Err(Error::new_from_span(
+            rule => Err(Box::new(Error::new_from_span(
                 ErrorVariant::CustomError {
                     message: format!("Error: Unknown rule: {:?}", rule),
                 },
                 pair.as_span(),
-            )),
+            ))),
         }
     }
 
-    fn parse_template(&mut self, path: &str) -> Result<Node, Error<Rule>> {
+    fn parse_template(&mut self, path: &str) -> Result<Node, Box<Error<Rule>>> {
         let input = self.read_template(path).map_err(|err| {
             Error::new_from_span(
                 ErrorVariant::CustomError {
@@ -142,7 +142,7 @@ impl RsHtmlParser {
                 },
                 template_pair.as_span(),
             );
-            Err(err)
+            Err(Box::new(err))
         }
     }
 
@@ -154,12 +154,12 @@ impl RsHtmlParser {
         Ok(template)
     }
 
-    pub fn run(&mut self, path: &str, config: Config) -> Result<Node, Error<Rule>> {
+    pub fn run(&mut self, path: &str, config: Config) -> Result<Node, Box<Error<Rule>>> {
         self.config = config;
-        self.parse_template(path).map_err(rename_rules)
+        self.parse_template(path).map_err(|err| rename_rules(*err))
     }
 }
 
 pub trait IParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>>;
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>>;
 }

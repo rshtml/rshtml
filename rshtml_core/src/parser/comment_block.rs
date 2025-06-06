@@ -6,7 +6,7 @@ use pest::iterators::Pair;
 pub struct CommentBlockParser;
 
 impl IParser for CommentBlockParser {
-    fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let span = pair.as_span();
 
         Ok(Node::Comment(

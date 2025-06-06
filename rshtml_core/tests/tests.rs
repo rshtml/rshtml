@@ -372,22 +372,3 @@ pub fn test_functions() -> std::io::Result<()> {
         quote! {},
     )
 }
-
-#[test]
-fn test_test() {
-    "Func".to_string().push_str("Func");
-    struct MyData {
-        data: Option<String>,
-    }
-
-    impl MyData {
-        fn to_string(&self) -> String {
-            self.data.as_deref().unwrap_or_else(|| "").to_string()
-        }
-    }
-
-    let x = &MyData {
-        data: Some("Hello".to_string()),
-    };
-    println!("{}", x.to_string());
-}

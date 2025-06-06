@@ -7,7 +7,7 @@ use std::path::PathBuf;
 pub struct ExtendsDirectiveParser;
 
 impl IParser for ExtendsDirectiveParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
 
         let mut path_str = parser.config.views.1.clone();
@@ -25,7 +25,7 @@ impl IParser for ExtendsDirectiveParser {
                     pair_span,
                 );
 
-                return Err(include_template_error);
+                return Err(Box::new(include_template_error));
             }
         };
 

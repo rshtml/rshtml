@@ -6,7 +6,7 @@ use pest::iterators::Pair;
 pub struct SectionBlockParser;
 
 impl IParser for SectionBlockParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
 
         let section_head_pair = pair

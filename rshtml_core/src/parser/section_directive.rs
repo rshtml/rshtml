@@ -8,7 +8,7 @@ use pest::iterators::Pair;
 pub struct SectionDirectiveParser;
 
 impl IParser for SectionDirectiveParser {
-    fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
         let mut pairs = pair
             .clone()
@@ -33,12 +33,12 @@ impl IParser for SectionDirectiveParser {
 
                 Ok(Node::SectionDirective(name, value_pair))
             }
-            _ => Err(Error::new_from_span(
+            _ => Err(Box::new(Error::new_from_span(
                 ErrorVariant::CustomError {
                     message: "Error: section_directive".to_string(),
                 },
                 pair_span,
-            )),
+            ))),
         }
     }
 }

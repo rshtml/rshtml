@@ -7,9 +7,9 @@ use std::iter::Peekable;
 pub struct RustExprParser;
 
 impl IParser for RustExprParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
-        
+
         let mut inner_pairs = pair.into_inner().peekable();
         let mut clauses: Vec<(String, Vec<Node>)> = Vec::new();
 
@@ -49,12 +49,12 @@ impl IParser for RustExprParser {
         }
 
         if clauses.is_empty() {
-            return Err(Error::new_from_span(
+            return Err(Box::new(Error::new_from_span(
                 ErrorVariant::CustomError {
                     message: "Internal Error: rust_expr parsed with no clauses".to_string(),
                 },
                 pair_span,
-            ));
+            )));
         }
 
         Ok(Node::RustExpr(clauses))

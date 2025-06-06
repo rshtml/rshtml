@@ -7,7 +7,7 @@ use std::path::Path;
 pub struct UseDirectiveParser;
 
 impl IParser for UseDirectiveParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
 
         let mut inner_pairs = pair.into_inner();
@@ -60,7 +60,7 @@ impl IParser for UseDirectiveParser {
                     pair_span,
                 );
 
-                return Err(include_template_error);
+                return Err(Box::new(include_template_error));
             }
         };
 

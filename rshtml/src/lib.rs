@@ -72,7 +72,7 @@
 //!
 //! **3. Set build.rs file for tracking view changes on build:** (Optional)
 //!
-//! ```rust
+//! ```ignore
 //! use rshtml::track_views_folder;
 //!
 //! fn main() {
@@ -139,15 +139,13 @@ pub fn track_views_folder() {
 
 fn walk_dir(dir: &Path) {
     if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if path.is_dir() {
-                    walk_dir(&path);
-                } else if path.is_file() {
-                    if let Some(path_str) = path.to_str() {
-                        println!("cargo:rerun-if-changed={}", path_str);
-                    }
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                walk_dir(&path);
+            } else if path.is_file() {
+                if let Some(path_str) = path.to_str() {
+                    println!("cargo:rerun-if-changed={}", path_str);
                 }
             }
         }

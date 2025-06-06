@@ -6,7 +6,7 @@ use pest::iterators::Pair;
 pub struct IncludeDirectiveParser;
 
 impl IParser for IncludeDirectiveParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
 
         let path_pair = pair.into_inner().find(|p| p.as_rule() == Rule::string_line).ok_or(Error::new_from_span(
@@ -23,12 +23,12 @@ impl IParser for IncludeDirectiveParser {
         let canonical_path = view_path.canonicalize().unwrap_or_default().to_string_lossy().to_string();
 
         if parser.included_templates.contains(&canonical_path) {
-            return Err(Error::new_from_span(
+            return Err(Box::new(Error::new_from_span(
                 ErrorVariant::CustomError {
                     message: format!("Error: Circular include detected for file '{}'", path),
                 },
                 path_pair.as_span(),
-            ));
+            )));
         }
 
         parser.included_templates.insert(canonical_path.clone());
@@ -43,7 +43,7 @@ impl IParser for IncludeDirectiveParser {
                     pair_span,
                 );
 
-                return Err(include_template_error);
+                return Err(Box::new(include_template_error));
             }
         };
 
@@ -52,12 +52,12 @@ impl IParser for IncludeDirectiveParser {
         let nodes = match inner_template {
             Node::Template(nodes) => nodes,
             _ => {
-                return Err(Error::new_from_span(
+                return Err(Box::new(Error::new_from_span(
                     ErrorVariant::CustomError {
                         message: format!("Error: Expected a template in the included file '{}', found {:?}", path, inner_template),
                     },
                     path_pair.as_span(),
-                ));
+                )));
             }
         };
 

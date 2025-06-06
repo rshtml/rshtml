@@ -1,8 +1,8 @@
 use crate::parser::Rule;
 use pest::error::Error;
 
-pub fn rename_rules(err: Error<Rule>) -> Error<Rule> {
-    err.renamed_rules(|rule| match rule {
+pub fn rename_rules(err: Error<Rule>) -> Box<Error<Rule>> {
+    let error = err.renamed_rules(|rule| match rule {
         Rule::EOI => "EOI".to_string(),
         Rule::WHITESPACE => "WHITESPACE".to_string(),
         Rule::rust_identifier => "rust identifier".to_string(),
@@ -56,5 +56,7 @@ pub fn rename_rules(err: Error<Rule>) -> Error<Rule> {
         Rule::raw_content => "raw content".to_string(),
         Rule::use_directive => "use directive".to_string(),
         other => format!("{:?}", other),
-    })
+    });
+
+    Box::new(error)
 }

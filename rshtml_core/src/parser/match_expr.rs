@@ -6,7 +6,7 @@ use pest::iterators::Pair;
 pub struct MatchExprParser;
 
 impl IParser for MatchExprParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
         let mut pairs = pair.into_inner();
 
@@ -31,12 +31,12 @@ impl IParser for MatchExprParser {
                 match_expr_arm_span,
             ))?;
             if match_expr_arm_head.as_rule() != Rule::match_expr_arm_head {
-                return Err(Error::new_from_span(
+                return Err(Box::new(Error::new_from_span(
                     ErrorVariant::CustomError {
                         message: "Invalid match expression arm head.".to_string(),
                     },
                     match_expr_arm_span,
-                ));
+                )));
             }
 
             let match_expr_arm_value = match_expr_arm_iter.next().ok_or(Error::new_from_span(
@@ -55,12 +55,12 @@ impl IParser for MatchExprParser {
                     match_expr_arm_value.as_str().replace("@@", "@").replace("@@{", "{").replace("@@}", "}"),
                 )],
                 _ => {
-                    return Err(Error::new_from_span(
+                    return Err(Box::new(Error::new_from_span(
                         ErrorVariant::CustomError {
                             message: "Unexpected match expression arm value ".to_string(),
                         },
                         match_expr_arm_span,
-                    ));
+                    )));
                 }
             };
 

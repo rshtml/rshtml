@@ -2,7 +2,7 @@
 
 use proc_macro::TokenStream;
 use rshtml_core::process_template;
-use syn::{parse_macro_input, DeriveInput, Expr, Lit, Meta};
+use syn::{DeriveInput, Expr, Lit, Meta, parse_macro_input};
 
 #[proc_macro_derive(RsHtml, attributes(rshtml))]
 pub fn rshtml_derive(input: TokenStream) -> TokenStream {

@@ -7,7 +7,7 @@ use pest::iterators::Pair;
 pub struct ComponentParser;
 
 impl IParser for ComponentParser {
-    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Error<Rule>> {
+    fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
 
         let component_name_pair = pair
@@ -77,7 +77,7 @@ impl IParser for ComponentParser {
 }
 
 impl ComponentParser {
-    pub fn build_component_parameter_value(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<ComponentParameterValue, Error<Rule>> {
+    pub fn build_component_parameter_value(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<ComponentParameterValue, Box<Error<Rule>>> {
         match pair.as_rule() {
             Rule::bool => Ok(ComponentParameterValue::Bool(pair.as_str() == "true")),
             Rule::number => Ok(ComponentParameterValue::Number(pair.as_str().to_string())),
@@ -91,12 +91,12 @@ impl ComponentParser {
                 let block_nodes = parser.build_nodes_from_pairs(pair.into_inner())?;
                 Ok(ComponentParameterValue::Block(block_nodes))
             }
-            rule => Err(Error::new_from_span(
+            rule => Err(Box::new(Error::new_from_span(
                 ErrorVariant::CustomError {
                     message: format!("Unexpected rule: {:?}", rule),
                 },
                 pair.as_span(),
-            )),
+            ))),
         }
     }
 }
