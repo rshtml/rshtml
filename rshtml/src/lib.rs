@@ -1,9 +1,15 @@
+//! [![Crates.io Version](https://img.shields.io/crates/v/rshtml.svg)](https://crates.io/crates/rshtml)
+//! [![GitHub Repository](https://img.shields.io/badge/github-repo-blue.svg?logo=github)](https://github.com/mehmetkesik/rshtml)
+//! [![Docs.rs Documentation](https://docs.rs/rshtml/badge.svg)](https://docs.rs/rshtml)
+//! [![Full Documentation](https://img.shields.io/badge/website-rshtml.gitlab.io-blue.svg)](https://mehmetkesik.gitlab.io/rshtml/)
+//!
 //! # RsHtml: A Template Engine for Seamless HTML and Rust Integration.
 //!
 //! RsHtml is a templating engine for Rust that allows you to embed Rust logic
 //! directly into HTML-like template files. It uses a `#[derive(RsHtml)]` macro
 //! to process these templates at compile time, generating efficient Rust code
 //! for rendering.
+//!
 //!
 //! ## Core Idea
 //!

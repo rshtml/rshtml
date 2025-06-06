@@ -105,7 +105,7 @@ To use RsHtml in your Rust project, add it as a dependency in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rshtml = "0.1.0"
+rshtml = "0.1.0"  #use latest version
 ```
 
 ## Usage

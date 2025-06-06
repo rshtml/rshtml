@@ -9,10 +9,10 @@ edition = "2024"
 readme = "README.md"
 repository = "https://github.com/mehmetkesik/rshtml"
 description = "RsHtml: A Template Engine for Seamless HTML and Rust Integration."
-keywords = ["rshtml", "rust", "html", "template", "html_template"]
-#categories =
+keywords = ["rshtml", "template", "html_template", "rust", "html"]
+categories = ["template-engine", "web-programming", "development-tools", "parser-implementations", "compilers"]
 
 [workspace.dependencies]
-rshtml = { path = "rshtml" }
-rshtml_macro = { path = "rshtml_macro" }
-rshtml_core = { path = "rshtml_core" }
+rshtml = { path = "rshtml", version = "0.1.0" }
+rshtml_macro = { path = "rshtml_macro", version = "0.1.0" }
+rshtml_core = { path = "rshtml_core", version = "0.1.0" }
