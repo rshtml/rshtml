@@ -7,6 +7,7 @@ authors.workspace = true
 readme.workspace = true
 repository.workspace = true
 description.workspace = true
+license.workspace = true
 
 [dependencies]
 rshtml_macro.workspace = true
