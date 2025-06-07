@@ -2,6 +2,7 @@
 name = "rshtml_macro"
 version.workspace = true
 edition.workspace = true
+publish = false
 
 [lib]
 proc-macro = true
