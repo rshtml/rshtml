@@ -18,11 +18,11 @@ rshtml = { path = "rshtml", version = "0.1.0" }
 #rshtml_macro = { path = "rshtml_macro", version = "0.1.0" }
 #rshtml_core = { path = "rshtml_macro",version = "0.1.0" }
 
-rshtml_macro = { git = "https://github.com/mehmetkesik/rshtml.git", tag = "v0.1.0", version = "0.1.0" }
-rshtml_core = { git = "https://github.com/mehmetkesik/rshtml.git", tag = "v0.1.0", version = "0.1.0" }
+rshtml_macro = { path = "rshtml_macro", git = "https://github.com/mehmetkesik/rshtml.git", tag = "v0.1.0", version = "0.1.0" }
+rshtml_core = { path = "rshtml_core", git = "https://github.com/mehmetkesik/rshtml.git", tag = "v0.1.0", version = "0.1.0" }
 
-[patch."https://github.com/mehmetkesik/rshtml.git"]
-rshtml_core = { path = "rshtml_core" }
-rshtml_macro = { path = "rshtml_macro" }
+#[patch."https://github.com/mehmetkesik/rshtml.git"]
+#rshtml_core = { path = "rshtml_core" }
+#rshtml_macro = { path = "rshtml_macro" }
 
 
