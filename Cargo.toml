@@ -8,8 +8,9 @@ authors = ["Mehmet Kesik <mhmtkskx@gmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/mehmetkesik/rshtml"
+repository = "https://github.com/rshtml/rshtml"
 description = "RsHtml: A Template Engine for Seamless HTML and Rust Integration."
+documentation = "https://docs.rs/rshtml"
 keywords = ["rshtml", "template", "html_template", "rust", "html"]
 categories = ["template-engine", "web-programming", "development-tools", "parser-implementations", "compilers"]
 

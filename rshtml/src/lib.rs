@@ -1,5 +1,5 @@
 //! [![Crates.io Version](https://img.shields.io/crates/v/rshtml.svg)](https://crates.io/crates/rshtml)
-//! [![GitHub Repository](https://img.shields.io/badge/github-repo-blue.svg?logo=github)](https://github.com/mehmetkesik/rshtml)
+//! [![GitHub Repository](https://img.shields.io/badge/github-repo-blue.svg?logo=github)](https://github.com/rshtml/rshtml)
 //! [![Docs.rs Documentation](https://docs.rs/rshtml/badge.svg)](https://docs.rs/rshtml)
 //! [![Full Documentation](https://img.shields.io/badge/book-rshtml.github.io-blue.svg)](https://rshtml.github.io/)
 //!
