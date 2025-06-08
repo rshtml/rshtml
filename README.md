@@ -10,7 +10,7 @@ RsHtml is a compile-time, type-safe, lightweight and flexible template engine fo
 - Provides helper functions (e.g., `@time()`).
 - Supports raw output with `@raw` blocks and server-side comments with `@* ... *@`.
 - Generates `efficient Rust code` for template rendering at compile time.
-- **See the [documentation](...) for a full list of features.**
+- **See the [documentation](https://rshtml.github.io/) for a full list of features.**
 ## Syntax Overview
 
 ### Condition, Iteration, Pattern Matching
