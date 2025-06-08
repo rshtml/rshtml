@@ -5,7 +5,7 @@ RsHtml is a compile-time, type-safe, lightweight and flexible template engine fo
 ## Features
 - Embeds Rust expressions and blocks directly into HTML templates using the `@` prefix or HTML-like component syntax (e.g., `<Component/>`).
 - Supports conditional rendering (`@if`, `@else`), loops (`@for`), and pattern matching (`@match`).
-- Supports Rust code blocks (`@{}`), various Rust expression syntaxes (e.g., `@expression`, `@(expression))`, and a broad range of other Rust syntax.
+- Supports Rust code blocks (`@{}`), various Rust expression syntaxes (e.g., `@expression`, `@(expression)`, and a broad range of other Rust syntax.
 - Includes a `section` system, `layout` system, and `component` system.
 - Provides helper functions (e.g., `@time()`).
 - Supports raw output with `@raw` blocks and server-side comments with `@* ... *@`.
