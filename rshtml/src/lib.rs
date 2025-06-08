@@ -76,7 +76,7 @@
 //!  </div>
 //! ```
 //!
-//! **3. Set build.rs file for tracking view changes on build:** (Optional)
+//! **3. Set build.rs file for tracking view changes on build:** (Optional, Highly Recommended)
 //!
 //! ```ignore
 //! use rshtml::track_views_folder;
