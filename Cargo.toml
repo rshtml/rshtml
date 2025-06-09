@@ -4,7 +4,7 @@ resolver = "2"
 
 [workspace.package]
 version = "0.1.0"
-authors = ["Mehmet Kesik <mhmtkskx@gmail.com>"]
+authors = ["Mehmet Kesik (https://github.com/mehmetkesik)"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
