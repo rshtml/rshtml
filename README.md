@@ -107,11 +107,15 @@ To use RsHtml in your Rust project, add it as a dependency in your `Cargo.toml`:
 ```toml
 [dependencies]
 rshtml = "x.y.z"
+
+# The default folder and layout can be changed. This is the default setup:
+[package.metadata.rshtml]
+views = { path = "views", layout = "layout.rs.html" }
 ```
 
 ## Usage
 
-1. Define your template in an HTML file (e.g., home.rs.html).
+1. Define your template in an HTML file (e.g., home.rs.html) in `views` folder.
 2. Use the `RsHtml` derive macro to parse the template.
 3. Render the template with render function.
 
@@ -123,8 +127,8 @@ You can override this with #[rshtml(path = "...")].
 use rshtml::RsHtml;
 
 #[derive(RsHtml)]
-//#[rshtml(path = "about.rs.html")] // Template can change from rshtml path param
-struct HomePage { // Looks for home.rs.html
+//#[rshtml(path = "about.rs.html")] // Template can change from rshtml path param, relative to views folder.
+struct HomePage { // Looks for home.rs.html in views folder.
     title: String,
 }
 
