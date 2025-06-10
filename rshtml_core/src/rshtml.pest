@@ -184,7 +184,7 @@ match_inner_text = @{ ( "@@}" | "@@{" | "@@" | (!(NEWLINE | "@" | ("," ~ (" " | 
 
 // endregion
 
-// region --- Rust @continue and @break directives for the loops
+// region --- Rust @continue and @break directives for the loops ---
 
 continue_directive = @{
     "continue"
@@ -196,6 +196,16 @@ break_directive = @{
     ~ WHITESPACE*
 }
 
+
+// endregion
+
+// region --- raw block @raw { ... } ---
+
+    raw_block = { "raw" ~ WHITESPACE* ~ "{" ~ raw_content ~ "}" }
+
+    raw_content = @{ ("@{" | "@}"| raw_nested_block | !("{" | "}") ~ ANY)* }
+
+    raw_nested_block = { "{" ~ raw_content ~ "}" }
 
 // endregion
 
@@ -326,16 +336,6 @@ child_content_directive = @{
     component_tag_identifier = _{ (ASCII_ALPHA_UPPER ~ ASCII_ALPHANUMERIC*) ~ ("." ~ (ASCII_ALPHA_UPPER ~ ASCII_ALPHANUMERIC*))* }
     component_tag_name = @{ component_tag_identifier }
 
-
-// endregion
-
-// region @raw block @raw { ... }
-
-    raw_block = { "raw" ~ WHITESPACE* ~ "{" ~ raw_content ~ "}" }
-
-    raw_content = @{ ("@{" | "@}"| raw_nested_block | !("{" | "}") ~ ANY)* }
-
-    raw_nested_block = { "{" ~ raw_content ~ "}" }
 
 // endregion
 
