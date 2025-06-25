@@ -17,8 +17,8 @@ tag_template = ${ (comment_block | block | text)* }
 
 // region --- Text and Comment Rules ---
 
-text = @{ ("@@}" | "@@{" | "@@" |  (!("@" | ("<" ~ component_tag_identifier) | ("</" ~ component_tag_identifier)) ~ ANY))+ }
-inner_text = @{ ("@@}" | "@@{" | "@@" | (!("@" | "}" | ("<" ~ component_tag_identifier) | ("</" ~ component_tag_identifier)) ~ ANY))+ }
+text = @{ ( "@@" |  (!("@" | ("<" ~ component_tag_identifier) | ("</" ~ component_tag_identifier)) ~ ANY))+ }
+inner_text = @{ ( "@@" | (!("@" | "}" | ("<" ~ component_tag_identifier) | ("</" ~ component_tag_identifier)) ~ ANY))+ }
 
 comment_block = { "@*" ~ comment_content ~ "*@" }
 comment_content = @{ (("*" ~ !("@")) | (!("*") ~ ANY))* }
@@ -180,7 +180,7 @@ match_expr_arm = {
 
 match_expr_arm_head = @{ (!("@" | "=>") ~ ANY)+ }
 
-match_inner_text = @{ ( "@@}" | "@@{" | "@@" | (!(NEWLINE | "@" | ("," ~ (" " | "\t" )* ~ NEWLINE) | ("," ~ WHITESPACE* ~ "}") | "}") ~ ANY) )+ }
+match_inner_text = @{ ( "@@" | (!(NEWLINE | "@" | ("," ~ (" " | "\t" )* ~ NEWLINE) | ("," ~ WHITESPACE* ~ "}") | "}") ~ ANY) )+ }
 
 // endregion
 
@@ -203,7 +203,7 @@ break_directive = @{
 
     raw_block = { "raw" ~ WHITESPACE* ~ "{" ~ raw_content ~ "}" }
 
-    raw_content = @{ ("@{" | "@}"| raw_nested_block | !("{" | "}") ~ ANY)* }
+    raw_content = @{ (raw_nested_block | !("{" | "}") ~ ANY)* }
 
     raw_nested_block = { "{" ~ raw_content ~ "}" }
 
@@ -356,3 +356,5 @@ child_content_directive = @{
 
 // TODO 998: try to add source mapping or something for better error messages, sourcemap crate
 // TODO 999: Maybe add @client {...} support for client side codes and templates
+
+// INFO: @@{ and @@} escapes removed, @{ and @} escaped removed in raw block. in html: &#123; -> { and &#125; -> }
