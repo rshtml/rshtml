@@ -343,8 +343,8 @@ child_content_directive = @{
 
        use_directive = ${
          &"use"
-         ~ "use" ~ WHITESPACE+
-         ~ string_line ~ WHITESPACE+
+         ~ "use" ~ WHITESPACE*
+         ~ string_line ~ WHITESPACE*
          ~ ("as" ~ WHITESPACE+ ~ rust_identifier ~ (";" | &(WHITESPACE+ | EOI)))?
         }
 
@@ -359,3 +359,4 @@ child_content_directive = @{
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
 // INFO: @@{ and @@} escapes removed, @{ and @} escaped removed in raw block. in html: &#123; -> { and &#125; -> }
+// INFO: changed whitespace+ to whitespace* after @use and after string_line in @use
