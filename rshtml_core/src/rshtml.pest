@@ -355,6 +355,7 @@ child_content_directive = @{
 // TODO 1: can be use @use "Component" without rs.html postfix
 // TODO 2: remove single quote string recognize in rust_block
 // TODO 3: remove inner_template in component and component_tag
+// TODO 4: in match arm, make the comma mandatory except for the last arm
 
 // TODO 998: try to add source mapping or something for better error messages, sourcemap crate
 // TODO 999: Maybe add @client {...} support for client side codes and templates
