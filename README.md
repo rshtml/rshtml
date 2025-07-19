@@ -15,6 +15,11 @@ RsHtml is a compile-time, type-safe, lightweight and flexible template engine fo
 - Supports raw output with `@raw` blocks and server-side comments with `@* ... *@`.
 - Generates `efficient Rust code` for template rendering at compile time.
 - **See the [documentation](https://rshtml.github.io/) for a full list of features.**
+
+## Editor Support
+
+Please see the [Editor Support](https://rshtml.github.io/#5-editor-support) section in the documentation.
+
 ## Syntax Overview
 
 ### Condition, Iteration, Pattern Matching
@@ -53,7 +58,7 @@ RsHtml is a compile-time, type-safe, lightweight and flexible template engine fo
     let y = x * 2;
     println!("Debug: x = {}, y = {}", x, y);
 
-    @: this is text line and x is @x 
+    @: this is text line and x is @x
 
     <text>this is text block and y is @y</text>
 }
@@ -124,8 +129,8 @@ views = { path = "views", layout = "layout.rs.html" }
 3. Render the template with render function.
 
 ### main.rs
-By default, #[derive(RsHtml)] infers the template file path from the struct's name. 
-It converts StructNamePage to struct_name.rs.html. 
+By default, #[derive(RsHtml)] infers the template file path from the struct's name.
+It converts StructNamePage to struct_name.rs.html.
 You can override this with #[rshtml(path = "...")].
 ```rust
 use rshtml::RsHtml;
@@ -140,9 +145,9 @@ fn main() {
     let mut homepage = HomePage {
         title: "Home Page".to_string()
     };
-    
+
     let result = homepage.render().unwrap();
-    
+
     print!("{}", result);
 }
 ```
