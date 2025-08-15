@@ -1,5 +1,5 @@
-﻿use crate::Node;
-use crate::parser::{IParser, RsHtmlParser, Rule};
+﻿use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::Node;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 use std::path::Path;
@@ -11,29 +11,21 @@ impl IParser for UseDirectiveParser {
         let pair_span = pair.as_span();
 
         let mut inner_pairs = pair.into_inner();
-        let import_path_str = inner_pairs.find(|p| p.as_rule() == Rule::string_line).ok_or(Error::new_from_span(
-            ErrorVariant::ParsingError {
-                positives: vec![Rule::string_line],
-                negatives: vec![],
-            },
-            pair_span,
-        ))?;
-
-        let import_path_str = import_path_str.as_str().trim_matches('"').to_string();
-        let import_path = Path::new(&import_path_str);
-        import_path
-            .file_name()
-            .and_then(|name| name.to_str())
-            .filter(|name| name.ends_with(".rs.html"))
+        let import_path_str = inner_pairs
+            .find(|p| p.as_rule() == Rule::string_line)
             .ok_or(Error::new_from_span(
-                ErrorVariant::CustomError {
-                    message: format!(
-                        "Failed to derive component name from import path extension: '{:#?}'. Expected format like 'name.rs.html'.",
-                        import_path
-                    ),
+                ErrorVariant::ParsingError {
+                    positives: vec![Rule::string_line],
+                    negatives: vec![],
                 },
                 pair_span,
             ))?;
+
+        let mut import_path_str = import_path_str.as_str().trim_matches('"').to_string();
+        if !import_path_str.ends_with(".rs.html") {
+            import_path_str.push_str(".rs.html");
+        }
+        let import_path = Path::new(&import_path_str);
 
         let component_name = match inner_pairs.find(|p| p.as_rule() == Rule::rust_identifier) {
             Some(component_name_pair) => component_name_pair.as_str().to_string(),
@@ -44,7 +36,10 @@ impl IParser for UseDirectiveParser {
                 .map(|s| s.to_string())
                 .ok_or(Error::new_from_span(
                     ErrorVariant::CustomError {
-                        message: format!("Failed to derive component name from import path: '{:#?}'", import_path),
+                        message: format!(
+                            "Failed to derive component name from import path: '{:#?}'",
+                            import_path
+                        ),
                     },
                     pair_span,
                 ))?,
@@ -55,7 +50,10 @@ impl IParser for UseDirectiveParser {
             Err(err) => {
                 let include_template_error = Error::new_from_span(
                     ErrorVariant::CustomError {
-                        message: format!("Error parsing component file '{}': {}", import_path_str, err),
+                        message: format!(
+                            "Error parsing component file '{}': {}",
+                            import_path_str, err
+                        ),
                     },
                     pair_span,
                 );
@@ -64,6 +62,10 @@ impl IParser for UseDirectiveParser {
             }
         };
 
-        Ok(Node::UseDirective(component_name.clone(), import_path.to_path_buf(), Box::new(component_node)))
+        Ok(Node::UseDirective(
+            component_name.clone(),
+            import_path.to_path_buf(),
+            Box::new(component_node),
+        ))
     }
 }
