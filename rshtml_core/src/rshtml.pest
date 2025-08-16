@@ -352,9 +352,6 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: remove single quote string recognize in rust_block
-// TODO 2: remove inner_template in component and component_tag
-// TODO 3: in match arm, make the comma mandatory except for the last arm
 
 // TODO 998: try to add source mapping or something for better error messages, sourcemap crate
 // TODO 999: Maybe add @client {...} support for client side codes and templates
