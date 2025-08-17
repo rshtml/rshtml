@@ -101,10 +101,6 @@ Please see the [Editor Support](https://rshtml.github.io/#5-editor-support) sect
 <Component title="home" is_ok=true>
     <p>child content</p>
 </Component>
-
-@Component(title="home", is_ok=true) {
-    <p>child content</p>
-}
 ```
 
 #### And much more..
