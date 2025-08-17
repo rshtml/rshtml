@@ -3,7 +3,7 @@
 <head>
 
     @use "Card" as Card
-    @use "SideBar.rs.html"
+    @use "SideBar.rs.html" as SideBar
     @use "Navbar"
 
     <meta charset="UTF-8">
@@ -30,13 +30,6 @@
              }
             _unused ="unused"
     />
-
-    @Card(title: "Card Title", footer: "Card Footer"){}
-
-    @Card(title: 4.53, footer: 543){
-        <p>hellooo</p>
-        @self.title
-    }
 
 </body>
 </html>

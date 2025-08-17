@@ -23,7 +23,6 @@ use crate::error::rename_rules;
 use crate::node::*;
 use crate::parser::block::BlockParser;
 use crate::parser::comment_block::CommentBlockParser;
-use crate::parser::component::ComponentParser;
 use crate::parser::component_tag::ComponentTagParser;
 use crate::parser::extends_directive::ExtendsDirectiveParser;
 use crate::parser::include_directive::IncludeDirectiveParser;
@@ -61,7 +60,10 @@ impl RsHtmlParser {
         }
     }
 
-    fn build_nodes_from_pairs(&mut self, pairs: Pairs<Rule>) -> Result<Vec<Node>, Box<Error<Rule>>> {
+    fn build_nodes_from_pairs(
+        &mut self,
+        pairs: Pairs<Rule>,
+    ) -> Result<Vec<Node>, Box<Error<Rule>>> {
         let mut nodes = Vec::new();
         for pair in pairs {
             match pair.as_rule() {
@@ -69,7 +71,11 @@ impl RsHtmlParser {
                     let inner_nodes = self.build_nodes_from_pairs(pair.into_inner())?;
                     nodes.extend(inner_nodes);
                 }
-                Rule::extends_directive | Rule::comment_block | Rule::block | Rule::text | Rule::inner_text => {
+                Rule::extends_directive
+                | Rule::comment_block
+                | Rule::block
+                | Rule::text
+                | Rule::inner_text => {
                     nodes.push(self.build_ast_node(pair)?);
                 }
                 // skip other rules (EOI, WHITESPACE, etc.)
@@ -97,7 +103,6 @@ impl RsHtmlParser {
             Rule::match_expr => MatchExprParser::parse(self, pair),
             Rule::section_directive => SectionDirectiveParser::parse(self, pair),
             Rule::section_block => SectionBlockParser::parse(self, pair),
-            Rule::component => ComponentParser::parse(self, pair),
             Rule::component_tag => ComponentTagParser::parse(self, pair),
             Rule::child_content_directive => Ok(Node::ChildContent),
             Rule::raw_block => RawBlockParser::parse(self, pair),
@@ -148,8 +153,13 @@ impl RsHtmlParser {
 
     fn read_template(&self, path: &str) -> Result<String, String> {
         let view_path = self.config.views.0.join(path);
-        let template =
-            std::fs::read_to_string(&view_path).map_err(|err| format!("Error reading template: {:?}, path: {}", err, view_path.to_string_lossy()))?;
+        let template = std::fs::read_to_string(&view_path).map_err(|err| {
+            format!(
+                "Error reading template: {:?}, path: {}",
+                err,
+                view_path.to_string_lossy()
+            )
+        })?;
 
         Ok(template)
     }

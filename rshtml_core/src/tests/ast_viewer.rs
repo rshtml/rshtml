@@ -1,4 +1,6 @@
-﻿use crate::node::{ComponentParameterValue, Node, RustBlockContent, SectionDirectiveContent, TextBlockItem, TextLineItem};
+﻿use crate::node::{
+    ComponentParameterValue, Node, RustBlockContent, SectionDirectiveContent, TextLineItem,
+};
 
 fn print_indent(indent: usize) {
     print!("{}", "  ".repeat(indent));
@@ -12,14 +14,6 @@ fn view_text_line_item(item: &TextLineItem, indent: usize) {
     }
 }
 
-fn view_text_block_item(item: &TextBlockItem, indent: usize) {
-    print_indent(indent);
-    match item {
-        TextBlockItem::Text(text) => println!("- Text: {:?}", text),
-        TextBlockItem::RustExprSimple(expr, _) => println!("- RustExprSimple: {:?}", expr),
-    }
-}
-
 fn view_rust_block_content(content: &RustBlockContent, indent: usize) {
     print_indent(indent);
     match content {
@@ -30,12 +24,6 @@ fn view_rust_block_content(content: &RustBlockContent, indent: usize) {
             println!("- TextLine:");
             for item in items {
                 view_text_line_item(item, indent + 1);
-            }
-        }
-        RustBlockContent::TextBlock(items) => {
-            println!("- TextBlock:");
-            for item in items {
-                view_text_block_item(item, indent + 1);
             }
         }
         RustBlockContent::NestedBlock(contents) => {
@@ -65,9 +53,6 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::Comment(comment) => {
             println!("- Comment: {:?}", comment);
         }
-        // Node::IncludeDirective(path) => {
-        //     println!("- IncludeDirective: {:?}", path);
-        // }
         Node::ExtendsDirective(path, _) => {
             println!("- ExtendsDirective: {:?}", path);
         }
@@ -117,7 +102,9 @@ pub fn view_node(node: &Node, indent: usize) {
             print_indent(indent + 1);
             match body {
                 SectionDirectiveContent::Text(s) => println!("- StringLine: {:?}", s),
-                SectionDirectiveContent::RustExprSimple(s, _) => println!("- RustExprSimple: {:?}", s),
+                SectionDirectiveContent::RustExprSimple(s, _) => {
+                    println!("- RustExprSimple: {:?}", s)
+                }
             }
         }
         Node::SectionBlock(section_head, body) => {

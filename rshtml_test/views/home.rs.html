@@ -25,8 +25,6 @@
   println!("{}", x + y);
   @: this is just a text @x   ttt
 
-  <text>this is @y    textttt </text>
-
   fn inline_function() -> String {
     "inline function".to_string()
   }
@@ -105,13 +103,5 @@
   <h1>Home Page</h1>
   <p>Welcome to the home page.</p>
   <hr>
-
-  @Card(title: "Card Title", footer: "Card Footer"){}
-
-  <!-- {<p>Card Footer</p>} -->
-
-  @Card(title: "Card Title", footer: {<p>Footer content</p>}, isok:true, c:'c', d: @self.my_var.as_str(), e: @(5i32)) {
-      <p>This is the content of the card.</p>
-  }
 
 </div>
