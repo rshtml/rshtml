@@ -22,12 +22,12 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     let config = Config::load_from_toml_or_default();
     let (_, layout) = config.views.clone();
 
-    let (compiled_ast_tokens, sections, text_size) = match parse_and_compile(&template_name, config) {
+    let (compiled_ast_tokens, sections, text_size) = match parse_and_compile(&template_name, config)
+    {
         Ok(tokens) => tokens,
         Err(err) => {
             let error_message = format!(
-                "Template processing failed for struct `{}` with template `{}`:\n{}",
-                struct_name, template_name, err
+                "Template processing failed for struct `{struct_name}` with template `{template_name}`:\n{err}"
             );
 
             return quote_spanned! { struct_name.span() => compile_error!(#error_message); };
@@ -71,7 +71,10 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
     generated_code
 }
 
-fn parse_and_compile(template_path: &str, config: Config) -> Result<(TokenStream, TokenStream, usize)> {
+fn parse_and_compile(
+    template_path: &str,
+    config: Config,
+) -> Result<(TokenStream, TokenStream, usize)> {
     let mut rshtml_parser = RsHtmlParser::new();
     let node = rshtml_parser.run(template_path, config)?;
 

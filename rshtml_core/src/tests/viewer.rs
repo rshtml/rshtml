@@ -1,4 +1,4 @@
-﻿// use pest::Parser;
+// use pest::Parser;
 // use pest::iterators::Pairs;
 // use pest_derive::Parser;
 //
@@ -24,10 +24,20 @@ pub fn execute_pairs(pairs: Pairs<Rule>, indent: usize, mut start: bool) {
     for pair in pairs {
         if pair.clone().tokens().len() == 2 {
             if start {
-                println!("{} - {:?}: {:?}", "  ".repeat(indent), pair.as_rule(), pair.as_str());
+                println!(
+                    "{} - {:?}: {:?}",
+                    "  ".repeat(indent),
+                    pair.as_rule(),
+                    pair.as_str()
+                );
             } else {
                 if pairs_len > 1 {
-                    println!("\n{} - {:?}: {:?}", "  ".repeat(indent), pair.as_rule(), pair.as_str());
+                    println!(
+                        "\n{} - {:?}: {:?}",
+                        "  ".repeat(indent),
+                        pair.as_rule(),
+                        pair.as_str()
+                    );
                 } else {
                     println!(" > {:?}: {:?}", pair.as_rule(), pair.as_str());
                 }

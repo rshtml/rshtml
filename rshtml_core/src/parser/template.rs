@@ -7,6 +7,8 @@ pub struct TemplateParser;
 
 impl IParser for TemplateParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
-        Ok(Node::Template(parser.build_nodes_from_pairs(pair.into_inner())?))
+        Ok(Node::Template(
+            parser.build_nodes_from_pairs(pair.into_inner())?,
+        ))
     }
 }

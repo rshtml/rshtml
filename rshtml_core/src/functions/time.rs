@@ -12,21 +12,27 @@ pub fn time<T: Display + ?Sized>(value: &T) -> RsDateTime {
     let dt_result: Result<DateTime<Utc>, _> = value_str.parse();
     match dt_result {
         Ok(dt) => return RsDateTime(dt.with_timezone(&Utc), default_format),
-        Err(err) => err_str.push_str(&format!("{}", err)),
+        Err(err) => err_str.push_str(&format!("{err}")),
     }
 
     let ndt_result: Result<NaiveDateTime, _> = value_str.parse();
     if let Ok(ndt) = ndt_result {
-        return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc), default_format);
+        return RsDateTime(
+            DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc),
+            default_format,
+        );
     }
 
     let nd_result: Result<NaiveDate, _> = value_str.parse();
     if let Ok(nd) = nd_result {
         let naive_datetime = nd.and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
-        return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(naive_datetime, Utc), default_format);
+        return RsDateTime(
+            DateTime::<Utc>::from_naive_utc_and_offset(naive_datetime, Utc),
+            default_format,
+        );
     }
 
-    eprintln!("DEBUG: Time Error: {}", err_str);
+    eprintln!("DEBUG: Time Error: {err_str}");
 
     RsDateTime(DateTime::default(), default_format)
 }

@@ -8,7 +8,10 @@ use std::str::FromStr;
 pub struct RustExprCompiler;
 
 impl RustExprCompiler {
-    pub fn compile(compiler: &mut Compiler, exprs: &Vec<(String, Vec<Node>)>) -> Result<TokenStream> {
+    pub fn compile(
+        compiler: &mut Compiler,
+        exprs: &Vec<(String, Vec<Node>)>,
+    ) -> Result<TokenStream> {
         let mut ts = TokenStream::new();
 
         for (expr, inner_nodes) in exprs {
@@ -18,7 +21,8 @@ impl RustExprCompiler {
                 inner_ts.extend(quote! {#its});
             }
 
-            let expr_code = TokenStream::from_str(expr).map_err(|err| anyhow!("Lex Error: {}", err))?;
+            let expr_code =
+                TokenStream::from_str(expr).map_err(|err| anyhow!("Lex Error: {}", err))?;
 
             ts.extend(quote! { #expr_code { #inner_ts } });
         }

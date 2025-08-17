@@ -1,4 +1,4 @@
-﻿use crate::Node;
+use crate::Node;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
@@ -10,12 +10,14 @@ impl IParser for MatchExprParser {
         let pair_span = pair.as_span();
         let mut pairs = pair.into_inner();
 
-        let match_expr_head = pairs.find(|pair| pair.as_rule() == Rule::match_expr_head).ok_or(Error::new_from_span(
-            ErrorVariant::CustomError {
-                message: "Match expression head cannot find.".to_string(),
-            },
-            pair_span,
-        ))?;
+        let match_expr_head = pairs
+            .find(|pair| pair.as_rule() == Rule::match_expr_head)
+            .ok_or(Error::new_from_span(
+                ErrorVariant::CustomError {
+                    message: "Match expression head cannot find.".to_string(),
+                },
+                pair_span,
+            ))?;
 
         let match_expr_arms = pairs.filter(|pair| pair.as_rule() == Rule::match_expr_arm);
 
@@ -46,13 +48,19 @@ impl IParser for MatchExprParser {
                 match_expr_arm_span,
             ))?;
             let node_arm_value = match match_expr_arm_value.as_rule() {
-                Rule::inner_template => parser.build_nodes_from_pairs(match_expr_arm_value.into_inner())?,
+                Rule::inner_template => {
+                    parser.build_nodes_from_pairs(match_expr_arm_value.into_inner())?
+                }
                 Rule::continue_directive => vec![Node::ContinueDirective],
                 Rule::break_directive => vec![Node::BreakDirective],
                 Rule::rust_expr_paren => vec![parser.build_ast_node(match_expr_arm_value)?],
                 Rule::rust_expr_simple => vec![parser.build_ast_node(match_expr_arm_value)?],
                 Rule::match_inner_text => vec![Node::InnerText(
-                    match_expr_arm_value.as_str().replace("@@", "@").replace("@@{", "{").replace("@@}", "}"),
+                    match_expr_arm_value
+                        .as_str()
+                        .replace("@@", "@")
+                        .replace("@@{", "{")
+                        .replace("@@}", "}"),
                 )],
                 _ => {
                     return Err(Box::new(Error::new_from_span(

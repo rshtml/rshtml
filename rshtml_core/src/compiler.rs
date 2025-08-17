@@ -73,20 +73,32 @@ impl Compiler {
             Node::Text(text) => TextCompiler::compile(self, text),
             Node::InnerText(inner_text) => InnerTextCompiler::compile(self, inner_text),
             Node::Comment(_) => Ok(quote! {}),
-            Node::ExtendsDirective(path, layout) => ExtendsDirectiveCompiler::compile(self, path, layout),
+            Node::ExtendsDirective(path, layout) => {
+                ExtendsDirectiveCompiler::compile(self, path, layout)
+            }
             Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, name),
             Node::RustBlock(contents) => RustBlockCompiler::compile(self, contents),
-            Node::RustExprSimple(expr, is_escaped) => RustExprSimpleCompiler::compile(self, expr, is_escaped),
-            Node::RustExprParen(expr, is_escaped) => RustExprParenCompiler::compile(self, expr, is_escaped),
+            Node::RustExprSimple(expr, is_escaped) => {
+                RustExprSimpleCompiler::compile(self, expr, is_escaped)
+            }
+            Node::RustExprParen(expr, is_escaped) => {
+                RustExprParenCompiler::compile(self, expr, is_escaped)
+            }
             Node::MatchExpr(name, arms) => MatchExprCompiler::compile(self, name, arms),
             Node::RustExpr(exprs) => RustExprCompiler::compile(self, exprs),
-            Node::SectionDirective(name, content) => SectionDirectiveCompiler::compile(self, name, content),
+            Node::SectionDirective(name, content) => {
+                SectionDirectiveCompiler::compile(self, name, content)
+            }
             Node::SectionBlock(name, content) => SectionBlockCompiler::compile(self, name, content),
             Node::RenderBody => RenderBodyCompiler::compile(self),
-            Node::Component(name, parameters, body) => ComponentCompiler::compile(self, name, parameters, body),
+            Node::Component(name, parameters, body) => {
+                ComponentCompiler::compile(self, name, parameters, body)
+            }
             Node::ChildContent => Ok(quote! {child_content(__f__)?;}),
             Node::Raw(body) => RawCompiler::compile(self, body),
-            Node::UseDirective(name, path, component) => UseDirectiveCompiler::compile(self, name, path, component),
+            Node::UseDirective(name, path, component) => {
+                UseDirectiveCompiler::compile(self, name, path, component)
+            }
             Node::ContinueDirective => Ok(quote! {continue;}),
             Node::BreakDirective => Ok(quote! {break;}),
         }
@@ -94,7 +106,9 @@ impl Compiler {
 
     pub fn section_names(&self) -> TokenStream {
         let mut token_stream = TokenStream::new();
-        self.sections.keys().for_each(|x| token_stream.extend(quote! {#x,}));
+        self.sections
+            .keys()
+            .for_each(|x| token_stream.extend(quote! {#x,}));
 
         quote! {[#token_stream]}
     }

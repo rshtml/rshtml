@@ -151,7 +151,7 @@ fn walk_dir(dir: &Path) {
                 walk_dir(&path);
             } else if path.is_file() {
                 if let Some(path_str) = path.to_str() {
-                    println!("cargo:rerun-if-changed={}", path_str);
+                    println!("cargo:rerun-if-changed={path_str}");
                 }
             }
         }

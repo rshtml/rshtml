@@ -1,6 +1,6 @@
-﻿use crate::node::{ComponentParameter, ComponentParameterValue};
-use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::Node;
+use crate::node::{ComponentParameter, ComponentParameterValue};
+use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 
@@ -86,7 +86,7 @@ impl ComponentTagParser {
             }
             rule => Err(Box::new(Error::new_from_span(
                 ErrorVariant::CustomError {
-                    message: format!("Unexpected rule: {:?}", rule),
+                    message: format!("Unexpected rule: {rule:?}"),
                 },
                 pair.as_span(),
             ))),

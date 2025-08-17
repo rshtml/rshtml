@@ -16,7 +16,7 @@ fn test_template_format() {
     let ast = match RsHtmlParser::new().run(views[0], Config::default()) {
         Ok(ast) => ast,
         Err(err) => {
-            println!("{}", err);
+            println!("{err}");
             return;
         }
     };
@@ -32,7 +32,7 @@ fn test_template_format_without_parsing() {
     let pairs = match RsHtmlParser::parse(Rule::template, template.as_str()) {
         Ok(pairs) => pairs,
         Err(err) => {
-            println!("{}", err);
+            println!("{err}");
             return;
         }
     };

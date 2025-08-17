@@ -49,7 +49,7 @@ fn prepare(
     let dir = tempdir()?;
     let file_path = dir.path().join("test.rs");
     let mut file = File::create(&file_path)?;
-    writeln!(file, "{}", test_code_str)?;
+    writeln!(file, "{test_code_str}")?;
 
     let t = trybuild::TestCases::new();
     t.pass(&file_path);

@@ -111,7 +111,7 @@ impl RsHtmlParser {
             Rule::break_directive => Ok(Node::BreakDirective),
             rule => Err(Box::new(Error::new_from_span(
                 ErrorVariant::CustomError {
-                    message: format!("Error: Unknown rule: {:?}", rule),
+                    message: format!("Error: Unknown rule: {rule:?}"),
                 },
                 pair.as_span(),
             ))),
@@ -122,7 +122,7 @@ impl RsHtmlParser {
         let input = self.read_template(path).map_err(|err| {
             Error::new_from_span(
                 ErrorVariant::CustomError {
-                    message: format!("Error reading template: {:?}, path: {}", err, path),
+                    message: format!("Error reading template: {err:?}, path: {path}"),
                 },
                 Span::new(path, 0, 0).unwrap(),
             )

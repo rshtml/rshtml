@@ -1,4 +1,4 @@
-﻿use crate::Node;
+use crate::Node;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
@@ -32,15 +32,22 @@ impl IParser for SectionBlockParser {
                 pair_span,
             ))?;
 
-        let section_head = section_name_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
+        let section_head = section_name_pair
+            .as_str()
+            .trim_matches('"')
+            .trim_matches('\'')
+            .to_string();
 
-        let inner_pairs = pair.into_inner().find(|x| x.as_rule() == Rule::inner_template).ok_or(Error::new_from_span(
-            ErrorVariant::ParsingError {
-                positives: vec![Rule::inner_template],
-                negatives: vec![],
-            },
-            pair_span,
-        ))?;
+        let inner_pairs = pair
+            .into_inner()
+            .find(|x| x.as_rule() == Rule::inner_template)
+            .ok_or(Error::new_from_span(
+                ErrorVariant::ParsingError {
+                    positives: vec![Rule::inner_template],
+                    negatives: vec![],
+                },
+                pair_span,
+            ))?;
 
         let body = parser.build_nodes_from_pairs(inner_pairs.into_inner())?;
         Ok(Node::SectionBlock(section_head, body))

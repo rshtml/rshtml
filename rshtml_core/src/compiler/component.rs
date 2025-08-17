@@ -10,14 +10,23 @@ use std::str::FromStr;
 pub struct ComponentCompiler;
 
 impl ComponentCompiler {
-    pub fn compile(compiler: &mut Compiler, name: &str, parameters: &Vec<ComponentParameter>, body: &[Node]) -> Result<TokenStream> {
-        let component_node = compiler.components.get(name).ok_or(anyhow!("Component {} not found", name))?;
+    pub fn compile(
+        compiler: &mut Compiler,
+        name: &str,
+        parameters: &Vec<ComponentParameter>,
+        body: &[Node],
+    ) -> Result<TokenStream> {
+        let component_node = compiler
+            .components
+            .get(name)
+            .ok_or(anyhow!("Component {} not found", name))?;
         let component_node = component_node.clone();
 
         let mut token_stream = TokenStream::new();
 
         for parameter in parameters {
-            let name_ts = TokenStream::from_str(&parameter.name).map_err(|err| anyhow!("Lex Error: {}", err))?;
+            let name_ts = TokenStream::from_str(&parameter.name)
+                .map_err(|err| anyhow!("Lex Error: {}", err))?;
 
             let parameter_ts = match &parameter.value {
                 ComponentParameterValue::Bool(value) => quote! {let #name_ts = #value;},
@@ -30,11 +39,13 @@ impl ComponentCompiler {
                     quote! {let #name_ts = #value;}
                 }
                 ComponentParameterValue::RustExprParen(value) => {
-                    let expr_ts = TokenStream::from_str(value).map_err(|err| anyhow!("Lex Error: {}", err))?;
+                    let expr_ts = TokenStream::from_str(value)
+                        .map_err(|err| anyhow!("Lex Error: {}", err))?;
                     quote! {let #name_ts = #expr_ts;}
                 }
                 ComponentParameterValue::RustExprSimple(value) => {
-                    let expr_ts = TokenStream::from_str(value).map_err(|err| anyhow!("Lex Error: {}", err))?;
+                    let expr_ts = TokenStream::from_str(value)
+                        .map_err(|err| anyhow!("Lex Error: {}", err))?;
                     quote! {let #name_ts = #expr_ts;}
                 }
                 ComponentParameterValue::Block(value) => {

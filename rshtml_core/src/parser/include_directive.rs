@@ -1,4 +1,4 @@
-﻿use crate::Node;
+use crate::Node;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
@@ -9,23 +9,34 @@ impl IParser for IncludeDirectiveParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
 
-        let path_pair = pair.into_inner().find(|p| p.as_rule() == Rule::string_line).ok_or(Error::new_from_span(
-            ErrorVariant::CustomError {
-                message: "Error: Expected a path to the included file".to_string(),
-            },
-            pair_span,
-        ))?;
+        let path_pair = pair
+            .into_inner()
+            .find(|p| p.as_rule() == Rule::string_line)
+            .ok_or(Error::new_from_span(
+                ErrorVariant::CustomError {
+                    message: "Error: Expected a path to the included file".to_string(),
+                },
+                pair_span,
+            ))?;
 
-        let path = path_pair.as_str().trim_matches('"').trim_matches('\'').to_string();
+        let path = path_pair
+            .as_str()
+            .trim_matches('"')
+            .trim_matches('\'')
+            .to_string();
 
         let view_path = parser.config.views.0.join(&path);
 
-        let canonical_path = view_path.canonicalize().unwrap_or_default().to_string_lossy().to_string();
+        let canonical_path = view_path
+            .canonicalize()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
 
         if parser.included_templates.contains(&canonical_path) {
             return Err(Box::new(Error::new_from_span(
                 ErrorVariant::CustomError {
-                    message: format!("Error: Circular include detected for file '{}'", path),
+                    message: format!("Error: Circular include detected for file '{path}'"),
                 },
                 path_pair.as_span(),
             )));
@@ -38,7 +49,7 @@ impl IParser for IncludeDirectiveParser {
             Err(err) => {
                 let include_template_error = Error::new_from_span(
                     ErrorVariant::CustomError {
-                        message: format!("Error parsing included file '{}': {}", path, err),
+                        message: format!("Error parsing included file '{path}': {err}"),
                     },
                     pair_span,
                 );
@@ -54,7 +65,9 @@ impl IParser for IncludeDirectiveParser {
             _ => {
                 return Err(Box::new(Error::new_from_span(
                     ErrorVariant::CustomError {
-                        message: format!("Error: Expected a template in the included file '{}', found {:?}", path, inner_template),
+                        message: format!(
+                            "Error: Expected a template in the included file '{path}', found {inner_template:?}"
+                        ),
                     },
                     path_pair.as_span(),
                 )));

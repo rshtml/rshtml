@@ -1,7 +1,7 @@
-﻿use crate::node::{RustBlockContent, TextLineItem};
+use crate::Node;
+use crate::node::{RustBlockContent, TextLineItem};
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::traits::IsEscaped;
-use crate::Node;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::{Pair, Pairs};
 
@@ -36,8 +36,7 @@ impl RustBlockParser {
                     return Err(Box::new(Error::new_from_span(
                         ErrorVariant::CustomError {
                             message: format!(
-                                "Internal Error: Unexpected rule {:?} inside rust block content",
-                                rule
+                                "Internal Error: Unexpected rule {rule:?} inside rust block content"
                             ),
                         },
                         inner_pair.as_span(),

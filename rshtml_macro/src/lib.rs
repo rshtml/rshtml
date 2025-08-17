@@ -15,9 +15,9 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
         Ok(None) => {
             let struct_name_str = struct_name.to_string();
             let template_file = if let Some(stripped) = struct_name_str.strip_suffix("Page") {
-                format!("{}.rs.html", stripped)
+                format!("{stripped}.rs.html")
             } else {
-                format!("{}.rs.html", struct_name_str)
+                format!("{struct_name_str}.rs.html")
             };
 
             template_file.to_lowercase()
@@ -47,10 +47,16 @@ fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<Optio
                             "Expected a string literal for the `path` argument, e.g., path = \"...\"",
                         ))
                     } else {
-                        Err(syn::Error::new_spanned(name_value.path, "Expected argument name `path`, e.g., path = \"...\""))
+                        Err(syn::Error::new_spanned(
+                            name_value.path,
+                            "Expected argument name `path`, e.g., path = \"...\"",
+                        ))
                     }
                 }
-                Ok(_) => Err(syn::Error::new_spanned(attr, "Expected `path = \"...\"` inside #[rshtml(...)]")),
+                Ok(_) => Err(syn::Error::new_spanned(
+                    attr,
+                    "Expected `path = \"...\"` inside #[rshtml(...)]",
+                )),
                 Err(parse_err) => Err(parse_err),
             };
         }

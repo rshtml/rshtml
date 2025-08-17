@@ -8,7 +8,11 @@ use std::str::FromStr;
 pub struct MatchExprCompiler;
 
 impl MatchExprCompiler {
-    pub fn compile(compiler: &mut Compiler, name: &str, arms: &Vec<(String, Vec<Node>)>) -> Result<TokenStream> {
+    pub fn compile(
+        compiler: &mut Compiler,
+        name: &str,
+        arms: &Vec<(String, Vec<Node>)>,
+    ) -> Result<TokenStream> {
         let mut arms_ts = TokenStream::new();
 
         for (arm_name, arm_nodes) in arms {
@@ -17,7 +21,8 @@ impl MatchExprCompiler {
                 let ts = compiler.compile(node)?;
                 token_stream.extend(quote! {#ts});
             }
-            let arm_head = TokenStream::from_str(arm_name).map_err(|err| anyhow!("Lex Error: {}", err))?;
+            let arm_head =
+                TokenStream::from_str(arm_name).map_err(|err| anyhow!("Lex Error: {}", err))?;
             let arm_ts = quote! {
                 #arm_head =>  { #token_stream },
             };

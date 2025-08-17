@@ -1,5 +1,5 @@
-﻿use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::Node;
+use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 use std::path::Path;
@@ -37,8 +37,7 @@ impl IParser for UseDirectiveParser {
                 .ok_or(Error::new_from_span(
                     ErrorVariant::CustomError {
                         message: format!(
-                            "Failed to derive component name from import path: '{:#?}'",
-                            import_path
+                            "Failed to derive component name from import path: '{import_path:#?}'"
                         ),
                     },
                     pair_span,
@@ -50,10 +49,7 @@ impl IParser for UseDirectiveParser {
             Err(err) => {
                 let include_template_error = Error::new_from_span(
                     ErrorVariant::CustomError {
-                        message: format!(
-                            "Error parsing component file '{}': {}",
-                            import_path_str, err
-                        ),
+                        message: format!("Error parsing component file '{import_path_str}': {err}"),
                     },
                     pair_span,
                 );

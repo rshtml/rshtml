@@ -31,7 +31,7 @@ impl HomePage {
     }
 
     fn get_header(&self, title: &str) -> String {
-        format!("Header: {}", title)
+        format!("Header: {title}")
     }
 }
 
@@ -80,6 +80,6 @@ mod tests {
 
         let s = homepage.render().unwrap();
 
-        print!("{}", s);
+        print!("{s}");
     }
 }

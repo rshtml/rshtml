@@ -1,4 +1,4 @@
-﻿use crate::Node;
+use crate::Node;
 use crate::node::SectionDirectiveContent;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::traits::IsEscaped;
@@ -19,17 +19,28 @@ impl IParser for SectionDirectiveParser {
             (Some(name), Some(value)) => {
                 let value_pair = match value.as_rule() {
                     Rule::string_line => {
-                        let value = value.as_str().trim_matches('"').trim_matches('\'').to_string();
+                        let value = value
+                            .as_str()
+                            .trim_matches('"')
+                            .trim_matches('\'')
+                            .to_string();
                         SectionDirectiveContent::Text(value)
                     }
                     Rule::rust_expr_simple => {
                         let value = value.as_str();
-                        SectionDirectiveContent::RustExprSimple(value.escaped_or_raw(), value.is_escaped())
+                        SectionDirectiveContent::RustExprSimple(
+                            value.escaped_or_raw(),
+                            value.is_escaped(),
+                        )
                     }
                     _ => unreachable!(),
                 };
 
-                let name = name.as_str().trim_matches('"').trim_matches('\'').to_string();
+                let name = name
+                    .as_str()
+                    .trim_matches('"')
+                    .trim_matches('\'')
+                    .to_string();
 
                 Ok(Node::SectionDirective(name, value_pair))
             }
