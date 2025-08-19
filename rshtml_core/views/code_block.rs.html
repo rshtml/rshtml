@@ -1,25 +1,16 @@
 @{
-    @: this is rust code blocks text line @self.data and data
 
     let s = "'<script/>'";
 
-    @: this is escaped: @s
-    @: this is not escaped: @#s
-
-     fn inline_function() -> String {
+}     fn inline_function() -> String {
         "inline function".to_string()
     }
 
     for i in 0..10 {
         println!("Item {}", i);
-        @: @i
     }
 
     let mut show_array = |arr: [i32;5]| -> ::std::fmt::Result {
-        for i in arr {
-            @: @i
-        }
-
         Ok(())
     };
 
@@ -33,5 +24,4 @@
         42 => data,
         _ => 0,
     };
-    @: @result
 }

@@ -9,12 +9,20 @@
   what is going on dude @self.hey
   <p>Footer content goes here.</p>
 
-  @if self.my_var == "my var" {
-    <p>MyVar is true</p>
-  } else {
-    <p>MyVar is false</p>
-  }
+  <div>
+    @if self.my_var == "my var" {
+      <p>MyVar is true</p>
+    } else {
+      <p>MyVar is false</p>
+    }
+  </div>
 }
+
+<div>
+  @for user in &self.users {
+    <p>@user.name</p>
+  }
+</div>
 
 @use "Card.rs.html" as Card
 
@@ -23,7 +31,6 @@
   let x = 5;
   let y = 10;
   println!("{}", x + y);
-  @: this is just a text @x   ttt
 
   fn inline_function() -> String {
     "inline function".to_string()

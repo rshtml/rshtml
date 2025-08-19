@@ -1,15 +1,8 @@
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum TextLineItem {
-    Text(String),
-    RustExprSimple(String, bool),
-}
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum RustBlockContent {
     Code(String),
-    TextLine(Vec<TextLineItem>),
     NestedBlock(Vec<RustBlockContent>),
 }
 

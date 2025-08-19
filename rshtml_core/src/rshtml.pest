@@ -33,7 +33,7 @@ block = !{
     "@" ~ (
         (raw_block | render_directive | include_directive | section_directive | section_block
         | render_body_directive | child_content_directive | use_directive)
-        | (rust_block | rust_expr | rust_expr_paren | match_expr | continue_directive | break_directive |rust_expr_simple)
+        | (rust_block | rust_expr | rust_expr_paren | match_expr | continue_directive | break_directive | rust_expr_simple)
         )
     )
 }
@@ -107,7 +107,6 @@ rust_block = {
 }
 
 rust_block_content = _{
-    text_line_directive |
     nested_block  |
     rust_code
 }
@@ -140,9 +139,6 @@ _string_literal = _{ _normal_string | _raw_string }
 
 _line_comment = _{ "//" ~ (!NEWLINE ~ ANY)* }
 _block_comment = _{ "/*" ~ (_block_comment | !"*/" ~ ANY)* ~ "*/" }
-
-text_line_directive = ${ ("@:" ~ (("@" ~ rust_expr_simple) | text_line)*) }
-text_line = @{ ("@@" | !(NEWLINE | ("@" ~ rust_expr_simple)) ~ ANY)+ }
 
 // endregion
 
@@ -331,3 +327,4 @@ child_content_directive = @{
 // INFO: can be use @use "Component" without rs.html postfix
 // INFO: removed text block tag in rust block
 // INFO: removed component only remain component tag
+// INFO: removed text line in rust block 
