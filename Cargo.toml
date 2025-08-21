@@ -3,7 +3,7 @@ members = ["rshtml", "rshtml_core", "rshtml_macro", "rshtml_test"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Mehmet Kesik (https://github.com/mehmetkesik)"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -12,11 +12,15 @@ repository = "https://github.com/rshtml/rshtml"
 description = "RsHtml: A Template Engine for Seamless HTML and Rust Integration."
 documentation = "https://docs.rs/rshtml"
 keywords = ["rshtml", "template", "html_template", "rust", "html"]
-categories = ["template-engine", "web-programming", "development-tools", "parser-implementations", "compilers"]
+categories = [
+  "template-engine",
+  "web-programming",
+  "development-tools",
+  "parser-implementations",
+  "compilers",
+]
 
 [workspace.dependencies]
-rshtml = { path = "rshtml", version = "0.1.0" }
-rshtml_macro = { path = "rshtml_macro", version = "0.1.0" }
-rshtml_core = { path = "rshtml_core", version = "0.1.0" }
-
-
+rshtml = { path = "rshtml", version = "0.2.0" }
+rshtml_macro = { path = "rshtml_macro", version = "0.2.0" }
+rshtml_core = { path = "rshtml_core", version = "0.2.0" }
