@@ -57,10 +57,6 @@ Please see the [Editor Support](https://rshtml.github.io/#5-editor-support) sect
     let x = 42;
     let y = x * 2;
     println!("Debug: x = {}, y = {}", x, y);
-
-    @: this is text line and x is @x
-
-    <text>this is text block and y is @y</text>
 }
 ```
 

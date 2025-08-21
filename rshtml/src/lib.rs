@@ -25,7 +25,7 @@
 //! - **Control Flow:** `@if ...`, `@for ...`, `@match ...`
 //! - **Code Blocks:** `@{ let a = 5; }`
 //! - **Layouts/Sections:** `@extends`, `@section`, `@render`
-//! - **Components:** `<MyComponent data=@value />` or `@MyComponent { ... }`
+//! - **Components:** `<MyComponent data=@value />`
 //! - **Raw Blocks:** `@raw{ ... }`
 //! - **Comments:** `@* server-side comment *@`
 //!
@@ -37,7 +37,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! rshtml = "0.1.0" # Use the latest version
+//! rshtml = "0.2.0" # Use the latest version
 //! ```
 //!
 //! **2. Define Struct and Template:**
