@@ -36,10 +36,10 @@ fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<Optio
             return match attr.parse_args::<Meta>() {
                 Ok(Meta::NameValue(name_value)) => {
                     if name_value.path.is_ident("path") {
-                        if let Expr::Lit(ref expr_lit) = name_value.value {
-                            if let Lit::Str(lit_str) = &expr_lit.lit {
-                                return Ok(Some(lit_str.value()));
-                            }
+                        if let Expr::Lit(ref expr_lit) = name_value.value
+                            && let Lit::Str(lit_str) = &expr_lit.lit
+                        {
+                            return Ok(Some(lit_str.value()));
                         }
 
                         Err(syn::Error::new_spanned(
