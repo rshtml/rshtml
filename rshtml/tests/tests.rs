@@ -15,7 +15,6 @@ mod tests {
     #[test]
     pub fn test_if_else() {
         #[derive(RsHtml)]
-        #[rshtml(path = "if_else.rs.html")]
         struct IfElsePage {
             is_ok: bool,
             count: i32,
@@ -86,7 +85,6 @@ mod tests {
     #[test]
     pub fn test_simple_expression() {
         #[derive(RsHtml)]
-        #[rshtml(path = "simple_expression.rs.html")]
         struct SimpleExpressionPage {
             value: i32,
             data: Option<String>,
@@ -110,7 +108,6 @@ mod tests {
     #[test]
     pub fn test_parentheses_expression() {
         #[derive(RsHtml)]
-        #[rshtml(path = "parentheses_expression.rs.html")]
         struct ParenthesesExpressionPage {
             value: i32,
             data: String,
@@ -126,7 +123,6 @@ mod tests {
     #[test]
     pub fn test_code_block() {
         #[derive(RsHtml)]
-        #[rshtml(path = "code_block.rs.html")]
         struct CodeBlockPage {}
 
         let mut page = CodeBlockPage {};
@@ -207,7 +203,6 @@ mod tests {
     #[test]
     pub fn test_raw_block() {
         #[derive(RsHtml)]
-        #[rshtml(path = "raw_block.rs.html")]
         struct RawBlockPage {}
 
         let mut page = RawBlockPage {};
@@ -251,7 +246,6 @@ mod tests {
     #[test]
     pub fn test_no_layout_with_section() {
         #[derive(RsHtml)]
-        #[rshtml(path = "no_layout_with_section.rs.html")]
         struct NoLayoutWithSectionPage {}
 
         let mut page = NoLayoutWithSectionPage {};

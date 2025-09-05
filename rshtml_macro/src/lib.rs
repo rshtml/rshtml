@@ -14,13 +14,15 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
         Ok(Some(path)) => path,
         Ok(None) => {
             let struct_name_str = struct_name.to_string();
-            let template_file = if let Some(stripped) = struct_name_str.strip_suffix("Page") {
+            let mut template_file = if let Some(stripped) = struct_name_str.strip_suffix("Page") {
                 format!("{stripped}.rs.html")
             } else {
                 format!("{struct_name_str}.rs.html")
             };
 
-            template_file.to_lowercase()
+            // template_file.to_lowercase()
+            template_file = to_snake_case(&template_file);
+            template_file
         }
         Err(err) => {
             return err.to_compile_error().into();
@@ -63,4 +65,26 @@ fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<Optio
     }
 
     Ok(None)
+}
+
+fn to_snake_case(s: &str) -> String {
+    if s.is_empty() {
+        return String::new();
+    }
+
+    let mut result = String::new();
+    let chars = s.chars().peekable();
+
+    for c in chars {
+        if c.is_uppercase() {
+            if !result.is_empty() {
+                result.push('_');
+            }
+            result.push(c.to_ascii_lowercase());
+        } else {
+            result.push(c);
+        }
+    }
+
+    result
 }

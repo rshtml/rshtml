@@ -28,5 +28,8 @@ publish_dry:
     cargo publish --dry-run --package rshtml_macro
     cargo publish --dry-run --package rshtml
 
+control: test clippy fmt build
+    echo "control works.."
+
 ci: test clippy fmt build publish_dry
     echo "CI works.."

@@ -5,9 +5,9 @@ pub mod config;
 mod error;
 mod node;
 mod parser;
+pub mod str_extensions;
 #[cfg(test)]
 mod tests;
-pub mod traits;
 
 use crate::config::Config;
 use crate::parser::RsHtmlParser;

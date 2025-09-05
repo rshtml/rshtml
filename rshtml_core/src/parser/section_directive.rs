@@ -1,7 +1,7 @@
 use crate::Node;
 use crate::node::SectionDirectiveContent;
 use crate::parser::{IParser, RsHtmlParser, Rule};
-use crate::traits::IsEscaped;
+use crate::str_extensions::*;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 

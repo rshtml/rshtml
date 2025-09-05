@@ -1,6 +1,6 @@
 use crate::node::Node;
 use crate::parser::{IParser, RsHtmlParser, Rule};
-use crate::traits::IsEscaped;
+use crate::str_extensions::*;
 use pest::error::Error;
 use pest::iterators::Pair;
 
