@@ -1,6 +1,7 @@
 [![Crates.io Version](https://img.shields.io/crates/v/rshtml.svg)](https://crates.io/crates/rshtml)
 [![Docs.rs Documentation](https://docs.rs/rshtml/badge.svg)](https://docs.rs/rshtml)
 [![Full Documentation](https://img.shields.io/badge/book-rshtml.github.io-blue.svg)](https://rshtml.github.io/)
+[![Read on Medium](https://img.shields.io/badge/Read_on_Medium-yellow?logo=medium)](https://medium.com/@mehmetkesik/announcing-rshtml-template-for-rust-e246713ba02f)
 ---
 # RsHtml
 
@@ -14,7 +15,7 @@ RsHtml is a compile-time, type-safe, lightweight and flexible template engine fo
 - Provides helper functions (e.g., `@time()`).
 - Supports raw output with `@raw` blocks and server-side comments with `@* ... *@`.
 - Generates `efficient Rust code` for template rendering at compile time.
-- **See the [documentation](https://rshtml.github.io/) for a full list of features.**
+- **See the [documentation](https://rshtml.github.io/) for a full list of features. You can also read the [Medium](https://medium.com/@mehmetkesik/announcing-rshtml-template-for-rust-e246713ba02f) article.**
 
 ## Editor Support
 
@@ -122,8 +123,8 @@ views = { path = "views", layout = "layout.rs.html" }
 
 ### main.rs
 By default, #[derive(RsHtml)] infers the template file path from the struct's name.
-It converts StructNamePage to struct_name.rs.html.
-You can override this with #[rshtml(path = "...")].
+It converts `StructNamePage` to `struct_name.rs.html`.
+You can override this with `#[rshtml(path = "...")]`.
 ```rust
 use rshtml::RsHtml;
 
