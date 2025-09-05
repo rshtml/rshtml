@@ -318,8 +318,8 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-
-// TODO 1: bind helper functions to feature
+// TODO 1: make name extracting like IfElsePage -> if_else.rs.html
+// TODO 2: bind helper functions to feature
 
 // TODO 998: try to add source mapping or something for better error messages, sourcemap crate
 // TODO 999: Maybe add @client {...} support for client side codes and templates
