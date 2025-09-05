@@ -108,8 +108,10 @@
 /// Utility functions for use directly in RsHtml templates.
 ///
 /// Example template usage: `@time(&self.my_date)`, `@json(&self.data)`.
-pub use rshtml_core::functions;
-pub use rshtml_core::traits;
+pub mod functions;
+pub mod traits;
+// pub use functions;
+// pub use rshtml_core::traits;
 
 /// The primary derive macro for enabling RsHtml templating on a struct.
 ///
@@ -126,34 +128,10 @@ pub use rshtml_core::traits;
 /// Once derived, an instance of the struct will have a `render()` method to produce the HTML output.
 pub use rshtml_macro::RsHtml;
 
-use rshtml_core::config;
-use std::fs;
-use std::path::Path;
-
 /// Instructs Cargo to recompile the crate if any file in the views folder changes.
 ///
 /// This function should be called from a `build.rs` script.
 /// It helps ensure that template changes are picked up during development
 /// without needing a full manual recompile of the dependent crate.
-pub fn track_views_folder() {
-    let config = config::Config::load_from_toml_or_default();
-
-    if config.views.0.is_dir() {
-        walk_dir(&config.views.0);
-    }
-}
-
-fn walk_dir(dir: &Path) {
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                walk_dir(&path);
-            } else if path.is_file()
-                && let Some(path_str) = path.to_str()
-            {
-                println!("cargo:rerun-if-changed={path_str}");
-            }
-        }
-    }
-}
+mod track_views_folder;
+pub use track_views_folder::track_views_folder;

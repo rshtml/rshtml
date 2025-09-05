@@ -11,7 +11,7 @@ use syn::__private::Span;
 
 #[test]
 fn test_template_format() {
-    let views = ["simple_expression.rs.html"];
+    let views = ["home.rs.html"];
 
     let ast = match RsHtmlParser::new().run(views[0], Config::default()) {
         Ok(ast) => ast,
@@ -28,7 +28,7 @@ fn test_template_format() {
 
 #[test]
 fn test_template_format_without_parsing() {
-    let template = fs::read_to_string("views/simple_expression.rs.html").unwrap();
+    let template = fs::read_to_string("views/home.rs.html").unwrap();
     let pairs = match RsHtmlParser::parse(Rule::template, template.as_str()) {
         Ok(pairs) => pairs,
         Err(err) => {
@@ -43,7 +43,7 @@ fn test_template_format_without_parsing() {
 #[test]
 pub fn test_process_simple() {
     let ident = syn::Ident::new("HomePage", Span::call_site());
-    process_template("continue_break.rs.html".to_string(), &ident);
+    process_template("home.rs.html".to_string(), &ident);
 }
 
 #[test]

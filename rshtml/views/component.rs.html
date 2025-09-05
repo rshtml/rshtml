@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    @use "Card" as Card
+    @use "SideBar.rs.html" as SideBar
+    @use "Navbar"
+
+    <meta charset="UTF-8">
+    <title>@self.title</title>
+</head>
+<body>
+    <Navbar for_escape = @&self.for_escape>
+        heyy
+    </Navbar>
+
+    this is card:
+    <Card title="hello" footer = @self.value>
+        this is card content
+    </Card>
+
+    <br/>
+    <hr/>
+    <br/>
+
+    <SideBar content = {
+             this is content:
+            <p>heyy</p>
+            <p>value: @self.value</p>
+             }
+            _unused ="unused"
+    />
+
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>@render("title")</title>
+</head>
+<body>
+    escaped: @render("title_escaped")
+    not escaped: @render("title_not_escaped")
+    <br/>
+    <div> this is extends layout @self.data</div>
+    <p>my func: @self.my_func()</p>
+
+    @render_body
+
+    <div>heyyy</div>
+    <p>oooooo</p>
+
+    @render("footer")
+</body>
+</html>

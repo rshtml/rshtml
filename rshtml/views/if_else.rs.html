@@ -1,0 +1,29 @@
+@if self.is_ok {
+    <p>We hope you find what you're looking for.</p>
+} else if self.count > 0 {
+    <p>Something get bigger.</p>
+} else {
+    <p>What is it</p>
+}
+
+@if !self.is_ok {
+    <p>We hope you find what you're looking for.</p>
+} else if self.count > 0 {
+    <p>Something get bigger.</p>
+}
+
+@if self.count < 0 {
+    <p>Something get smaller.</p>
+} else {
+    <p>Something not get smaller</p>
+}
+
+@if self.is_ok {
+    <p>We hope you find what you're looking for.</p>
+} else if self.count > 0 {
+    <p>Something get bigger.</p>
+} else if self.count <= 0 {
+    <p>Something get bigger.</p>
+} else {
+    <p>What is it</p>
+}

@@ -1,0 +1,18 @@
+@for user in &self.users {
+    <p>Item @user</p>
+}
+
+@for i in 0..10 {
+    @if i == 5 {
+        @continue
+    }
+    <p>Item @i</p>
+}
+
+@for i in 0..10 {
+    @if i == 5 {
+        @break
+    }
+
+    <p>Item @i</p>
+}

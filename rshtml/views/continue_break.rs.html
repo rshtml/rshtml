@@ -1,0 +1,24 @@
+@for user in &self.users {
+  @if *user == "Bob" {
+    @continue
+  }
+  <p>this is user: @user</p>
+}
+
+@for i in 0..10 {
+  @if i == 5 {
+    @break
+  }
+  <p>Item @i</p>
+}
+
+@for i in 0..10 {
+  @match i {
+    4 => i,
+    5 => 5,
+    6 => <p>heyy</p>,
+    7 => continue,
+    8 => break,
+    _ => (i * 45 / 2),
+  }
+}

@@ -1,0 +1,7 @@
+@* --- Default, Safe Rendering --- *@ @* The HTML tags will be visible as plain
+text. *@
+<div>@self.my_var</div>
+
+@* --- Raw, Unescaped Rendering --- *@ @* The string is rendered as actual HTML.
+*@
+<div>@#self.my_var</div>
