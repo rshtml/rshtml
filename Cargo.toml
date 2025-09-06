@@ -21,6 +21,6 @@ categories = [
 ]
 
 [workspace.dependencies]
-rshtml = { path = "rshtml", version = "0.2.0" }
+rshtml = { path = "rshtml", version = "0.2.0", features = ["functions"] }
 rshtml_macro = { path = "rshtml_macro", version = "0.2.0" }
 rshtml_core = { path = "rshtml_core", version = "0.2.0" }
