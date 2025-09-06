@@ -11,7 +11,10 @@ license.workspace = true
 
 [dependencies]
 rshtml_macro.workspace = true
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
-chrono = "0.4.41"
 toml = "0.8.22"
+serde = { version = "1.0.219", features = ["derive"], optional = true }
+serde_json = { version = "1.0.140", optional = true }
+chrono = { version = "0.4.41", optional = true }
+
+[features]
+functions = ["dep:serde", "dep:serde_json", "dep:chrono"]
