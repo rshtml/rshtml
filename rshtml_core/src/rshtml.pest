@@ -318,9 +318,10 @@ child_content_directive = @{
 
 /// endregion Code blocks and code transfers
 
-// TODO 1: bind helper functions to feature
+// TODO 1: make examples projects, use featurely and featureless projects basics and full projects
 
 // TODO 998: try to add source mapping or something for better error messages, sourcemap crate
 // TODO 999: Maybe add @client {...} support for client side codes and templates
 
 // INFO: Struct names lowercased by the macro were converted to snake_case. like IfElsePage -> if_else.rs.html
+// INFO: binded helper functions to a 'functions' feature
