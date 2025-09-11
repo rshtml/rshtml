@@ -112,6 +112,9 @@
 pub mod functions;
 pub mod traits;
 
+mod escaping_writer;
+pub use escaping_writer::EscapingWriter;
+
 /// The primary derive macro for enabling RsHtml templating on a struct.
 ///
 /// Apply `#[derive(RsHtml)]` to a Rust struct to associate it with an
