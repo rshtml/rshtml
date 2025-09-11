@@ -42,7 +42,6 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
         const layout: &str = #layout;
         fn has_section(section: &str) -> bool {#sections.contains(&section)}
         #[allow(unused_imports)]
-        use rshtml::functions::*;
         use ::std::fmt::Write;
     };
 
