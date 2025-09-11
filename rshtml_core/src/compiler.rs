@@ -113,26 +113,9 @@ impl Compiler {
         quote! {[#token_stream]}
     }
 
-    fn escape(&self, input: TokenStream) -> TokenStream {
-        quote! {
-            for c in #input.to_string().chars() {
-                match c {
-                    '&' => write!(__f__, "{}", "&amp;")?,
-                    '<' => write!(__f__, "{}", "&lt;")?,
-                    '>' => write!(__f__, "{}", "&gt;")?,
-                    '"' => write!(__f__, "{}", "&quot;")?,
-                    '\'' => write!(__f__, "{}", "&#39;")?,
-                    '/' => write!(__f__, "{}", "&#x2F;")?,
-                    _ => write!(__f__, "{}", c)?,
-                }
-            }
-        }
-    }
-
     fn escape_or_raw(&self, expr_ts: TokenStream, is_escaped: &bool) -> TokenStream {
         if *is_escaped {
-            let escaped = self.escape(quote! {(#expr_ts)});
-            quote! {#escaped}
+            quote! {write!(rshtml::EscapingWriter { inner: __f__ }, "{}", &(#expr_ts))?;}
         } else {
             quote! {write!(__f__, "{}", #expr_ts)?;}
         }
