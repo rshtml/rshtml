@@ -1,6 +1,6 @@
 #![allow(unused_imports, dead_code)]
 
-use rshtml::RsHtml;
+use rshtml::{RsHtml, functions::*, traits::RsHtml};
 use serde::Serialize;
 use std::fmt::Write;
 
@@ -40,7 +40,6 @@ mod tests {
     use super::*;
     use chrono::prelude::*;
     use pest::Parser;
-    use rshtml::traits::RsHtml;
     use std::fs;
     use syn::__private::Span;
 
