@@ -5,11 +5,17 @@
     @use "Card" as Card
     @use "SideBar.rs.html" as SideBar
     @use "Navbar"
+    @use "Item"
 
     <meta charset="UTF-8">
     <title>@self.title</title>
 </head>
 <body>
+
+    @for item in &self.items {
+        <Item name=@&item.name/>
+    }
+
     <Navbar for_escape = @&self.for_escape>
         heyy
     </Navbar>

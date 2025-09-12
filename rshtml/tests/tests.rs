@@ -210,12 +210,17 @@ mod tests {
 
     #[test]
     pub fn test_component() {
+        struct Item {
+            name: String,
+        }
+
         #[derive(RsHtml)]
         struct ComponentPage {
             value: i32,
             title: String,
             data: String,
             for_escape: String,
+            items: Vec<Item>,
         }
 
         let mut page = ComponentPage {
@@ -223,6 +228,14 @@ mod tests {
             title: "Component".to_string(),
             data: "Hello".to_string(),
             for_escape: "'<script/>'".to_string(),
+            items: vec![
+                Item {
+                    name: "Jack".to_string(),
+                },
+                Item {
+                    name: "John".to_string(),
+                },
+            ],
         };
 
         println!("{}", page.render().unwrap());
