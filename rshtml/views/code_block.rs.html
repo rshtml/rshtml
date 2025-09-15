@@ -1,8 +1,14 @@
 @{
 
+    struct MyStruct {
+        name: String,
+    }
+
+    let x = ::std::vec![MyStruct {name: "hey".to_string()}];
+    
     let s = "'<script/>'";
 
-}     fn inline_function() -> String {
+    fn inline_function() -> String {
         "inline function".to_string()
     }
 
