@@ -14,6 +14,7 @@ mod section_directive;
 mod text;
 mod use_directive;
 
+use crate::Node;
 use crate::compiler::component::ComponentCompiler;
 use crate::compiler::extends_directive::ExtendsDirectiveCompiler;
 use crate::compiler::inner_text::InnerTextCompiler;
@@ -29,7 +30,6 @@ use crate::compiler::section_block::SectionBlockCompiler;
 use crate::compiler::section_directive::SectionDirectiveCompiler;
 use crate::compiler::text::TextCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
-use crate::Node;
 use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::quote;
