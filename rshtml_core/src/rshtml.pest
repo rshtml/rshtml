@@ -322,3 +322,5 @@ child_content_directive = @{
 
 // INFO: Struct names lowercased by the macro were converted to snake_case. like IfElsePage -> if_else.rs.html
 // INFO: binded helper functions to a 'functions' feature
+// INFO: escaping strings improved with EscapingWriter
+// INFO: rust code block flatten and fixed
