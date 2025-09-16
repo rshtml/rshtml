@@ -77,7 +77,7 @@ impl Compiler {
                 ExtendsDirectiveCompiler::compile(self, path, layout)
             }
             Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, name),
-            Node::RustBlock(contents) => RustBlockCompiler::compile(self, contents),
+            Node::RustBlock(content) => RustBlockCompiler::compile(self, content),
             Node::RustExprSimple(expr, is_escaped) => {
                 RustExprSimpleCompiler::compile(self, expr, is_escaped)
             }

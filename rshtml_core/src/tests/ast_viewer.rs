@@ -1,22 +1,7 @@
-﻿use crate::node::{ComponentParameterValue, Node, RustBlockContent, SectionDirectiveContent};
+﻿use crate::node::{ComponentParameterValue, Node, SectionDirectiveContent};
 
 fn print_indent(indent: usize) {
     print!("{}", "  ".repeat(indent));
-}
-
-fn view_rust_block_content(content: &RustBlockContent, indent: usize) {
-    print_indent(indent);
-    match content {
-        RustBlockContent::Code(code) => {
-            println!("- Code: {code:?}");
-        }
-        RustBlockContent::NestedBlock(contents) => {
-            println!("- NestedBlock:");
-            for inner_content in contents {
-                view_rust_block_content(inner_content, indent + 1);
-            }
-        }
-    }
 }
 
 pub fn view_node(node: &Node, indent: usize) {
@@ -43,11 +28,8 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::RenderDirective(path) => {
             println!("- RenderDirective: {path:?}");
         }
-        Node::RustBlock(contents) => {
-            println!("- RustBlock:");
-            for content in contents {
-                view_rust_block_content(content, indent + 1);
-            }
+        Node::RustBlock(content) => {
+            println!("- RustBlock: {content:?}");
         }
         Node::RustExprSimple(expr, _) => {
             println!("- RustExprSimple: {expr:?}");
