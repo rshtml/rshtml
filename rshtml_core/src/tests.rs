@@ -23,7 +23,7 @@ fn test_template_format() {
 
     ast_viewer::view_node(&ast, 0);
 
-    assert!(matches!(ast, Node::Template(_)));
+    assert!(matches!(ast, Node::Template(_, _)));
 }
 
 #[test]

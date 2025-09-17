@@ -1,4 +1,5 @@
 use crate::node::Node;
+use crate::node::Position;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::str_extensions::*;
 use pest::error::Error;
@@ -12,6 +13,7 @@ impl IParser for RustExprParenParser {
         Ok(Node::RustExprParen(
             pair_str.escaped_or_raw(),
             pair_str.is_escaped(),
+            Position::from(&pair),
         ))
     }
 }

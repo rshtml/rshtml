@@ -1,6 +1,7 @@
-use crate::Node;
+use crate::node::Position;
 use crate::node::{ComponentParameter, ComponentParameterValue};
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::Node;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 
@@ -9,6 +10,8 @@ pub struct ComponentTagParser;
 impl IParser for ComponentTagParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
+        let position = Position::from(&pair);
+
         let mut inner_pairs = pair.into_inner();
         let component_name_pair = inner_pairs
             .find(|p| p.as_rule() == Rule::component_tag_name)
@@ -58,7 +61,12 @@ impl IParser for ComponentTagParser {
             None => vec![],
         };
 
-        Ok(Node::Component(component_name, component_parameters, body))
+        Ok(Node::Component(
+            component_name,
+            component_parameters,
+            body,
+            position,
+        ))
     }
 }
 

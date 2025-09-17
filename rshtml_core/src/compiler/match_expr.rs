@@ -1,6 +1,7 @@
-use crate::Node;
 use crate::compiler::Compiler;
-use anyhow::{Result, anyhow};
+use crate::node::Position;
+use crate::Node;
+use anyhow::{anyhow, Result};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::str::FromStr;
@@ -11,11 +12,11 @@ impl MatchExprCompiler {
     pub fn compile(
         compiler: &mut Compiler,
         name: &str,
-        arms: &Vec<(String, Vec<Node>)>,
+        arms: &Vec<((String, Position), Vec<Node>)>,
     ) -> Result<TokenStream> {
         let mut arms_ts = TokenStream::new();
 
-        for (arm_name, arm_nodes) in arms {
+        for ((arm_name, arm_position), arm_nodes) in arms {
             let mut token_stream = TokenStream::new();
             for node in arm_nodes {
                 let ts = compiler.compile(node)?;

@@ -1,3 +1,5 @@
+use crate::parser::Rule;
+use pest::iterators::Pair;
 use std::path::PathBuf;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -25,24 +27,40 @@ pub struct ComponentParameter {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node {
     //IncludeDirective(PathBuf),         // include directive @include("other_view.html")
-    Template(Vec<Node>),                  // main template, contains child nodes
-    Text(String),                         // plain text content (@@ -> @)
-    InnerText(String),                    // text inside a block (@@ -> @, @{ -> {, @} -> })
-    Comment(String),                      // comment content
-    ExtendsDirective(PathBuf, Box<Node>), // extends directive @extends("layout.html")
-    RenderDirective(String),              // yield directive @yield("content")
-    RustBlock(String),                    // @{ ... } block content (with trim)
-    RustExprSimple(String, bool),         // @expr ... (simple expression)
-    RustExprParen(String, bool),          // @(expr) (expression parentheses)
-    MatchExpr(String, Vec<(String, Vec<Node>)>), // @match expr { ... => ... }
-    RustExpr(Vec<(String, Vec<Node>)>),   // @if ...  { ... } else { ... } / @for ... { ... }
-    SectionDirective(String, SectionDirectiveContent), // @section("content")
-    SectionBlock(String, Vec<Node>),      // @section content { ... }
-    RenderBody,                           // @render_body (main body of subpage)
-    Component(String, Vec<ComponentParameter>, Vec<Node>), // @componentName(param1 = value1, param2 = value2) { ... } also <CompName p=""/> tags
-    ChildContent,                             // @child_content (component child content)
-    Raw(String),                              // @raw {} (raw content)
-    UseDirective(String, PathBuf, Box<Node>), // @use "component.rs.html" as Component
-    ContinueDirective,                        // @continue for the loops
-    BreakDirective,                           // @break for the loops
+    Template(Vec<Node>, Position), // main template, contains child nodes
+    Text(String, Position),        // plain text content (@@ -> @)
+    InnerText(String, Position),   // text inside a block (@@ -> @, @{ -> {, @} -> })
+    Comment(String, Position),     // comment content
+    ExtendsDirective(PathBuf, Box<Node>, Position), // extends directive @extends("layout.html")
+    RenderDirective(String, Position), // yield directive @yield("content")
+    RustBlock(String, Position),   // @{ ... } block content (with trim)
+    RustExprSimple(String, bool, Position), // @expr ... (simple expression)
+    RustExprParen(String, bool, Position), // @(expr) (expression parentheses)
+    MatchExpr(
+        (String, Position),
+        Vec<((String, Position), Vec<Node>)>,
+        Position,
+    ), // @match expr { ... => ... }
+    RustExpr(Vec<((String, Position), Vec<Node>)>, Position), // @if ...  { ... } else { ... } / @for ... { ... }
+    SectionDirective(String, SectionDirectiveContent, Position), // @section("content")
+    SectionBlock((String, Position), Vec<Node>, Position),    // @section content { ... }
+    RenderBody(Position),                                     // @render_body (main body of subpage)
+    Component(String, Vec<ComponentParameter>, Vec<Node>, Position), // @componentName(param1 = value1, param2 = value2) { ... } also <CompName p=""/> tags
+    ChildContent(Position), // @child_content (component child content)
+    Raw(String, Position),  // @raw {} (raw content)
+    UseDirective(String, PathBuf, Box<Node>, Position), // @use "component.rs.html" as Component
+    ContinueDirective(Position), // @continue for the loops
+    BreakDirective(Position), // @break for the loops
+}
+
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct Position((usize, usize), (usize, usize)); // start: (line, col), end: (line, col)
+
+impl From<&Pair<'_, Rule>> for Position {
+    fn from(value: &Pair<Rule>) -> Self {
+        Self(
+            value.as_span().start_pos().line_col(),
+            value.as_span().end_pos().line_col(),
+        )
+    }
 }

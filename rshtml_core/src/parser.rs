@@ -41,7 +41,7 @@ use crate::parser::text::TextParser;
 use crate::parser::use_directive::UseDirectiveParser;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::{Pair, Pairs};
-use pest::{Parser, Position, Span};
+use pest::{Parser, Span};
 use pest_derive::Parser;
 use std::collections::HashSet;
 
@@ -94,7 +94,7 @@ impl RsHtmlParser {
             Rule::block => BlockParser::parse(self, pair),
             Rule::include_directive => IncludeDirectiveParser::parse(self, pair),
             Rule::render_directive => RenderDirectiveParser::parse(self, pair),
-            Rule::render_body_directive => Ok(Node::RenderBody),
+            Rule::render_body_directive => Ok(Node::RenderBody(Position::from(&pair))),
             Rule::extends_directive => ExtendsDirectiveParser::parse(self, pair),
             Rule::rust_block => RustBlockParser::parse(self, pair),
             Rule::rust_expr_simple => RustExprSimpleParser::parse(self, pair),
@@ -104,11 +104,11 @@ impl RsHtmlParser {
             Rule::section_directive => SectionDirectiveParser::parse(self, pair),
             Rule::section_block => SectionBlockParser::parse(self, pair),
             Rule::component_tag => ComponentTagParser::parse(self, pair),
-            Rule::child_content_directive => Ok(Node::ChildContent),
+            Rule::child_content_directive => Ok(Node::ChildContent(Position::from(&pair))),
             Rule::raw_block => RawBlockParser::parse(self, pair),
             Rule::use_directive => UseDirectiveParser::parse(self, pair),
-            Rule::continue_directive => Ok(Node::ContinueDirective),
-            Rule::break_directive => Ok(Node::BreakDirective),
+            Rule::continue_directive => Ok(Node::ContinueDirective(Position::from(&pair))),
+            Rule::break_directive => Ok(Node::BreakDirective(Position::from(&pair))),
             rule => Err(Box::new(Error::new_from_span(
                 ErrorVariant::CustomError {
                     message: format!("Error: Unknown rule: {rule:?}"),
@@ -133,7 +133,7 @@ impl RsHtmlParser {
             ErrorVariant::CustomError {
                 message: "Error: Empty template".to_string(),
             },
-            Position::new("Template", 0).unwrap(),
+            pest::Position::new("Template", 0).unwrap(),
         ))?;
 
         if template_pair.as_rule() == Rule::template {
