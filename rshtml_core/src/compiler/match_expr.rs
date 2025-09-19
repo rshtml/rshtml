@@ -11,8 +11,9 @@ pub struct MatchExprCompiler;
 impl MatchExprCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        name: &str,
+        (name, name_position): (&str, &Position),
         arms: &Vec<((String, Position), Vec<Node>)>,
+        position: &Position,
     ) -> Result<TokenStream> {
         let mut arms_ts = TokenStream::new();
 

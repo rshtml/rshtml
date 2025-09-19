@@ -80,29 +80,29 @@ impl Compiler {
             Node::RenderDirective(name, position) => RenderDirectiveCompiler::compile(self, name),
             Node::RustBlock(content, position) => RustBlockCompiler::compile(self, content),
             Node::RustExprSimple(expr, is_escaped, position) => {
-                RustExprSimpleCompiler::compile(self, expr, is_escaped)
+                RustExprSimpleCompiler::compile(self, expr, is_escaped, position)
             }
             Node::RustExprParen(expr, is_escaped, position) => {
-                RustExprParenCompiler::compile(self, expr, is_escaped)
+                RustExprParenCompiler::compile(self, expr, is_escaped, position)
             }
-            Node::MatchExpr((name, name_position), arms, position) => {
-                MatchExprCompiler::compile(self, name, arms)
+            Node::MatchExpr((head, head_position), arms, position) => {
+                MatchExprCompiler::compile(self, (head, head_position), arms, position)
             }
-            Node::RustExpr(exprs, position) => RustExprCompiler::compile(self, exprs),
+            Node::RustExpr(exprs, position) => RustExprCompiler::compile(self, exprs, position),
             Node::SectionDirective(name, content, position) => {
                 SectionDirectiveCompiler::compile(self, name, content, position)
             }
             Node::SectionBlock((name, name_position), content, position) => {
-                SectionBlockCompiler::compile(self, name, content)
+                SectionBlockCompiler::compile(self, name, content, position)
             }
             Node::RenderBody(position) => RenderBodyCompiler::compile(self),
             Node::Component(name, parameters, body, position) => {
-                ComponentCompiler::compile(self, name, parameters, body)
+                ComponentCompiler::compile(self, name, parameters, body, position)
             }
             Node::ChildContent(position) => Ok(quote! {child_content(__f__)?;}),
             Node::Raw(body, position) => RawCompiler::compile(self, body),
             Node::UseDirective(name, path, component, position) => {
-                UseDirectiveCompiler::compile(self, name, path, component)
+                UseDirectiveCompiler::compile(self, name, path, component, position)
             }
             Node::ContinueDirective(position) => Ok(quote! {continue;}),
             Node::BreakDirective(position) => Ok(quote! {break;}),

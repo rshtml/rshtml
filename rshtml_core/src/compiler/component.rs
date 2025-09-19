@@ -16,6 +16,7 @@ impl ComponentCompiler {
         name: &str,
         parameters: &Vec<ComponentParameter>,
         body: &[Node],
+        position: &Position,
     ) -> Result<TokenStream> {
         let component_node = compiler
             .components

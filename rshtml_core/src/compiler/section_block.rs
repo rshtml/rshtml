@@ -1,5 +1,6 @@
-use crate::Node;
 use crate::compiler::Compiler;
+use crate::node::Position;
+use crate::Node;
 use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -11,6 +12,7 @@ impl SectionBlockCompiler {
         compiler: &mut Compiler,
         name: &str,
         content: &Vec<Node>,
+        position: &Position,
     ) -> Result<TokenStream> {
         let mut token_stream = TokenStream::new();
 

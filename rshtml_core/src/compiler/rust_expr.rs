@@ -12,6 +12,7 @@ impl RustExprCompiler {
     pub fn compile(
         compiler: &mut Compiler,
         exprs: &Vec<((String, Position), Vec<Node>)>,
+        position: &Position,
     ) -> Result<TokenStream> {
         let mut ts = TokenStream::new();
 
