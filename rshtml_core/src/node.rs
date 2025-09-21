@@ -1,5 +1,4 @@
-use crate::parser::Rule;
-use pest::iterators::Pair;
+use crate::position::Position;
 use std::path::PathBuf;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -51,16 +50,4 @@ pub enum Node {
     UseDirective(String, PathBuf, Box<Node>, Position), // @use "component.rs.html" as Component
     ContinueDirective(Position), // @continue for the loops
     BreakDirective(Position), // @break for the loops
-}
-
-#[derive(Debug, PartialEq, Clone, Default)]
-pub struct Position((usize, usize), (usize, usize)); // start: (line, col), end: (line, col)
-
-impl From<&Pair<'_, Rule>> for Position {
-    fn from(value: &Pair<Rule>) -> Self {
-        Self(
-            value.as_span().start_pos().line_col(),
-            value.as_span().end_pos().line_col(),
-        )
-    }
 }

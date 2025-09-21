@@ -29,7 +29,6 @@ use crate::compiler::section_block::SectionBlockCompiler;
 use crate::compiler::section_directive::SectionDirectiveCompiler;
 use crate::compiler::text::TextCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
-use crate::node::Position;
 use crate::Node;
 use anyhow::Result;
 use proc_macro2::TokenStream;

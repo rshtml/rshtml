@@ -5,6 +5,7 @@ pub mod config;
 mod error;
 mod node;
 mod parser;
+mod position;
 pub mod str_extensions;
 #[cfg(test)]
 mod tests;

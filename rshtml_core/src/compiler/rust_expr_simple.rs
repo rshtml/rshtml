@@ -1,4 +1,4 @@
-use crate::{compiler::Compiler, node::Position};
+use crate::{compiler::Compiler, position::Position};
 use anyhow::{anyhow, Result};
 use proc_macro2::TokenStream;
 use std::str::FromStr;

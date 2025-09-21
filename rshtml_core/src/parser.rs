@@ -39,6 +39,7 @@ use crate::parser::section_directive::SectionDirectiveParser;
 use crate::parser::template::TemplateParser;
 use crate::parser::text::TextParser;
 use crate::parser::use_directive::UseDirectiveParser;
+use crate::position::Position;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::{Pair, Pairs};
 use pest::{Parser, Span};

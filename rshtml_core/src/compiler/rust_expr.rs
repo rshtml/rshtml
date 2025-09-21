@@ -1,5 +1,5 @@
 use crate::compiler::Compiler;
-use crate::node::Position;
+use crate::position::Position;
 use crate::Node;
 use anyhow::{anyhow, Result};
 use proc_macro2::TokenStream;
