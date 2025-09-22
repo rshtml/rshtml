@@ -51,6 +51,7 @@ use std::collections::HashSet;
 pub struct RsHtmlParser {
     included_templates: HashSet<String>,
     config: Config,
+    files: Vec<String>,
 }
 
 impl RsHtmlParser {
@@ -58,6 +59,7 @@ impl RsHtmlParser {
         Self {
             included_templates: HashSet::new(),
             config: Config::default(),
+            files: Vec::new(),
         }
     }
 
@@ -138,7 +140,12 @@ impl RsHtmlParser {
         ))?;
 
         if template_pair.as_rule() == Rule::template {
+            self.files.push(path.to_string());
+
             let ast = self.build_ast_node(template_pair)?;
+
+            self.files.pop();
+
             Ok(ast)
         } else {
             let err: Error<Rule> = Error::new_from_span(

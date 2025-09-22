@@ -26,13 +26,13 @@ pub struct ComponentParameter {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node {
     //IncludeDirective(PathBuf),         // include directive @include("other_view.html")
-    Template(Vec<Node>, Position), // main template, contains child nodes
-    Text(String, Position),        // plain text content (@@ -> @)
-    InnerText(String, Position),   // text inside a block (@@ -> @, @{ -> {, @} -> })
-    Comment(String, Position),     // comment content
+    Template(String, Vec<Node>, Position), // main template, contains child nodes
+    Text(String, Position),                // plain text content (@@ -> @)
+    InnerText(String, Position),           // text inside a block (@@ -> @, @{ -> {, @} -> })
+    Comment(String, Position),             // comment content
     ExtendsDirective(PathBuf, Box<Node>, Position), // extends directive @extends("layout.html")
-    RenderDirective(String, Position), // yield directive @yield("content")
-    RustBlock(String, Position),   // @{ ... } block content (with trim)
+    RenderDirective(String, Position),     // yield directive @yield("content")
+    RustBlock(String, Position),           // @{ ... } block content (with trim)
     RustExprSimple(String, bool, Position), // @expr ... (simple expression)
     RustExprParen(String, bool, Position), // @(expr) (expression parentheses)
     MatchExpr(

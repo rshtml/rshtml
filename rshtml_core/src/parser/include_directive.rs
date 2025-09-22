@@ -62,8 +62,8 @@ impl IParser for IncludeDirectiveParser {
 
         parser.included_templates.remove(&canonical_path);
 
-        let nodes = match inner_template {
-            Node::Template(nodes, _) => nodes,
+        let (file, nodes) = match inner_template {
+            Node::Template(file, nodes, _) => (file, nodes),
             _ => {
                 return Err(Box::new(Error::new_from_span(
                     ErrorVariant::CustomError {
@@ -76,6 +76,6 @@ impl IParser for IncludeDirectiveParser {
             }
         };
 
-        Ok(Node::Template(nodes, position))
+        Ok(Node::Template(file, nodes, position))
     }
 }

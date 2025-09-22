@@ -14,13 +14,9 @@ impl From<&Pair<'_, Rule>> for Position {
 }
 
 impl Position {
-    pub fn as_info(&self, files: &[&str]) -> String {
+    pub fn as_info(&self, file: &str) -> String {
         let positions = format!("{}:{}-{}:{}", self.0 .0, self.0 .1, self.1 .0, self.1 .1);
 
-        if files.is_empty() {
-            return positions;
-        }
-
-        format!("{}::{}", files.join(" -> "), positions)
+        format!("{}::{}", file, positions)
     }
 }

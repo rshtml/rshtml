@@ -51,8 +51,11 @@ impl ComponentCompiler {
                     quote! {let #name_ts = #expr_ts;}
                 }
                 ComponentParameterValue::Block(value) => {
-                    let block_ts =
-                        compiler.compile(&Node::Template(value.clone(), Position::default()))?;
+                    let block_ts = compiler.compile(&Node::Template(
+                        String::new(),
+                        value.clone(),
+                        position.clone(),
+                    ))?;
                     quote! {
                         let mut #name_ts = String::new();
                         (|__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#block_ts Ok(())})(&mut #name_ts)?;
@@ -63,7 +66,11 @@ impl ComponentCompiler {
             token_stream.extend(parameter_ts);
         }
 
-        let body_ts = compiler.compile(&Node::Template(body.to_owned(), Position::default()))?;
+        let body_ts = compiler.compile(&Node::Template(
+            String::new(),
+            body.to_owned(),
+            position.clone(),
+        ))?;
         let body_ts = quote! {let child_content = |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body_ts  Ok(())};};
 
         token_stream.extend(body_ts);

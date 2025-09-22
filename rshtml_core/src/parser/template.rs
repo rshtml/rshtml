@@ -11,6 +11,7 @@ impl IParser for TemplateParser {
         let position = Position::from(&pair);
 
         Ok(Node::Template(
+            parser.files.last().cloned().unwrap_or_default(),
             parser.build_nodes_from_pairs(pair.into_inner())?,
             position,
         ))

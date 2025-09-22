@@ -29,6 +29,7 @@ use crate::compiler::section_block::SectionBlockCompiler;
 use crate::compiler::section_directive::SectionDirectiveCompiler;
 use crate::compiler::text::TextCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
+use crate::position::Position;
 use crate::Node;
 use anyhow::Result;
 use proc_macro2::TokenStream;
@@ -45,6 +46,7 @@ pub struct Compiler {
     sections: HashMap<String, TokenStream>,
     pub section_body: Option<TokenStream>,
     pub text_size: usize,
+    files: Vec<(String, Position)>,
 }
 
 impl Compiler {
@@ -57,17 +59,27 @@ impl Compiler {
             sections: HashMap::new(),
             section_body: None,
             text_size: 0,
+            files: Vec::new(),
         }
     }
 
     pub fn compile(&mut self, node: &Node) -> Result<TokenStream> {
         match node {
-            Node::Template(nodes, position) => {
+            Node::Template(file, nodes, position) => {
+                if !file.is_empty() {
+                    self.files.push((file.clone(), position.clone()));
+                }
+
                 let mut token_stream = TokenStream::new();
                 for node in nodes {
                     let ts = self.compile(node)?;
                     token_stream.extend(quote! {#ts});
                 }
+
+                if !file.is_empty() {
+                    self.files.pop();
+                }
+
                 Ok(token_stream)
             }
             Node::Text(text, position) => TextCompiler::compile(self, text),
