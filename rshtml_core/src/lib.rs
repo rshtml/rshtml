@@ -16,8 +16,13 @@ use node::Node;
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
 use std::clone::Clone;
+use syn::Generics;
 
-pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStream {
+pub fn process_template(
+    template_name: String,
+    struct_name: &Ident,
+    struct_generics: &Generics,
+) -> TokenStream {
     let config = Config::load_from_toml_or_default();
     let (_, layout) = config.views.clone();
 
@@ -35,6 +40,8 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
 
     let text_size = text_size + ((text_size as f64 * 0.10) as usize).clamp(32, 512);
 
+    let (impl_generics, ty_generics, where_clause) = struct_generics.split_for_impl();
+
     //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
     let rs = quote! {
@@ -50,7 +57,7 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
 
             #rs
 
-            impl rshtml::traits::RsHtml for #struct_name {
+            impl #impl_generics rshtml::traits::RsHtml for #struct_name #ty_generics #where_clause {
                 fn fmt(&mut self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
 
                     #compiled_ast_tokens
