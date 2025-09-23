@@ -23,6 +23,14 @@ impl ComponentCompiler {
             .get(name)
             .ok_or(anyhow!("Component {} not found", name))?;
         let component_node = component_node.clone();
+        let component_node = match component_node {
+            Node::Template(file, node, _) => Node::Template(file, node, position.clone()),
+            _ => {
+                return Err(anyhow!(
+                    "The component must return a template as the top node."
+                ))
+            }
+        };
 
         let mut token_stream = TokenStream::new();
 

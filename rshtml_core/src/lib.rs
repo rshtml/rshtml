@@ -7,11 +7,14 @@ mod node;
 mod parser;
 mod position;
 pub mod str_extensions;
+// mod temporary_file_writer;
 #[cfg(test)]
 mod tests;
+mod ts_extensions;
 
 use crate::config::Config;
 use crate::parser::RsHtmlParser;
+use crate::position::Position;
 use anyhow::Result;
 use node::Node;
 use proc_macro2::{Ident, TokenStream};
@@ -68,6 +71,25 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
         };
     };
 
+    // use temporary_file_writer::write;
+    // let temporary_file = write(
+    //     struct_name.to_string().as_str(),
+    //     generated_code.to_string().as_str(),
+    // );
+    // let temporary_file = temporary_file.unwrap();
+    // let temporary_file_str = temporary_file.to_string_lossy().to_string();
+
+    // std::process::Command::new("rustfmt")
+    //     .arg("--config")
+    //     .arg("max_width=10000")
+    //     .arg(temporary_file)
+    //     .status()
+    //     .expect("rustfmt komutu çalıştırılamadı.");
+
+    // let generated_code = quote! {
+    //     include!(#temporary_file_str);
+    // };
+
     generated_code
 }
 
@@ -83,6 +105,9 @@ fn parse_and_compile(
 
     if let Some(layout) = compiler.layout.clone() {
         compiler.section_body = Some(ts.clone());
+        compiler
+            .files
+            .push((template_path.to_string(), Position::default()));
         let layout_ts = compiler.compile(&layout)?;
 
         return Ok((layout_ts, compiler.section_names(), compiler.text_size));

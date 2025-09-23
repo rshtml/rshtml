@@ -46,7 +46,7 @@ pub struct Compiler {
     sections: HashMap<String, TokenStream>,
     pub section_body: Option<TokenStream>,
     pub text_size: usize,
-    files: Vec<(String, Position)>,
+    pub files: Vec<(String, Position)>,
 }
 
 impl Compiler {

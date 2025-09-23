@@ -35,6 +35,19 @@ impl IParser for ExtendsDirectiveParser {
             }
         };
 
+        let layout_node = match layout_node {
+            Node::Template(file, nodes, _) => Node::Template(file, nodes, position.clone()),
+            _ => {
+                return Err(Box::new(Error::new_from_span(
+                    ErrorVariant::CustomError {
+                        message: "The layout file must contain Template as the top node."
+                            .to_string(),
+                    },
+                    pair_span,
+                )))
+            }
+        };
+
         Ok(Node::ExtendsDirective(
             PathBuf::from(path_str),
             Box::new(layout_node),
