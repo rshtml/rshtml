@@ -16,7 +16,7 @@ impl RustExprCompiler {
     ) -> Result<TokenStream> {
         let mut ts = TokenStream::new();
 
-        for ((expr, _expr_position), inner_nodes) in exprs {
+        for ((expr, expr_position), inner_nodes) in exprs {
             let mut inner_ts = TokenStream::new();
             for inner_node in inner_nodes {
                 let its = compiler.compile(inner_node)?;
