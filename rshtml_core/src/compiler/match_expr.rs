@@ -34,10 +34,14 @@ impl MatchExprCompiler {
 
         let name_head = TokenStream::from_str(name).map_err(|err| anyhow!("Lex Error: {}", err))?;
 
-        Ok(quote! {
+        let ts = quote! {
            #name_head {
              #arms_ts
            }
-        })
+        };
+
+        let ts = compiler.with_info(ts, position);
+
+        Ok(ts)
     }
 }

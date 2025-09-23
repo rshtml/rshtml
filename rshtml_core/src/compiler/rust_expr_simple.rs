@@ -14,6 +14,10 @@ impl RustExprSimpleCompiler {
     ) -> Result<TokenStream> {
         let expr_ts = TokenStream::from_str(expr).map_err(|err| anyhow!("Lex Error: {}", err))?;
 
-        Ok(compiler.escape_or_raw(expr_ts, is_escaped))
+        let expr_ts = compiler.escape_or_raw(expr_ts, is_escaped);
+
+        let expr_ts = compiler.with_info(expr_ts, position);
+
+        Ok(expr_ts)
     }
 }

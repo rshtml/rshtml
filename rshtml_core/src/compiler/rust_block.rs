@@ -1,18 +1,29 @@
-use crate::compiler::Compiler;
-use anyhow::{Result, anyhow};
+use crate::{compiler::Compiler, position::Position};
+use anyhow::{anyhow, Result};
 use proc_macro2::TokenStream;
+use quote::quote;
 use std::str::FromStr;
 
 pub struct RustBlockCompiler;
 
 impl RustBlockCompiler {
-    pub fn compile(_compiler: &mut Compiler, content: &str) -> Result<TokenStream> {
-        let mut token_stream = TokenStream::new();
-
+    pub fn compile(
+        compiler: &mut Compiler,
+        content: &str,
+        position: &Position,
+    ) -> Result<TokenStream> {
         let code_ts =
             TokenStream::from_str(content).map_err(|err| anyhow!("Lex Error: {}", err))?;
-        token_stream.extend(code_ts);
 
-        Ok(token_stream)
+        let info_ts = compiler.with_info(TokenStream::new(), position);
+
+        let code_ts = quote! {
+             "Rust Code Block Start";
+             #info_ts
+             #code_ts
+             "Rust Code Block End";
+        };
+
+        Ok(code_ts)
     }
 }

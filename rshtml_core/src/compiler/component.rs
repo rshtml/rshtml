@@ -87,6 +87,16 @@ impl ComponentCompiler {
 
         token_stream.extend(component_ts);
 
-        Ok(quote! {{ #token_stream }})
+        let info_ts = compiler.with_info(TokenStream::new(), position);
+
+        let info_start = format!("Component {} Start", name);
+        let info_end = format!("Component {} End", name);
+
+        Ok(quote! {{
+           #info_start;
+           #info_ts
+           #token_stream
+           #info_end;
+        }})
     }
 }

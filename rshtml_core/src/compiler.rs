@@ -89,7 +89,9 @@ impl Compiler {
                 ExtendsDirectiveCompiler::compile(self, path, layout)
             }
             Node::RenderDirective(name, position) => RenderDirectiveCompiler::compile(self, name),
-            Node::RustBlock(content, position) => RustBlockCompiler::compile(self, content),
+            Node::RustBlock(content, position) => {
+                RustBlockCompiler::compile(self, content, position)
+            }
             Node::RustExprSimple(expr, is_escaped, position) => {
                 RustExprSimpleCompiler::compile(self, expr, is_escaped, position)
             }
@@ -134,6 +136,33 @@ impl Compiler {
             quote! {write!(rshtml::EscapingWriter { inner: __f__ }, "{}", &(#expr_ts))?;}
         } else {
             quote! {write!(__f__, "{}", #expr_ts)?;}
+        }
+    }
+
+    fn with_info(&self, expr_ts: TokenStream, position: &Position) -> TokenStream {
+        if cfg!(debug_assertions) {
+            let positions = self
+                .files
+                .iter()
+                .skip(1)
+                .map(|(_, pos)| pos)
+                .chain(std::iter::once(position));
+
+            let mappings: Vec<String> = self
+                .files
+                .iter()
+                .zip(positions)
+                .map(|((file, _), pos)| pos.as_info(&file))
+                .collect();
+
+            let mapping = mappings.join(" > ");
+            if expr_ts.is_empty() {
+                quote! {#mapping;}
+            } else {
+                quote! {{#mapping;#expr_ts}}
+            }
+        } else {
+            expr_ts
         }
     }
 }
