@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 // use std::str::FromStr;
 
-pub(crate) trait ToInfo {
+pub(crate) trait WithInfo {
     fn with_info(
         ts: TokenStream,
         files: &Vec<(String, Position)>,
@@ -11,7 +11,7 @@ pub(crate) trait ToInfo {
     ) -> TokenStream;
 }
 
-impl ToInfo for TokenStream {
+impl WithInfo for TokenStream {
     fn with_info(
         ts: TokenStream,
         files: &Vec<(String, Position)>,
