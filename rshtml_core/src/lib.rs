@@ -5,12 +5,15 @@ pub mod config;
 mod error;
 mod node;
 mod parser;
+mod position;
 pub mod str_extensions;
+mod temporary_file;
 #[cfg(test)]
 mod tests;
 
 use crate::config::Config;
 use crate::parser::RsHtmlParser;
+use crate::position::Position;
 use anyhow::Result;
 use node::Node;
 use proc_macro2::{Ident, TokenStream};
@@ -19,7 +22,8 @@ use std::clone::Clone;
 
 pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStream {
     let config = Config::load_from_toml_or_default();
-    let (_, layout) = config.views.clone();
+    let layout = config.layout.clone();
+    let extract_file_on_debug = config.extract_file_on_debug;
 
     let (compiled_ast_tokens, sections, text_size) = match parse_and_compile(&template_name, config)
     {
@@ -67,6 +71,15 @@ pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStre
         };
     };
 
+    if cfg!(debug_assertions) && extract_file_on_debug {
+        match temporary_file::create(&struct_name.to_string(), &generated_code.to_string()) {
+            Ok(code) => return code,
+            Err(err) => {
+                dbg!("Failed to create temporary file:", err);
+            }
+        }
+    }
+
     generated_code
 }
 
@@ -82,6 +95,9 @@ fn parse_and_compile(
 
     if let Some(layout) = compiler.layout.clone() {
         compiler.section_body = Some(ts.clone());
+        compiler
+            .files
+            .push((template_path.to_string(), Position::default()));
         let layout_ts = compiler.compile(&layout)?;
 
         return Ok((layout_ts, compiler.section_names(), compiler.text_size));

@@ -1,5 +1,6 @@
 use crate::Node;
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::position::Position;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::{Pair, Pairs};
 use std::iter::Peekable;
@@ -9,6 +10,7 @@ pub struct RustExprParser;
 impl IParser for RustExprParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
+        let position = Position::from(&pair);
 
         let mut inner_pairs = pair.into_inner().peekable();
         let mut clauses: Vec<(String, Vec<Node>)> = Vec::new();
@@ -66,6 +68,6 @@ impl IParser for RustExprParser {
             )));
         }
 
-        Ok(Node::RustExpr(clauses))
+        Ok(Node::RustExpr(clauses, position))
     }
 }

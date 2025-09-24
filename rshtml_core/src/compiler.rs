@@ -30,12 +30,12 @@ use crate::compiler::section_block::SectionBlockCompiler;
 use crate::compiler::section_directive::SectionDirectiveCompiler;
 use crate::compiler::text::TextCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
+use crate::position::Position;
 use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashMap;
 use std::path::PathBuf;
-// TODO: Maybe use like syn::parse2::<Expr> for compiler control, and get error from parser
 
 pub struct Compiler {
     use_directives: Vec<(String, PathBuf)>,
@@ -45,6 +45,7 @@ pub struct Compiler {
     sections: HashMap<String, TokenStream>,
     pub section_body: Option<TokenStream>,
     pub text_size: usize,
+    pub files: Vec<(String, Position)>,
 }
 
 impl Compiler {
@@ -57,17 +58,27 @@ impl Compiler {
             sections: HashMap::new(),
             section_body: None,
             text_size: 0,
+            files: Vec::new(),
         }
     }
 
     pub fn compile(&mut self, node: &Node) -> Result<TokenStream> {
         match node {
-            Node::Template(nodes) => {
+            Node::Template(file, nodes, position) => {
+                if !file.is_empty() {
+                    self.files.push((file.clone(), position.clone()));
+                }
+
                 let mut token_stream = TokenStream::new();
                 for node in nodes {
                     let ts = self.compile(node)?;
                     token_stream.extend(quote! {#ts});
                 }
+
+                if !file.is_empty() {
+                    self.files.pop();
+                }
+
                 Ok(token_stream)
             }
             Node::Text(text) => TextCompiler::compile(self, text),
@@ -77,22 +88,26 @@ impl Compiler {
                 ExtendsDirectiveCompiler::compile(self, path, layout)
             }
             Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, name),
-            Node::RustBlock(content) => RustBlockCompiler::compile(self, content),
-            Node::RustExprSimple(expr, is_escaped) => {
-                RustExprSimpleCompiler::compile(self, expr, is_escaped)
+            Node::RustBlock(content, position) => {
+                RustBlockCompiler::compile(self, content, position)
             }
-            Node::RustExprParen(expr, is_escaped) => {
-                RustExprParenCompiler::compile(self, expr, is_escaped)
+            Node::RustExprSimple(expr, is_escaped, position) => {
+                RustExprSimpleCompiler::compile(self, expr, is_escaped, position)
             }
-            Node::MatchExpr(name, arms) => MatchExprCompiler::compile(self, name, arms),
-            Node::RustExpr(exprs) => RustExprCompiler::compile(self, exprs),
-            Node::SectionDirective(name, content) => {
-                SectionDirectiveCompiler::compile(self, name, content)
+            Node::RustExprParen(expr, is_escaped, position) => {
+                RustExprParenCompiler::compile(self, expr, is_escaped, position)
+            }
+            Node::MatchExpr(head, arms, position) => {
+                MatchExprCompiler::compile(self, head, arms, position)
+            }
+            Node::RustExpr(exprs, position) => RustExprCompiler::compile(self, exprs, position),
+            Node::SectionDirective(name, content, position) => {
+                SectionDirectiveCompiler::compile(self, name, content, position)
             }
             Node::SectionBlock(name, content) => SectionBlockCompiler::compile(self, name, content),
             Node::RenderBody => RenderBodyCompiler::compile(self),
-            Node::Component(name, parameters, body) => {
-                ComponentCompiler::compile(self, name, parameters, body)
+            Node::Component(name, parameters, body, position) => {
+                ComponentCompiler::compile(self, name, parameters, body, position)
             }
             Node::ChildContent => Ok(quote! {child_content(__f__)?;}),
             Node::Raw(body) => RawCompiler::compile(self, body),
@@ -118,6 +133,33 @@ impl Compiler {
             quote! {write!(rshtml::EscapingWriter { inner: __f__ }, "{}", &(#expr_ts))?;}
         } else {
             quote! {write!(__f__, "{}", #expr_ts)?;}
+        }
+    }
+
+    fn with_info(&self, expr_ts: TokenStream, position: &Position) -> TokenStream {
+        if cfg!(debug_assertions) {
+            let positions = self
+                .files
+                .iter()
+                .skip(1)
+                .map(|(_, pos)| pos)
+                .chain(std::iter::once(position));
+
+            let mappings: Vec<String> = self
+                .files
+                .iter()
+                .zip(positions)
+                .map(|((file, _), pos)| pos.as_info(file))
+                .collect();
+
+            let mapping = mappings.join(" > ");
+            if expr_ts.is_empty() {
+                quote! {#mapping;}
+            } else {
+                quote! {{#mapping;#expr_ts}}
+            }
+        } else {
+            expr_ts
         }
     }
 }

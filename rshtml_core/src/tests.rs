@@ -23,7 +23,7 @@ fn test_template_format() {
 
     ast_viewer::view_node(&ast, 0);
 
-    assert!(matches!(ast, Node::Template(_)));
+    assert!(matches!(ast, Node::Template(_, _, _)));
 }
 
 #[test]
@@ -49,6 +49,6 @@ pub fn test_process_simple() {
 #[test]
 pub fn test_config() {
     let config = Config::default();
-    assert!(config.views.0.ends_with("views"));
-    assert_eq!(config.views.1, "layout.rs.html".to_string());
+    assert!(config.base_path.ends_with("views"));
+    assert_eq!(config.layout, "layout.rs.html".to_string());
 }

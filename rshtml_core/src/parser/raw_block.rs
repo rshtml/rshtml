@@ -1,4 +1,4 @@
-﻿use crate::Node;
+use crate::Node;
 use crate::parser::Rule::raw_content;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::error::{Error, ErrorVariant};
@@ -9,6 +9,7 @@ pub struct RawBlockParser;
 impl IParser for RawBlockParser {
     fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
+
         Ok(Node::Raw(
             pair.into_inner()
                 .find(|p| p.as_rule() == Rule::raw_content)

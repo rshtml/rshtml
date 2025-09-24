@@ -1,5 +1,6 @@
 use crate::Node;
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::position::Position;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 use std::path::PathBuf;
@@ -9,8 +10,9 @@ pub struct ExtendsDirectiveParser;
 impl IParser for ExtendsDirectiveParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
+        let position = Position::from(&pair);
 
-        let mut path_str = parser.config.views.1.clone();
+        let mut path_str = parser.config.layout.clone();
         if let Some(path_pair) = pair.into_inner().find(|p| p.as_rule() == Rule::string_line) {
             path_str = path_pair
                 .as_str()
@@ -30,6 +32,19 @@ impl IParser for ExtendsDirectiveParser {
                 );
 
                 return Err(Box::new(include_template_error));
+            }
+        };
+
+        let layout_node = match layout_node {
+            Node::Template(file, nodes, _) => Node::Template(file, nodes, position),
+            _ => {
+                return Err(Box::new(Error::new_from_span(
+                    ErrorVariant::CustomError {
+                        message: "The layout file must contain Template as the top node."
+                            .to_string(),
+                    },
+                    pair_span,
+                )));
             }
         };
 

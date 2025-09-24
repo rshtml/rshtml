@@ -1,5 +1,6 @@
 use crate::Node;
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::position::Position;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 
@@ -8,6 +9,7 @@ pub struct IncludeDirectiveParser;
 impl IParser for IncludeDirectiveParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
+        let position = Position::from(&pair);
 
         let path_pair = pair
             .into_inner()
@@ -25,7 +27,7 @@ impl IParser for IncludeDirectiveParser {
             .trim_matches('\'')
             .to_string();
 
-        let view_path = parser.config.views.0.join(&path);
+        let view_path = parser.config.base_path.join(&path);
 
         let canonical_path = view_path
             .canonicalize()
@@ -60,8 +62,8 @@ impl IParser for IncludeDirectiveParser {
 
         parser.included_templates.remove(&canonical_path);
 
-        let nodes = match inner_template {
-            Node::Template(nodes) => nodes,
+        let (file, nodes) = match inner_template {
+            Node::Template(file, nodes, _) => (file, nodes),
             _ => {
                 return Err(Box::new(Error::new_from_span(
                     ErrorVariant::CustomError {
@@ -74,6 +76,6 @@ impl IParser for IncludeDirectiveParser {
             }
         };
 
-        Ok(Node::Template(nodes))
+        Ok(Node::Template(file, nodes, position))
     }
 }

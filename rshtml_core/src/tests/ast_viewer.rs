@@ -7,7 +7,7 @@ fn print_indent(indent: usize) {
 pub fn view_node(node: &Node, indent: usize) {
     print_indent(indent);
     match node {
-        Node::Template(nodes) => {
+        Node::Template(_, nodes, _) => {
             println!("- Template:");
             for inner_node in nodes {
                 view_node(inner_node, indent + 1);
@@ -28,16 +28,16 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::RenderDirective(path) => {
             println!("- RenderDirective: {path:?}");
         }
-        Node::RustBlock(content) => {
+        Node::RustBlock(content, _) => {
             println!("- RustBlock: {content:?}");
         }
-        Node::RustExprSimple(expr, _) => {
+        Node::RustExprSimple(expr, _, _) => {
             println!("- RustExprSimple: {expr:?}");
         }
-        Node::RustExprParen(expr, _) => {
+        Node::RustExprParen(expr, _, _) => {
             println!("- RustExprParen: {expr:?}");
         }
-        Node::RustExpr(clauses) => {
+        Node::RustExpr(clauses, _) => {
             println!("- RustExpr:");
             for (condition, nodes) in clauses {
                 print_indent(indent + 1);
@@ -47,7 +47,7 @@ pub fn view_node(node: &Node, indent: usize) {
                 }
             }
         }
-        Node::MatchExpr(head, arms) => {
+        Node::MatchExpr(head, arms, _) => {
             println!("- MatchExpr:");
             print_indent(indent + 1);
             println!("- Clause: {head:?}");
@@ -61,7 +61,7 @@ pub fn view_node(node: &Node, indent: usize) {
                 }
             }
         }
-        Node::SectionDirective(name, body) => {
+        Node::SectionDirective(name, body, _) => {
             println!("- SectionDirective:");
             print_indent(indent + 1);
             println!("- StringLine: {name:?}");
@@ -84,7 +84,7 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::RenderBody => {
             println!("- RenderBody");
         }
-        Node::Component(name, parameters, body) => {
+        Node::Component(name, parameters, body, _) => {
             println!("- Component:");
             print_indent(indent + 1);
             println!("- Name: {name:?}");

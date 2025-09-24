@@ -1,6 +1,7 @@
 use crate::Node;
 use crate::node::SectionDirectiveContent;
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::position::Position;
 use crate::str_extensions::*;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
@@ -10,6 +11,8 @@ pub struct SectionDirectiveParser;
 impl IParser for SectionDirectiveParser {
     fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
+        let position = Position::from(&pair);
+
         let mut pairs = pair
             .clone()
             .into_inner()
@@ -42,7 +45,7 @@ impl IParser for SectionDirectiveParser {
                     .trim_matches('\'')
                     .to_string();
 
-                Ok(Node::SectionDirective(name, value_pair))
+                Ok(Node::SectionDirective(name, value_pair, position))
             }
             _ => Err(Box::new(Error::new_from_span(
                 ErrorVariant::CustomError {

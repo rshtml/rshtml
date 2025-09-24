@@ -41,7 +41,7 @@ use crate::parser::text::TextParser;
 use crate::parser::use_directive::UseDirectiveParser;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::{Pair, Pairs};
-use pest::{Parser, Position, Span};
+use pest::{Parser, Span};
 use pest_derive::Parser;
 use std::collections::HashSet;
 
@@ -50,6 +50,7 @@ use std::collections::HashSet;
 pub struct RsHtmlParser {
     included_templates: HashSet<String>,
     config: Config,
+    files: Vec<String>,
 }
 
 impl RsHtmlParser {
@@ -57,6 +58,7 @@ impl RsHtmlParser {
         Self {
             included_templates: HashSet::new(),
             config: Config::default(),
+            files: Vec::new(),
         }
     }
 
@@ -133,11 +135,16 @@ impl RsHtmlParser {
             ErrorVariant::CustomError {
                 message: "Error: Empty template".to_string(),
             },
-            Position::new("Template", 0).unwrap(),
+            pest::Position::new("Template", 0).unwrap(),
         ))?;
 
         if template_pair.as_rule() == Rule::template {
+            self.files.push(path.to_string());
+
             let ast = self.build_ast_node(template_pair)?;
+
+            self.files.pop();
+
             Ok(ast)
         } else {
             let err: Error<Rule> = Error::new_from_span(
@@ -152,7 +159,7 @@ impl RsHtmlParser {
     }
 
     fn read_template(&self, path: &str) -> Result<String, String> {
-        let view_path = self.config.views.0.join(path);
+        let view_path = self.config.base_path.join(path);
         let template = std::fs::read_to_string(&view_path).map_err(|err| {
             format!(
                 "Error reading template: {:?}, path: {}",

@@ -3,28 +3,54 @@ use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
-    pub views: (PathBuf, String), // base_path, layout
+    pub base_path: PathBuf,
+    pub layout: String,
+    pub extract_file_on_debug: bool,
 }
 
-#[allow(dead_code)]
 impl Config {
-    pub fn new<P: AsRef<Path>>(views: (PathBuf, String)) -> Self {
-        Config { views }
+    pub fn new<P: AsRef<Path>>(
+        base_path: PathBuf,
+        layout: String,
+        extract_file_on_debug: bool,
+    ) -> Self {
+        Config {
+            base_path,
+            layout,
+            extract_file_on_debug,
+        }
     }
 
-    pub fn set_views(&mut self, views: (String, String)) {
-        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
+    pub fn set_views(
+        &mut self,
+        path: Option<String>,
+        layout: Option<String>,
+        extract_file_on_debug: Option<bool>,
+    ) {
+        if let Some(p) = path {
+            let manifest_dir =
+                std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
 
-        let mut base_path = PathBuf::from(&manifest_dir);
-        base_path.push(views.0);
-        self.views = (base_path, views.1);
+            let mut base_path = PathBuf::from(&manifest_dir);
+            base_path.push(p);
+            self.base_path = base_path;
+        }
+
+        if let Some(l) = layout {
+            self.layout = l;
+        }
+
+        if let Some(ef) = extract_file_on_debug {
+            self.extract_file_on_debug = ef;
+        }
     }
 
     pub fn load_from_toml_or_default() -> Self {
         #[derive(Deserialize, Debug, Clone)]
         pub struct Views {
-            pub path: String,
-            pub layout: String,
+            pub path: Option<String>,
+            pub layout: Option<String>,
+            pub extract_file_on_debug: Option<bool>,
         }
 
         #[derive(Deserialize, Debug, Clone)]
@@ -58,7 +84,7 @@ impl Config {
                 && let Some(toml_config) = metadata.rshtml
                 && let Some(views) = toml_config.views
             {
-                config.set_views((views.path, views.layout));
+                config.set_views(views.path, views.layout, views.extract_file_on_debug);
             }
         }
 
@@ -72,11 +98,11 @@ impl Default for Config {
         let base_path = PathBuf::from(manifest_dir);
         let mut views_base_path = base_path.clone();
         views_base_path.push("views");
-        let mut locales_base_path = base_path.clone();
-        locales_base_path.push("locales");
 
         Config {
-            views: (views_base_path.clone(), String::from("layout.rs.html")),
+            base_path: views_base_path.clone(),
+            layout: String::from("layout.rs.html"),
+            extract_file_on_debug: false,
         }
     }
 }

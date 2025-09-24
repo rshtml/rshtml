@@ -1,5 +1,6 @@
 use crate::Node;
 use crate::compiler::Compiler;
+use crate::position::Position;
 use anyhow::{Result, anyhow};
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -12,6 +13,7 @@ impl MatchExprCompiler {
         compiler: &mut Compiler,
         name: &str,
         arms: &Vec<(String, Vec<Node>)>,
+        position: &Position,
     ) -> Result<TokenStream> {
         let mut arms_ts = TokenStream::new();
 
@@ -32,10 +34,14 @@ impl MatchExprCompiler {
 
         let name_head = TokenStream::from_str(name).map_err(|err| anyhow!("Lex Error: {}", err))?;
 
-        Ok(quote! {
+        let ts = quote! {
            #name_head {
              #arms_ts
            }
-        })
+        };
+
+        let ts = compiler.with_info(ts, position);
+
+        Ok(ts)
     }
 }
