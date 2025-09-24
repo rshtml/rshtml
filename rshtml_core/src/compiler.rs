@@ -36,7 +36,6 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashMap;
 use std::path::PathBuf;
-// TODO: Maybe use like syn::parse2::<Expr> for compiler control, and get error from parser
 
 pub struct Compiler {
     use_directives: Vec<(String, PathBuf)>,
@@ -82,13 +81,13 @@ impl Compiler {
 
                 Ok(token_stream)
             }
-            Node::Text(text, position) => TextCompiler::compile(self, text),
-            Node::InnerText(inner_text, position) => InnerTextCompiler::compile(self, inner_text),
-            Node::Comment(_, _) => Ok(quote! {}),
-            Node::ExtendsDirective(path, layout, position) => {
+            Node::Text(text) => TextCompiler::compile(self, text),
+            Node::InnerText(inner_text) => InnerTextCompiler::compile(self, inner_text),
+            Node::Comment(_) => Ok(quote! {}),
+            Node::ExtendsDirective(path, layout) => {
                 ExtendsDirectiveCompiler::compile(self, path, layout)
             }
-            Node::RenderDirective(name, position) => RenderDirectiveCompiler::compile(self, name),
+            Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, name),
             Node::RustBlock(content, position) => {
                 RustBlockCompiler::compile(self, content, position)
             }
@@ -98,27 +97,25 @@ impl Compiler {
             Node::RustExprParen(expr, is_escaped, position) => {
                 RustExprParenCompiler::compile(self, expr, is_escaped, position)
             }
-            Node::MatchExpr((head, head_position), arms, position) => {
-                MatchExprCompiler::compile(self, (head, head_position), arms, position)
+            Node::MatchExpr(head, arms, position) => {
+                MatchExprCompiler::compile(self, head, arms, position)
             }
             Node::RustExpr(exprs, position) => RustExprCompiler::compile(self, exprs, position),
             Node::SectionDirective(name, content, position) => {
                 SectionDirectiveCompiler::compile(self, name, content, position)
             }
-            Node::SectionBlock((name, name_position), content, position) => {
-                SectionBlockCompiler::compile(self, name, content, position)
-            }
-            Node::RenderBody(position) => RenderBodyCompiler::compile(self),
+            Node::SectionBlock(name, content) => SectionBlockCompiler::compile(self, name, content),
+            Node::RenderBody => RenderBodyCompiler::compile(self),
             Node::Component(name, parameters, body, position) => {
                 ComponentCompiler::compile(self, name, parameters, body, position)
             }
-            Node::ChildContent(position) => Ok(quote! {child_content(__f__)?;}),
-            Node::Raw(body, position) => RawCompiler::compile(self, body),
-            Node::UseDirective(name, path, component, position) => {
-                UseDirectiveCompiler::compile(self, name, path, component, position)
+            Node::ChildContent => Ok(quote! {child_content(__f__)?;}),
+            Node::Raw(body) => RawCompiler::compile(self, body),
+            Node::UseDirective(name, path, component) => {
+                UseDirectiveCompiler::compile(self, name, path, component)
             }
-            Node::ContinueDirective(position) => Ok(quote! {continue;}),
-            Node::BreakDirective(position) => Ok(quote! {break;}),
+            Node::ContinueDirective => Ok(quote! {continue;}),
+            Node::BreakDirective => Ok(quote! {break;}),
         }
     }
 

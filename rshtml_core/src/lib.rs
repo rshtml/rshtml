@@ -10,7 +10,6 @@ pub mod str_extensions;
 // mod temporary_file_writer;
 #[cfg(test)]
 mod tests;
-mod ts_extensions;
 
 use crate::config::Config;
 use crate::parser::RsHtmlParser;

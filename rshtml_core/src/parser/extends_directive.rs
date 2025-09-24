@@ -36,7 +36,7 @@ impl IParser for ExtendsDirectiveParser {
         };
 
         let layout_node = match layout_node {
-            Node::Template(file, nodes, _) => Node::Template(file, nodes, position.clone()),
+            Node::Template(file, nodes, _) => Node::Template(file, nodes, position),
             _ => {
                 return Err(Box::new(Error::new_from_span(
                     ErrorVariant::CustomError {
@@ -51,7 +51,6 @@ impl IParser for ExtendsDirectiveParser {
         Ok(Node::ExtendsDirective(
             PathBuf::from(path_str),
             Box::new(layout_node),
-            position,
         ))
     }
 }

@@ -1,5 +1,4 @@
 use crate::compiler::Compiler;
-use crate::position::Position;
 use crate::Node;
 use anyhow::Result;
 use proc_macro2::TokenStream;
@@ -14,7 +13,6 @@ impl UseDirectiveCompiler {
         name: &String,
         path: &Path,
         component: &Node,
-        position: &Position,
     ) -> Result<TokenStream> {
         compiler
             .use_directives

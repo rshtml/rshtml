@@ -11,13 +11,13 @@ pub struct MatchExprCompiler;
 impl MatchExprCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        (name, name_position): (&str, &Position),
-        arms: &Vec<((String, Position), Vec<Node>)>,
+        name: &str,
+        arms: &Vec<(String, Vec<Node>)>,
         position: &Position,
     ) -> Result<TokenStream> {
         let mut arms_ts = TokenStream::new();
 
-        for ((arm_name, arm_position), arm_nodes) in arms {
+        for (arm_name, arm_nodes) in arms {
             let mut token_stream = TokenStream::new();
             for node in arm_nodes {
                 let ts = compiler.compile(node)?;

@@ -13,7 +13,7 @@ impl IParser for RustExprParser {
         let position = Position::from(&pair);
 
         let mut inner_pairs = pair.into_inner().peekable();
-        let mut clauses: Vec<((String, Position), Vec<Node>)> = Vec::new();
+        let mut clauses: Vec<(String, Vec<Node>)> = Vec::new();
 
         let consume_whitespaces = |inner_p: &mut Peekable<Pairs<Rule>>| {
             while let Some(p) = inner_p.peek() {
@@ -37,7 +37,6 @@ impl IParser for RustExprParser {
                     },
                     pair_span,
                 ))?;
-            let head_position = Position::from(&head_pair);
             let head = head_pair.as_str().trim().to_string();
 
             consume_whitespaces(&mut inner_pairs);
@@ -55,7 +54,7 @@ impl IParser for RustExprParser {
 
             let body_nodes = parser.build_nodes_from_pairs(template_pair.into_inner())?;
 
-            clauses.push(((head.clone(), head_position), body_nodes));
+            clauses.push((head.clone(), body_nodes));
 
             consume_whitespaces(&mut inner_pairs);
         }

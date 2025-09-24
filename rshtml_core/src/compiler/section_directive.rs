@@ -16,9 +16,7 @@ impl SectionDirectiveCompiler {
         position: &Position,
     ) -> Result<TokenStream> {
         let content_ts = match content {
-            SectionDirectiveContent::Text(text) => {
-                compiler.compile(&Node::Text(text.clone(), position.clone()))?
-            }
+            SectionDirectiveContent::Text(text) => compiler.compile(&Node::Text(text.clone()))?,
             SectionDirectiveContent::RustExprSimple(expr, is_escaped) => compiler.compile(
                 &Node::RustExprSimple(expr.clone(), *is_escaped, position.clone()),
             )?,
