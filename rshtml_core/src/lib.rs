@@ -23,7 +23,7 @@ use std::clone::Clone;
 pub fn process_template(template_name: String, struct_name: &Ident) -> TokenStream {
     let config = Config::load_from_toml_or_default();
     let layout = config.layout.clone();
-    let extract_file_on_debug = config.extract_file_on_debug.clone();
+    let extract_file_on_debug = config.extract_file_on_debug;
 
     let (compiled_ast_tokens, sections, text_size) = match parse_and_compile(&template_name, config)
     {
