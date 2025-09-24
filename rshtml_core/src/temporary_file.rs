@@ -29,5 +29,5 @@ pub fn create(struct_name: &str, generated_code: &str) -> io::Result<TokenStream
         "The generated file path is not valid UTF-8",
     ))?;
 
-    Ok(quote! {const _ :() = {include!(#full_path_str)}})
+    Ok(quote! {include!(#full_path_str);})
 }
