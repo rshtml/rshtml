@@ -1,5 +1,5 @@
 use crate::{compiler::Compiler, position::Position};
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::str::FromStr;

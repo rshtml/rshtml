@@ -1,6 +1,6 @@
-﻿use crate::parser::Rule::raw_content;
-use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::Node;
+use crate::parser::Rule::raw_content;
+use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 

@@ -1,5 +1,5 @@
-use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::Node;
+use crate::parser::{IParser, RsHtmlParser, Rule};
 use pest::error::Error;
 use pest::iterators::Pair;
 

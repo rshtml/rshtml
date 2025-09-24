@@ -1,7 +1,7 @@
+use crate::Node;
 use crate::compiler::Compiler;
 use crate::position::Position;
-use crate::Node;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::str::FromStr;

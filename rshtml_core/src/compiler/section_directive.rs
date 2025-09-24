@@ -1,7 +1,7 @@
+use crate::Node;
 use crate::compiler::Compiler;
 use crate::node::SectionDirectiveContent;
 use crate::position::Position;
-use crate::Node;
 use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::quote;

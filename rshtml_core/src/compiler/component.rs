@@ -1,8 +1,8 @@
+use crate::Node;
 use crate::compiler::Compiler;
 use crate::node::{ComponentParameter, ComponentParameterValue};
 use crate::position::Position;
-use crate::Node;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::ops::AddAssign;
@@ -28,7 +28,7 @@ impl ComponentCompiler {
             _ => {
                 return Err(anyhow!(
                     "The component must return a template as the top node."
-                ))
+                ));
             }
         };
 

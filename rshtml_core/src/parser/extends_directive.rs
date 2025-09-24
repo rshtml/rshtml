@@ -1,6 +1,6 @@
+use crate::Node;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::position::Position;
-use crate::Node;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 use std::path::PathBuf;
@@ -44,7 +44,7 @@ impl IParser for ExtendsDirectiveParser {
                             .to_string(),
                     },
                     pair_span,
-                )))
+                )));
             }
         };
 

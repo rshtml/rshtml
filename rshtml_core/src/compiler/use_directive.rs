@@ -1,5 +1,5 @@
-use crate::compiler::Compiler;
 use crate::Node;
+use crate::compiler::Compiler;
 use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::quote;
