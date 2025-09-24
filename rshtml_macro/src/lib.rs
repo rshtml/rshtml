@@ -9,6 +9,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let struct_name = &input.ident;
+    let struct_generics = &input.generics;
 
     let template_name = match parse_template_path_from_attrs(&input.attrs) {
         Ok(Some(path)) => path,
@@ -29,7 +30,11 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
         }
     };
 
-    TokenStream::from(process_template(template_name, struct_name))
+    TokenStream::from(process_template(
+        template_name,
+        struct_name,
+        struct_generics,
+    ))
 }
 
 fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<Option<String>> {
