@@ -1,6 +1,6 @@
-use crate::Node;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::position::Position;
+use crate::Node;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 
@@ -27,7 +27,7 @@ impl IParser for IncludeDirectiveParser {
             .trim_matches('\'')
             .to_string();
 
-        let view_path = parser.config.views.0.join(&path);
+        let view_path = parser.config.base_path.join(&path);
 
         let canonical_path = view_path
             .canonicalize()

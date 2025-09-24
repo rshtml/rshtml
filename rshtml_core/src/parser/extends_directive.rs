@@ -1,6 +1,6 @@
-use crate::Node;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::position::Position;
+use crate::Node;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
 use std::path::PathBuf;
@@ -12,7 +12,7 @@ impl IParser for ExtendsDirectiveParser {
         let pair_span = pair.as_span();
         let position = Position::from(&pair);
 
-        let mut path_str = parser.config.views.1.clone();
+        let mut path_str = parser.config.layout.clone();
         if let Some(path_pair) = pair.into_inner().find(|p| p.as_rule() == Rule::string_line) {
             path_str = path_pair
                 .as_str()
