@@ -1,7 +1,6 @@
 mod block;
 mod comment_block;
 mod component;
-mod component_tag;
 mod extends_directive;
 mod include_directive;
 mod inner_text;
@@ -23,7 +22,7 @@ use crate::error::rename_rules;
 use crate::node::*;
 use crate::parser::block::BlockParser;
 use crate::parser::comment_block::CommentBlockParser;
-use crate::parser::component_tag::ComponentTagParser;
+use crate::parser::component::ComponentParser;
 use crate::parser::extends_directive::ExtendsDirectiveParser;
 use crate::parser::include_directive::IncludeDirectiveParser;
 use crate::parser::inner_text::InnerTextParser;
@@ -102,7 +101,7 @@ impl RsHtmlParser {
             Rule::match_expr => MatchExprParser::parse(self, pair),
             Rule::section_directive => SectionDirectiveParser::parse(self, pair),
             Rule::section_block => SectionBlockParser::parse(self, pair),
-            Rule::component_tag => ComponentTagParser::parse(self, pair),
+            Rule::component => ComponentParser::parse(self, pair),
             Rule::child_content_directive => Ok(Node::ChildContent),
             Rule::raw_block => RawBlockParser::parse(self, pair),
             Rule::use_directive => UseDirectiveParser::parse(self, pair),

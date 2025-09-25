@@ -39,7 +39,7 @@ pub fn rename_rules(err: Error<Rule>) -> Box<Error<Rule>> {
         Rule::bool => "bool".to_string(),
         Rule::number => "number".to_string(),
         Rule::string => "string literal".to_string(),
-        Rule::component_tag => "component tag".to_string(),
+        Rule::component => "component".to_string(),
         Rule::attributes => "attributes".to_string(),
         Rule::attribute => "attribute".to_string(),
         Rule::attribute_name => "attribute name".to_string(),

@@ -28,7 +28,7 @@ comment_content = @{ (("*" ~ !("@")) | (!("*") ~ ANY))* }
 // region --- Block Types ---
 
 block = !{
-    component_tag
+    component
     | (
     "@" ~ (
         (raw_block | render_directive | include_directive | section_directive | section_block
@@ -277,7 +277,7 @@ child_content_directive = @{
 
 // region Component tag <ComponentName param1="value", param2=@value2> ... <ComponentName/>
 
-    component_tag = ${
+    component = ${
         &("<" ~ component_tag_identifier) ~
         "<" ~ component_tag_name ~ attributes ~ WHITESPACE*
         ~ ("/>" | (">" ~ tag_template ~ "</" ~ component_tag_identifier ~ ">"))
@@ -324,3 +324,4 @@ child_content_directive = @{
 // INFO: escaping strings improved with EscapingWriter
 // INFO: rust code block flatten and fixed
 // INFO: Added files and positions in debug mode, added option to views for file extract
+// INFO: Circular call errors managed
