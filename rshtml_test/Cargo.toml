@@ -12,7 +12,7 @@ pest = "2.8.0"
 serde = { version = "1.0.219", features = ["derive"] }
 
 [package.metadata.rshtml]
-views = { path = "views", layout = "layout.rs.html", extract_file_on_debug = false }
+views = { path = "views", layout = "layout.rs.html", extract_file_on_debug = true }
 
 [build-dependencies]
 rshtml.workspace = true
