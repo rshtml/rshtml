@@ -43,12 +43,10 @@ use pest::error::{Error, ErrorVariant};
 use pest::iterators::{Pair, Pairs};
 use pest::{Parser, Span};
 use pest_derive::Parser;
-use std::collections::HashSet;
 
 #[derive(Parser)]
 #[grammar = "rshtml.pest"]
 pub struct RsHtmlParser {
-    included_templates: HashSet<String>,
     config: Config,
     files: Vec<String>,
 }
@@ -56,7 +54,6 @@ pub struct RsHtmlParser {
 impl RsHtmlParser {
     pub fn new() -> Self {
         Self {
-            included_templates: HashSet::new(),
             config: Config::default(),
             files: Vec::new(),
         }
@@ -139,6 +136,15 @@ impl RsHtmlParser {
         ))?;
 
         if template_pair.as_rule() == Rule::template {
+            if self.files.contains(&path.to_string()) {
+                return Err(Box::new(Error::new_from_span(
+                    ErrorVariant::CustomError {
+                        message: format!("Error: Circular call detected for '{path}'"),
+                    },
+                    template_pair.as_span(),
+                )));
+            }
+
             self.files.push(path.to_string());
 
             let ast = self.build_ast_node(template_pair)?;

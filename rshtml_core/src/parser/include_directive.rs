@@ -27,25 +27,6 @@ impl IParser for IncludeDirectiveParser {
             .trim_matches('\'')
             .to_string();
 
-        let view_path = parser.config.base_path.join(&path);
-
-        let canonical_path = view_path
-            .canonicalize()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string();
-
-        if parser.included_templates.contains(&canonical_path) {
-            return Err(Box::new(Error::new_from_span(
-                ErrorVariant::CustomError {
-                    message: format!("Error: Circular include detected for file '{path}'"),
-                },
-                path_pair.as_span(),
-            )));
-        }
-
-        parser.included_templates.insert(canonical_path.clone());
-
         let inner_template = match parser.parse_template(&path) {
             Ok(node) => node,
             Err(err) => {
@@ -59,8 +40,6 @@ impl IParser for IncludeDirectiveParser {
                 return Err(Box::new(include_template_error));
             }
         };
-
-        parser.included_templates.remove(&canonical_path);
 
         let (file, nodes) = match inner_template {
             Node::Template(file, nodes, _) => (file, nodes),
