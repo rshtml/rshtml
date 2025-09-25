@@ -57,7 +57,7 @@ rust_expr_head = @{
 
 rust_expr_simple = @{
     !(WHITESPACE*
-    ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body"|"raw"|"use")
+    ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body"|"raw"|"use"|"child_content")
     ~ WHITESPACE+
     )
     ~ "#"? ~ "&"* ~ rust_identifier ~ chain_segment*
@@ -260,7 +260,7 @@ render_directive = {
 render_body_directive = @{
     &"render_body"
     ~ "render_body"
-    ~ (&(WHITESPACE+ | EOI) | ("(" ~ ")"))
+    ~ ("(" ~ ")" | &(!rust_identifier))
 }
 
 // endregion
@@ -270,7 +270,7 @@ render_body_directive = @{
 child_content_directive = @{
     &"child_content"
     ~ "child_content"
-    ~ (&(WHITESPACE+ | EOI) | ("(" ~ ")"))
+    ~ ("(" ~ ")" | &(!rust_identifier))
 }
 
 // endregion
@@ -325,3 +325,4 @@ child_content_directive = @{
 // INFO: rust code block flatten and fixed
 // INFO: Added files and positions in debug mode, added option to views for file extract
 // INFO: Circular call errors managed
+// INFO: render_body and child_content fixed, no need for whitespace after them anymore
