@@ -1,9 +1,10 @@
 use crate::Node;
+use crate::error::E;
 use crate::node::SectionDirectiveContent;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::position::Position;
 use crate::str_extensions::*;
-use pest::error::{Error, ErrorVariant};
+use pest::error::Error;
 use pest::iterators::Pair;
 
 pub struct SectionDirectiveParser;
@@ -47,12 +48,7 @@ impl IParser for SectionDirectiveParser {
 
                 Ok(Node::SectionDirective(name, value_pair, position))
             }
-            _ => Err(Box::new(Error::new_from_span(
-                ErrorVariant::CustomError {
-                    message: "Error: section_directive".to_string(),
-                },
-                pair_span,
-            ))),
+            _ => Err(E::mes("Error: section_directive").span(pair_span)),
         }
     }
 }

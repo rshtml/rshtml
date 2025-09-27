@@ -1,8 +1,9 @@
 use crate::Node;
+use crate::error::E;
 use crate::node::{ComponentParameter, ComponentParameterValue};
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::position::Position;
-use pest::error::{Error, ErrorVariant};
+use pest::error::Error;
 use pest::iterators::Pair;
 
 pub struct ComponentParser;
@@ -15,13 +16,8 @@ impl IParser for ComponentParser {
         let mut inner_pairs = pair.into_inner();
         let component_name_pair = inner_pairs
             .find(|p| p.as_rule() == Rule::component_tag_name)
-            .ok_or(Error::new_from_span(
-                ErrorVariant::ParsingError {
-                    positives: vec![Rule::component_tag_name],
-                    negatives: vec![],
-                },
-                pair_span,
-            ))?;
+            .ok_or(E::pos(Rule::component_tag_name).span(pair_span))?;
+
         let component_name = component_name_pair.as_str().to_string();
 
         let component_parameter_pairs = inner_pairs
@@ -34,13 +30,7 @@ impl IParser for ComponentParser {
                 .clone()
                 .into_inner()
                 .find(|p| p.as_rule() == Rule::attribute_name)
-                .ok_or(Error::new_from_span(
-                    ErrorVariant::ParsingError {
-                        positives: vec![Rule::attribute_name],
-                        negatives: vec![],
-                    },
-                    pair_span,
-                ))?;
+                .ok_or(E::pos(Rule::attribute_name).span(pair_span))?;
 
             let value = match pair
                 .clone()
@@ -92,12 +82,7 @@ impl ComponentParser {
                 let block_nodes = parser.build_nodes_from_pairs(pair.into_inner())?;
                 Ok(ComponentParameterValue::Block(block_nodes))
             }
-            rule => Err(Box::new(Error::new_from_span(
-                ErrorVariant::CustomError {
-                    message: format!("Unexpected rule: {rule:?}"),
-                },
-                pair.as_span(),
-            ))),
+            rule => Err(E::mes(format!("Unexpected rule: {rule:?}")).span(pair.as_span())),
         }
     }
 }

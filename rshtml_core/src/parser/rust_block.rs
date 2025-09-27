@@ -1,8 +1,8 @@
 use crate::Node;
-use crate::parser::Rule::rust_block_content;
+use crate::error::E;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::position::Position;
-use pest::error::{Error, ErrorVariant};
+use pest::error::Error;
 use pest::iterators::Pair;
 
 pub struct RustBlockParser;
@@ -16,13 +16,7 @@ impl IParser for RustBlockParser {
             pair.into_inner()
                 .find(|p| p.as_rule() == Rule::rust_block_content)
                 .map(|p| p.as_str().to_string())
-                .ok_or(Error::new_from_span(
-                    ErrorVariant::ParsingError {
-                        positives: vec![rust_block_content],
-                        negatives: vec![],
-                    },
-                    pair_span,
-                ))?,
+                .ok_or(E::pos(Rule::rust_block_content).span(pair_span))?,
             position,
         ))
     }

@@ -1,6 +1,7 @@
 use crate::Node;
+use crate::error::E;
 use crate::parser::{IParser, RsHtmlParser, Rule};
-use pest::error::{Error, ErrorVariant};
+use pest::error::Error;
 use pest::iterators::Pair;
 
 pub struct SectionBlockParser;
@@ -13,24 +14,12 @@ impl IParser for SectionBlockParser {
             .clone()
             .into_inner()
             .find(|p| p.as_rule() == Rule::section_head)
-            .ok_or(Error::new_from_span(
-                ErrorVariant::ParsingError {
-                    positives: vec![Rule::section_head],
-                    negatives: vec![],
-                },
-                pair_span,
-            ))?;
+            .ok_or(E::pos(Rule::section_head).span(pair_span))?;
 
         let section_name_pair = section_head_pair
             .into_inner()
             .find(|p| p.as_rule() == Rule::rust_identifier)
-            .ok_or(Error::new_from_span(
-                ErrorVariant::ParsingError {
-                    positives: vec![Rule::rust_identifier],
-                    negatives: vec![],
-                },
-                pair_span,
-            ))?;
+            .ok_or(E::pos(Rule::rust_identifier).span(pair_span))?;
 
         let section_head = section_name_pair
             .as_str()
@@ -41,13 +30,7 @@ impl IParser for SectionBlockParser {
         let inner_pairs = pair
             .into_inner()
             .find(|x| x.as_rule() == Rule::inner_template)
-            .ok_or(Error::new_from_span(
-                ErrorVariant::ParsingError {
-                    positives: vec![Rule::inner_template],
-                    negatives: vec![],
-                },
-                pair_span,
-            ))?;
+            .ok_or(E::pos(Rule::inner_template).span(pair_span))?;
 
         let body = parser.build_nodes_from_pairs(inner_pairs.into_inner())?;
         Ok(Node::SectionBlock(section_head, body))

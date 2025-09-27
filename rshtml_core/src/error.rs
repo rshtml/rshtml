@@ -1,5 +1,6 @@
 use crate::parser::Rule;
-use pest::error::Error;
+use pest::Position;
+use pest::error::{Error, ErrorVariant};
 
 pub fn rename_rules(err: Error<Rule>) -> Box<Error<Rule>> {
     let error = err.renamed_rules(|rule| match rule {
@@ -53,4 +54,97 @@ pub fn rename_rules(err: Error<Rule>) -> Box<Error<Rule>> {
     });
 
     Box::new(error)
+}
+
+pub struct Custom {
+    message: String,
+}
+
+pub struct Parsing {
+    positives: Vec<Rule>,
+    negatives: Vec<Rule>,
+}
+
+pub struct E<T = Parsing> {
+    state: T,
+}
+
+impl E {
+    pub fn mes<S: Into<String>>(message: S) -> E<Custom> {
+        E::<Custom> {
+            state: Custom {
+                message: message.into(),
+            },
+        }
+    }
+
+    pub fn pos(rule: Rule) -> E<Parsing> {
+        E::<Parsing> {
+            state: Parsing {
+                positives: vec![rule],
+                negatives: vec![],
+            },
+        }
+    }
+
+    // pub fn poss(positives: Vec<Rule>) -> E<Parsing> {
+    //     E::<Parsing> {
+    //         state: Parsing {
+    //             positives: positives,
+    //             negatives: vec![],
+    //         },
+    //     }
+    // }
+}
+
+impl E<Custom> {
+    pub fn span(self, span: pest::Span<'_>) -> Box<Error<Rule>> {
+        Box::new(Error::new_from_span(
+            ErrorVariant::CustomError {
+                message: self.state.message,
+            },
+            span,
+        ))
+    }
+
+    pub fn position(self, position: Position<'_>) -> Box<Error<Rule>> {
+        Box::new(Error::new_from_pos(
+            ErrorVariant::CustomError {
+                message: self.state.message,
+            },
+            position,
+        ))
+    }
+}
+
+impl E<Parsing> {
+    pub fn span(self, span: pest::Span<'_>) -> Box<Error<Rule>> {
+        Box::new(Error::new_from_span(
+            ErrorVariant::ParsingError {
+                positives: self.state.positives,
+                negatives: self.state.negatives,
+            },
+            span,
+        ))
+    }
+
+    // pub fn position(self, position: Position<'_>) -> Box<Error<Rule>> {
+    //     Box::new(Error::new_from_pos(
+    //         ErrorVariant::ParsingError {
+    //             positives: self.state.positives,
+    //             negatives: self.state.negatives,
+    //         },
+    //         position,
+    //     ))
+    // }
+
+    // pub fn negs(mut self, negatives: Vec<Rule>) -> E<Parsing> {
+    //     self.state.negatives = negatives;
+    //     self
+    // }
+
+    // pub fn neg(mut self, negative: Rule) -> E<Parsing> {
+    //     self.state.negatives.push(negative);
+    //     self
+    // }
 }

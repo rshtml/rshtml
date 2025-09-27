@@ -326,3 +326,5 @@ child_content_directive = @{
 // INFO: Added files and positions in debug mode, added option to views for file extract
 // INFO: Circular call errors managed
 // INFO: render_body and child_content fixed, no need for whitespace after them anymore
+// INFO: E type added and error return types simplified
+// INFO: @@{ and @@} removed from remaining places 

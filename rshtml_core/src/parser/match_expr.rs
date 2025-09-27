@@ -1,7 +1,8 @@
 use crate::Node;
+use crate::error::E;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::position::Position;
-use pest::error::{Error, ErrorVariant};
+use pest::error::Error;
 use pest::iterators::Pair;
 
 pub struct MatchExprParser;
@@ -15,12 +16,7 @@ impl IParser for MatchExprParser {
 
         let match_expr_head = pairs
             .find(|pair| pair.as_rule() == Rule::match_expr_head)
-            .ok_or(Error::new_from_span(
-                ErrorVariant::CustomError {
-                    message: "Match expression head cannot find.".to_string(),
-                },
-                pair_span,
-            ))?;
+            .ok_or(E::mes("Match expression head cannot find.").span(pair_span))?;
 
         let match_expr_arms = pairs.filter(|pair| pair.as_rule() == Rule::match_expr_arm);
 
@@ -29,28 +25,17 @@ impl IParser for MatchExprParser {
             let match_expr_arm_span = match_expr_arm.as_span();
             let mut match_expr_arm_iter = match_expr_arm.into_inner();
 
-            let match_expr_arm_head = match_expr_arm_iter.next().ok_or(Error::new_from_span(
-                ErrorVariant::CustomError {
-                    message: "Match expression arm head cannot find.".to_string(),
-                },
-                match_expr_arm_span,
-            ))?;
+            let match_expr_arm_head = match_expr_arm_iter.next().ok_or(
+                E::mes("Match expression arm head cannot find.").span(match_expr_arm_span),
+            )?;
 
             if match_expr_arm_head.as_rule() != Rule::match_expr_arm_head {
-                return Err(Box::new(Error::new_from_span(
-                    ErrorVariant::CustomError {
-                        message: "Invalid match expression arm head.".to_string(),
-                    },
-                    match_expr_arm_span,
-                )));
+                return Err(E::mes("Invalid match expression arm head.").span(match_expr_arm_span));
             }
 
-            let match_expr_arm_value = match_expr_arm_iter.next().ok_or(Error::new_from_span(
-                ErrorVariant::CustomError {
-                    message: "Match expression arm value cannot find.".to_string(),
-                },
-                match_expr_arm_span,
-            ))?;
+            let match_expr_arm_value = match_expr_arm_iter.next().ok_or(
+                E::mes("Match expression arm value cannot find.").span(match_expr_arm_span),
+            )?;
 
             let node_arm_value = match match_expr_arm_value.as_rule() {
                 Rule::inner_template => {
@@ -63,19 +48,12 @@ impl IParser for MatchExprParser {
                 Rule::rust_expr_paren => vec![parser.build_ast_node(match_expr_arm_value)?],
                 Rule::rust_expr_simple => vec![parser.build_ast_node(match_expr_arm_value)?],
                 Rule::match_inner_text => vec![Node::InnerText(
-                    match_expr_arm_value
-                        .as_str()
-                        .replace("@@", "@")
-                        .replace("@@{", "{")
-                        .replace("@@}", "}"),
+                    match_expr_arm_value.as_str().replace("@@", "@"),
                 )],
                 _ => {
-                    return Err(Box::new(Error::new_from_span(
-                        ErrorVariant::CustomError {
-                            message: "Unexpected match expression arm value ".to_string(),
-                        },
-                        match_expr_arm_span,
-                    )));
+                    return Err(
+                        E::mes("Unexpected match expression arm value ").span(match_expr_arm_span)
+                    );
                 }
             };
 

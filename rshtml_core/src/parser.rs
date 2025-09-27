@@ -18,7 +18,7 @@ mod text;
 mod use_directive;
 
 use crate::config::Config;
-use crate::error::rename_rules;
+use crate::error::{E, rename_rules};
 use crate::node::*;
 use crate::parser::block::BlockParser;
 use crate::parser::comment_block::CommentBlockParser;
@@ -38,7 +38,7 @@ use crate::parser::section_directive::SectionDirectiveParser;
 use crate::parser::template::TemplateParser;
 use crate::parser::text::TextParser;
 use crate::parser::use_directive::UseDirectiveParser;
-use pest::error::{Error, ErrorVariant};
+use pest::error::Error;
 use pest::iterators::{Pair, Pairs};
 use pest::{Parser, Span};
 use pest_derive::Parser;
@@ -107,41 +107,27 @@ impl RsHtmlParser {
             Rule::use_directive => UseDirectiveParser::parse(self, pair),
             Rule::continue_directive => Ok(Node::ContinueDirective),
             Rule::break_directive => Ok(Node::BreakDirective),
-            rule => Err(Box::new(Error::new_from_span(
-                ErrorVariant::CustomError {
-                    message: format!("Error: Unknown rule: {rule:?}"),
-                },
-                pair.as_span(),
-            ))),
+            rule => Err(E::mes(format!("Error: Unknown rule: {rule:?}")).span(pair.as_span())),
         }
     }
 
     fn parse_template(&mut self, path: &str) -> Result<Node, Box<Error<Rule>>> {
         let input = self.read_template(path).map_err(|err| {
-            Error::new_from_span(
-                ErrorVariant::CustomError {
-                    message: format!("Error reading template: {err:?}, path: {path}"),
-                },
-                Span::new(path, 0, 0).unwrap(),
-            )
+            E::mes(format!("Error reading template: {err:?}, path: {path}"))
+                .span(Span::new(path, 0, 0).unwrap())
         })?;
 
         let mut pairs = Self::parse(Rule::template, &input)?;
-        let template_pair = pairs.next().ok_or(Error::new_from_pos(
-            ErrorVariant::CustomError {
-                message: "Error: Empty template".to_string(),
-            },
-            pest::Position::new("Template", 0).unwrap(),
-        ))?;
+        let template_pair = pairs.next().ok_or(
+            E::mes("Error: Empty template").position(pest::Position::new("Template", 0).unwrap()),
+        )?;
 
         if template_pair.as_rule() == Rule::template {
             if self.files.contains(&path.to_string()) {
-                return Err(Box::new(Error::new_from_span(
-                    ErrorVariant::CustomError {
-                        message: format!("Error: Circular call detected for '{path}'"),
-                    },
-                    template_pair.as_span(),
-                )));
+                return Err(
+                    E::mes(format!("Error: Circular call detected for '{path}'"))
+                        .span(template_pair.as_span()),
+                );
             }
 
             self.files.push(path.to_string());
@@ -152,14 +138,7 @@ impl RsHtmlParser {
 
             Ok(ast)
         } else {
-            let err: Error<Rule> = Error::new_from_span(
-                ErrorVariant::ParsingError {
-                    positives: vec![Rule::template],
-                    negatives: vec![],
-                },
-                template_pair.as_span(),
-            );
-            Err(Box::new(err))
+            Err(E::pos(Rule::template).span(template_pair.as_span()))
         }
     }
 

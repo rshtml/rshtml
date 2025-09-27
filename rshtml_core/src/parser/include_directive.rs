@@ -1,7 +1,8 @@
 use crate::Node;
+use crate::error::E;
 use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::position::Position;
-use pest::error::{Error, ErrorVariant};
+use pest::error::Error;
 use pest::iterators::Pair;
 
 pub struct IncludeDirectiveParser;
@@ -14,12 +15,7 @@ impl IParser for IncludeDirectiveParser {
         let path_pair = pair
             .into_inner()
             .find(|p| p.as_rule() == Rule::string_line)
-            .ok_or(Error::new_from_span(
-                ErrorVariant::CustomError {
-                    message: "Error: Expected a path to the included file".to_string(),
-                },
-                pair_span,
-            ))?;
+            .ok_or(E::mes("Error: Expected a path to the included file").span(pair_span))?;
 
         let path = path_pair
             .as_str()
@@ -30,28 +26,18 @@ impl IParser for IncludeDirectiveParser {
         let inner_template = match parser.parse_template(&path) {
             Ok(node) => node,
             Err(err) => {
-                let include_template_error = Error::new_from_span(
-                    ErrorVariant::CustomError {
-                        message: format!("Error parsing included file '{path}': {err}"),
-                    },
-                    pair_span,
+                return Err(
+                    E::mes(format!("Error parsing included file '{path}': {err}")).span(pair_span),
                 );
-
-                return Err(Box::new(include_template_error));
             }
         };
 
         let (file, nodes) = match inner_template {
             Node::Template(file, nodes, _) => (file, nodes),
             _ => {
-                return Err(Box::new(Error::new_from_span(
-                    ErrorVariant::CustomError {
-                        message: format!(
+                return Err(E::mes(format!(
                             "Error: Expected a template in the included file '{path}', found {inner_template:?}"
-                        ),
-                    },
-                    path_pair.as_span(),
-                )));
+                        )).span(path_pair.as_span()));
             }
         };
 

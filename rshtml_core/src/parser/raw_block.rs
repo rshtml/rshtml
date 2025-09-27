@@ -1,7 +1,7 @@
 use crate::Node;
-use crate::parser::Rule::raw_content;
+use crate::error::E;
 use crate::parser::{IParser, RsHtmlParser, Rule};
-use pest::error::{Error, ErrorVariant};
+use pest::error::Error;
 use pest::iterators::Pair;
 
 pub struct RawBlockParser;
@@ -14,13 +14,7 @@ impl IParser for RawBlockParser {
             pair.into_inner()
                 .find(|p| p.as_rule() == Rule::raw_content)
                 .map(|p| p.as_str().to_string())
-                .ok_or(Error::new_from_span(
-                    ErrorVariant::ParsingError {
-                        positives: vec![raw_content],
-                        negatives: vec![],
-                    },
-                    pair_span,
-                ))?,
+                .ok_or(E::pos(Rule::raw_content).span(pair_span))?,
         ))
     }
 }

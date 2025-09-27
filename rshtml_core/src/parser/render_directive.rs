@@ -1,6 +1,7 @@
 use crate::Node;
+use crate::error::E;
 use crate::parser::{IParser, RsHtmlParser, Rule};
-use pest::error::{Error, ErrorVariant};
+use pest::error::Error;
 use pest::iterators::Pair;
 
 pub struct RenderDirectiveParser;
@@ -12,12 +13,8 @@ impl IParser for RenderDirectiveParser {
         let path_pair = pair
             .into_inner()
             .find(|p| p.as_rule() == Rule::string_line)
-            .ok_or(Error::new_from_span(
-                ErrorVariant::CustomError {
-                    message: "No path found".into(),
-                },
-                span,
-            ))?;
+            .ok_or(E::mes("No path found").span(span))?;
+
         let path_str = path_pair
             .as_str()
             .trim_matches('"')

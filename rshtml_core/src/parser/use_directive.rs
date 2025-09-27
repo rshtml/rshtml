@@ -1,6 +1,7 @@
 use crate::Node;
+use crate::error::E;
 use crate::parser::{IParser, RsHtmlParser, Rule};
-use pest::error::{Error, ErrorVariant};
+use pest::error::Error;
 use pest::iterators::Pair;
 use std::path::Path;
 
@@ -13,13 +14,7 @@ impl IParser for UseDirectiveParser {
         let mut inner_pairs = pair.into_inner();
         let import_path_str = inner_pairs
             .find(|p| p.as_rule() == Rule::string_line)
-            .ok_or(Error::new_from_span(
-                ErrorVariant::ParsingError {
-                    positives: vec![Rule::string_line],
-                    negatives: vec![],
-                },
-                pair_span,
-            ))?;
+            .ok_or(E::pos(Rule::string_line).span(pair_span))?;
 
         let mut import_path_str = import_path_str.as_str().trim_matches('"').to_string();
         if !import_path_str.ends_with(".rs.html") {
@@ -34,27 +29,21 @@ impl IParser for UseDirectiveParser {
                 .and_then(|stem1| Path::new(stem1).file_stem())
                 .and_then(|stem2| stem2.to_str())
                 .map(|s| s.to_string())
-                .ok_or(Error::new_from_span(
-                    ErrorVariant::CustomError {
-                        message: format!(
-                            "Failed to derive component name from import path: '{import_path:#?}'"
-                        ),
-                    },
-                    pair_span,
-                ))?,
+                .ok_or(
+                    E::mes(format!(
+                        "Failed to derive component name from import path: '{import_path:#?}'"
+                    ))
+                    .span(pair_span),
+                )?,
         };
 
         let component_node = match parser.parse_template(&import_path_str) {
             Ok(node) => node,
             Err(err) => {
-                let include_template_error = Error::new_from_span(
-                    ErrorVariant::CustomError {
-                        message: format!("Error parsing component file '{import_path_str}': {err}"),
-                    },
-                    pair_span,
-                );
-
-                return Err(Box::new(include_template_error));
+                return Err(E::mes(format!(
+                    "Error parsing component file '{import_path_str}': {err}"
+                ))
+                .span(pair_span));
             }
         };
 
