@@ -112,7 +112,7 @@ rshtml = "x.y.z"
 
 # The default folder and layout can be changed. This is the default setup:
 [package.metadata.rshtml]
-views = { path = "views", layout = "layout.rs.html" }
+views = { path = "views", layout = "layout.rs.html", extract_file_on_debug = false }
 ```
 
 ## Usage
