@@ -37,7 +37,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! rshtml = "0.2.0" # Use the latest version
+//! rshtml = "0.4.0" # Use the latest version
 //! ```
 //!
 //! **2. Define Struct and Template:**
@@ -89,7 +89,7 @@
 //!  **4. Change views settings:** (Optional)
 //! ```toml
 //! [package.metadata.rshtml]
-//! views = { path = "views", layout = "layout.rs.html" } # these are the default values
+//! views = { path = "views", layout = "layout.rs.html", extract_file_on_debug = false } # these are the default values
 //! ```
 //!
 //!
