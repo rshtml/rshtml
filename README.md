@@ -126,7 +126,7 @@ By default, #[derive(RsHtml)] infers the template file path from the struct's na
 It converts `StructNamePage` to `struct_name.rs.html`.
 You can override this with `#[rshtml(path = "...")]`.
 ```rust
-use rshtml::RsHtml;
+use rshtml::{RsHtml, traits::RsHtml};
 
 #[derive(RsHtml)]
 //#[rshtml(path = "about.rs.html")] // Template can change from rshtml path param, relative to views folder.
