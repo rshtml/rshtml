@@ -11,8 +11,8 @@ pub struct RustExprCompiler;
 impl RustExprCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        exprs: &Vec<(String, Vec<Node>)>,
-        position: &Position,
+        exprs: Vec<(String, Vec<Node>)>,
+        position: Position,
     ) -> Result<TokenStream> {
         let mut ts = TokenStream::new();
 
@@ -24,7 +24,7 @@ impl RustExprCompiler {
             }
 
             let expr_code =
-                TokenStream::from_str(expr).map_err(|err| anyhow!("Lex Error: {}", err))?;
+                TokenStream::from_str(&expr).map_err(|err| anyhow!("Lex Error: {}", err))?;
 
             ts.extend(quote! { #expr_code { #inner_ts } });
         }

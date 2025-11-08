@@ -9,8 +9,8 @@ pub struct SectionBlockCompiler;
 impl SectionBlockCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        name: &str,
-        content: &Vec<Node>,
+        name: String,
+        content: Vec<Node>,
     ) -> Result<TokenStream> {
         let mut token_stream = TokenStream::new();
 
@@ -19,7 +19,7 @@ impl SectionBlockCompiler {
             token_stream.extend(quote! {#ts});
         }
 
-        compiler.sections.insert(name.to_owned(), token_stream);
+        compiler.sections.insert(name, token_stream);
 
         Ok(quote! {})
     }

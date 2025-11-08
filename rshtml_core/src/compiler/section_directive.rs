@@ -11,20 +11,18 @@ pub struct SectionDirectiveCompiler;
 impl SectionDirectiveCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        name: &str,
-        content: &SectionDirectiveContent,
-        position: &Position,
+        name: String,
+        content: SectionDirectiveContent,
+        position: Position,
     ) -> Result<TokenStream> {
         let content_ts = match content {
-            SectionDirectiveContent::Text(text) => compiler.compile(&Node::Text(text.clone()))?,
-            SectionDirectiveContent::RustExprSimple(expr, is_escaped) => compiler.compile(
-                &Node::RustExprSimple(expr.clone(), *is_escaped, position.clone()),
-            )?,
+            SectionDirectiveContent::Text(text) => compiler.compile(Node::Text(text))?,
+            SectionDirectiveContent::RustExprSimple(expr, is_escaped) => {
+                compiler.compile(Node::RustExprSimple(expr, is_escaped, position))?
+            }
         };
 
-        compiler
-            .sections
-            .insert(name.to_owned(), content_ts.clone());
+        compiler.sections.insert(name.to_owned(), content_ts);
 
         Ok(quote! {})
     }

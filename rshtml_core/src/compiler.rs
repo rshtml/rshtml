@@ -11,6 +11,7 @@ mod rust_expr_paren;
 mod rust_expr_simple;
 mod section_block;
 mod section_directive;
+mod template;
 mod text;
 mod use_directive;
 
@@ -28,6 +29,7 @@ use crate::compiler::rust_expr_paren::RustExprParenCompiler;
 use crate::compiler::rust_expr_simple::RustExprSimpleCompiler;
 use crate::compiler::section_block::SectionBlockCompiler;
 use crate::compiler::section_directive::SectionDirectiveCompiler;
+use crate::compiler::template::TemplateCompiler;
 use crate::compiler::text::TextCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
 use crate::position::Position;
@@ -62,30 +64,16 @@ impl Compiler {
         }
     }
 
-    pub fn compile(&mut self, node: &Node) -> Result<TokenStream> {
+    pub fn compile(&mut self, node: Node) -> Result<TokenStream> {
         match node {
             Node::Template(file, nodes, position) => {
-                if !file.is_empty() {
-                    self.files.push((file.clone(), position.clone()));
-                }
-
-                let mut token_stream = TokenStream::new();
-                for node in nodes {
-                    let ts = self.compile(node)?;
-                    token_stream.extend(quote! {#ts});
-                }
-
-                if !file.is_empty() {
-                    self.files.pop();
-                }
-
-                Ok(token_stream)
+                TemplateCompiler::compile(self, file, nodes, position)
             }
             Node::Text(text) => TextCompiler::compile(self, text),
             Node::InnerText(inner_text) => InnerTextCompiler::compile(self, inner_text),
             Node::Comment(_) => Ok(quote! {}),
             Node::ExtendsDirective(path, layout) => {
-                ExtendsDirectiveCompiler::compile(self, path, layout)
+                ExtendsDirectiveCompiler::compile(self, path, *layout)
             }
             Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, name),
             Node::RustBlock(content, position) => {
@@ -112,7 +100,7 @@ impl Compiler {
             Node::ChildContent => Ok(quote! {child_content(__f__)?;}),
             Node::Raw(body) => RawCompiler::compile(self, body),
             Node::UseDirective(name, path, component) => {
-                UseDirectiveCompiler::compile(self, name, path, component)
+                UseDirectiveCompiler::compile(self, name, path, *component)
             }
             Node::ContinueDirective => Ok(quote! {continue;}),
             Node::BreakDirective => Ok(quote! {break;}),
@@ -128,22 +116,22 @@ impl Compiler {
         quote! {[#token_stream]}
     }
 
-    fn escape_or_raw(&self, expr_ts: TokenStream, is_escaped: &bool) -> TokenStream {
-        if *is_escaped {
+    fn escape_or_raw(&self, expr_ts: TokenStream, is_escaped: bool) -> TokenStream {
+        if is_escaped {
             quote! {write!(rshtml::EscapingWriter { inner: __f__ }, "{}", &(#expr_ts))?;}
         } else {
             quote! {write!(__f__, "{}", #expr_ts)?;}
         }
     }
 
-    fn with_info(&self, expr_ts: TokenStream, position: &Position) -> TokenStream {
+    fn with_info(&self, expr_ts: TokenStream, position: Position) -> TokenStream {
         if cfg!(debug_assertions) {
             let positions = self
                 .files
                 .iter()
                 .skip(1)
                 .map(|(_, pos)| pos)
-                .chain(std::iter::once(position));
+                .chain(std::iter::once(&position));
 
             let mappings: Vec<String> = self
                 .files

@@ -98,14 +98,14 @@ fn parse_and_compile(
     let node = rshtml_parser.run(template_path, config)?;
 
     let mut compiler = compiler::Compiler::new();
-    let ts = compiler.compile(&node)?;
+    let ts = compiler.compile(node)?;
 
     if let Some(layout) = compiler.layout.clone() {
-        compiler.section_body = Some(ts.clone());
+        compiler.section_body = Some(ts);
         compiler
             .files
             .push((template_path.to_string(), Position::default()));
-        let layout_ts = compiler.compile(&layout)?;
+        let layout_ts = compiler.compile(layout)?;
 
         return Ok((layout_ts, compiler.section_names(), compiler.text_size));
     }
