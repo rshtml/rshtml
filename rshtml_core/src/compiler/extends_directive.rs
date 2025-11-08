@@ -3,14 +3,14 @@ use crate::compiler::Compiler;
 use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::quote;
-use std::path::Path;
+use std::path::PathBuf;
 
 pub struct ExtendsDirectiveCompiler;
 
 impl ExtendsDirectiveCompiler {
-    pub fn compile(compiler: &mut Compiler, path: &Path, layout: &Node) -> Result<TokenStream> {
-        compiler.layout_directive = path.to_path_buf();
-        compiler.layout = Some(layout.clone());
+    pub fn compile(compiler: &mut Compiler, path: PathBuf, layout: Node) -> Result<TokenStream> {
+        compiler.layout_directive = path;
+        compiler.layout = Some(layout);
 
         Ok(quote! {})
     }

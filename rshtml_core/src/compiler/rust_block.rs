@@ -9,11 +9,11 @@ pub struct RustBlockCompiler;
 impl RustBlockCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        content: &str,
-        position: &Position,
+        content: String,
+        position: Position,
     ) -> Result<TokenStream> {
         let code_ts =
-            TokenStream::from_str(content).map_err(|err| anyhow!("Lex Error: {}", err))?;
+            TokenStream::from_str(&content).map_err(|err| anyhow!("Lex Error: {}", err))?;
 
         let info_ts = compiler.with_info(TokenStream::new(), position);
 

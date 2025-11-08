@@ -11,9 +11,9 @@ pub struct MatchExprCompiler;
 impl MatchExprCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        name: &str,
-        arms: &Vec<(String, Vec<Node>)>,
-        position: &Position,
+        name: String,
+        arms: Vec<(String, Vec<Node>)>,
+        position: Position,
     ) -> Result<TokenStream> {
         let mut arms_ts = TokenStream::new();
 
@@ -24,7 +24,7 @@ impl MatchExprCompiler {
                 token_stream.extend(quote! {#ts});
             }
             let arm_head =
-                TokenStream::from_str(arm_name).map_err(|err| anyhow!("Lex Error: {}", err))?;
+                TokenStream::from_str(&arm_name).map_err(|err| anyhow!("Lex Error: {}", err))?;
             let arm_ts = quote! {
                 #arm_head =>  { #token_stream },
             };
@@ -32,7 +32,8 @@ impl MatchExprCompiler {
             arms_ts.extend(arm_ts);
         }
 
-        let name_head = TokenStream::from_str(name).map_err(|err| anyhow!("Lex Error: {}", err))?;
+        let name_head =
+            TokenStream::from_str(&name).map_err(|err| anyhow!("Lex Error: {}", err))?;
 
         let ts = quote! {
            #name_head {
