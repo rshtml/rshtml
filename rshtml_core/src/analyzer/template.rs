@@ -6,12 +6,12 @@ pub struct TemplateAnalyzer;
 impl TemplateAnalyzer {
     pub fn analyze(
         analyzer: &mut Analyzer,
-        file: &String,
+        file: &str,
         nodes: &Vec<Node>,
         position: &Position,
     ) -> Result<()> {
         if !file.is_empty() {
-            analyzer.files.push((file.clone(), position.clone()));
+            analyzer.files.push((file.to_owned(), position.clone()));
         }
 
         for node in nodes {

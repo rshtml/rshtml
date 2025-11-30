@@ -6,17 +6,17 @@ pub struct RustExprSimpleAnalyzer;
 impl RustExprSimpleAnalyzer {
     pub fn analyze(
         analyzer: &mut Analyzer,
-        expr: &String,
+        expr: &str,
         _is_escaped: &bool,
         _position: &Position,
     ) -> Result<()> {
         if let Some(name) = &analyzer.is_component
-            && Self::is_valid_attribute_name(&expr)
+            && Self::is_valid_attribute_name(expr)
         {
             analyzer
                 .components
                 .entry(name.to_owned())
-                .and_modify(|component| component.parameters.push(expr.clone()));
+                .and_modify(|component| component.parameters.push(expr.to_owned()));
         }
 
         Ok(())

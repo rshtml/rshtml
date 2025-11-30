@@ -19,6 +19,13 @@ impl UseDirectiveAnalyzer {
             .entry(name.to_owned())
             .or_insert(Component::new());
 
-        analyzer.analyze(component)
+        let previous_is_component = analyzer.is_component.clone();
+        analyzer.is_component = Some(name.to_owned());
+
+        analyzer.analyze(component)?;
+
+        analyzer.is_component = previous_is_component;
+
+        Ok(())
     }
 }

@@ -48,7 +48,7 @@ pub fn test_process_simple() {
         "home.rs.html".to_string(),
         &ident,
         &Generics::default(),
-        false,
+        true,
     );
 }
 

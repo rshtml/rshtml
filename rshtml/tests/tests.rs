@@ -215,6 +215,7 @@ mod tests {
         }
 
         #[derive(RsHtml)]
+        #[rshtml(no_warn)]
         struct ComponentPage {
             value: i32,
             title: String,

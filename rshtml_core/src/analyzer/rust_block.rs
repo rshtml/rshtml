@@ -18,7 +18,7 @@ impl RustBlockAnalyzer {
             &format!("{{ {} }}", content)
         };
 
-        let block: Block = match parse_str(&content) {
+        let block: Block = match parse_str(content) {
             Ok(x) => x,
             Err(_) => {
                 return Ok(());

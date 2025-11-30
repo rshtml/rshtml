@@ -1,16 +1,22 @@
 mod child_content;
 mod component;
 mod extends_directive;
+mod match_expr;
 mod rust_block;
+mod rust_expr;
 mod rust_expr_simple;
+mod section_block;
+mod section_directive;
 mod template;
 mod use_directive;
 
 use crate::{
     analyzer::{
         child_content::ChildContentAnalyzer, component::ComponentAnalyzer,
-        extends_directive::ExtendsDirectiveAnalyzer, rust_block::RustBlockAnalyzer,
-        rust_expr_simple::RustExprSimpleAnalyzer, template::TemplateAnalyzer,
+        extends_directive::ExtendsDirectiveAnalyzer, match_expr::MatchExprAnalyzer,
+        rust_block::RustBlockAnalyzer, rust_expr::RustExprAnalyzer,
+        rust_expr_simple::RustExprSimpleAnalyzer, section_block::SectionBlockAnalyzer,
+        section_directive::SectionDirectiveAnalyzer, template::TemplateAnalyzer,
         use_directive::UseDirectiveAnalyzer,
     },
     node::Node,
@@ -24,7 +30,8 @@ pub struct Analyzer {
     components: HashMap<String, Component>,
     layout_directive: PathBuf,
     pub layout: Option<Node>,
-    pub sources: HashMap<String, String>,
+    sources: HashMap<String, String>,
+    sections: HashMap<String, Position>,
     pub no_warn: bool,
     pub position: Position,
     is_component: Option<String>,
@@ -38,6 +45,7 @@ impl Analyzer {
             layout_directive: PathBuf::new(),
             layout: None,
             sources,
+            sections: HashMap::new(),
             no_warn,
             position: Position::default(),
             is_component: None,
@@ -63,10 +71,14 @@ impl Analyzer {
                 RustExprSimpleAnalyzer::analyze(self, expr, is_escaped, position)
             }
             Node::RustExprParen(_, _, _) => Ok(()),
-            Node::MatchExpr(_, _, _) => Ok(()),
-            Node::RustExpr(_, _) => Ok(()),
-            Node::SectionDirective(_, _, _) => Ok(()),
-            Node::SectionBlock(_, _) => Ok(()),
+            Node::MatchExpr(head, arms, position) => {
+                MatchExprAnalyzer::analyze(self, head, arms, position)
+            }
+            Node::RustExpr(exprs, position) => RustExprAnalyzer::analyze(self, exprs, position),
+            Node::SectionDirective(name, content, position) => {
+                SectionDirectiveAnalyzer::analyze(self, name, content, position)
+            }
+            Node::SectionBlock(name, content) => SectionBlockAnalyzer::analyze(self, name, content),
             Node::RenderBody => Ok(()),
             Node::Component(name, parameters, body, position) => {
                 ComponentAnalyzer::analyze(self, name, parameters, body, position)
@@ -81,10 +93,7 @@ impl Analyzer {
         }
     }
 
-    fn warning(&self, title: &str, lines: &[usize], info: &str, name_len: usize) {
-        let yellow = "\x1b[33m";
-        let reset = "\x1b[0m";
-
+    pub fn message(&self, title: &str, lines: &[usize], info: &str, name_len: usize) -> String {
         let lines = if lines.is_empty() {
             &[(self.position.0).0]
         } else {
@@ -105,7 +114,7 @@ impl Analyzer {
 
         let lp = " ".repeat(left_pad);
         let file_info = self.files_to_info();
-        let info = if info.len() == 0 {
+        let info = if info.is_empty() {
             "".to_string()
         } else {
             let hyphen = "-".repeat(name_len + 1);
@@ -126,12 +135,25 @@ impl Analyzer {
             }
         }
 
-        let lp = " ".repeat(left_pad);
-        let warn = format!(
-            "{yellow}warning:{reset} {title}\n{lp} --> {file_info}\n{lp} |\n{source}{info}{lp} |",
-        );
+        let title = if !title.is_empty() {
+            format!("{title}\n")
+        } else {
+            "".to_string()
+        };
 
-        eprintln!("{warn}");
+        let lp = " ".repeat(left_pad);
+        let warn = format!("{title}{lp} --> {file_info}\n{lp} |\n{source}{info}{lp} |",);
+
+        warn
+    }
+
+    pub fn warning(&self, title: &str, lines: &[usize], info: &str, name_len: usize) {
+        let yellow = "\x1b[33m";
+        let reset = "\x1b[0m";
+
+        let warn = self.message(title, lines, info, name_len);
+
+        eprintln!("{yellow}warning:{reset} {warn}");
     }
 
     fn files_to_info(&self) -> String {
@@ -182,17 +204,15 @@ impl Analyzer {
 
     fn source_first_line(&self) -> Option<String> {
         let file_path = self.files.last().map(|x| x.0.clone())?;
-        let first_line = self
-            .sources
+        self.sources
             .get(&file_path)?
             .lines()
             .nth((self.position.0).0.saturating_sub(1))
-            .map(|s| s.to_string());
-
-        first_line
+            .map(|s| s.to_string())
     }
 }
 
+#[derive(Clone)]
 struct Component {
     parameters: Vec<String>,
     code_block_vars: Vec<String>,
