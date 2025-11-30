@@ -25,6 +25,7 @@ pub fn process_template(
     template_name: String,
     struct_name: &Ident,
     struct_generics: &Generics,
+    _no_warn: bool,
 ) -> TokenStream {
     let config = Config::load_from_toml_or_default();
     let layout = config.layout.clone();
