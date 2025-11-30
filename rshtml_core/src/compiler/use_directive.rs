@@ -11,15 +11,13 @@ impl UseDirectiveCompiler {
     pub fn compile(
         compiler: &mut Compiler,
         name: String,
-        path: PathBuf,
+        _path: PathBuf,
         component: Node,
     ) -> Result<TokenStream> {
-        compiler
-            .use_directives
-            .push((name.to_string(), path.to_path_buf()));
-        compiler
-            .components
-            .insert(name.to_string(), (component).clone());
+        if !compiler.components.contains_key(&name) {
+            let component_ts = compiler.compile(component)?;
+            compiler.components.insert(name, component_ts);
+        }
 
         Ok(quote! {})
     }

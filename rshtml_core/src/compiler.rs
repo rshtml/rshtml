@@ -40,8 +40,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub struct Compiler {
-    use_directives: Vec<(String, PathBuf)>,
-    components: HashMap<String, Node>,
+    components: HashMap<String, TokenStream>,
     layout_directive: PathBuf,
     pub layout: Option<Node>,
     sections: HashMap<String, TokenStream>,
@@ -53,7 +52,6 @@ pub struct Compiler {
 impl Compiler {
     pub fn new() -> Self {
         Compiler {
-            use_directives: Vec::new(),
             components: HashMap::new(),
             layout_directive: PathBuf::new(),
             layout: None,

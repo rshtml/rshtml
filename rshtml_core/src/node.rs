@@ -21,6 +21,7 @@ pub enum ComponentParameterValue {
 pub struct ComponentParameter {
     pub name: String,
     pub value: ComponentParameterValue,
+    pub position: Position,
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -43,7 +43,11 @@ impl IParser for ComponentParser {
 
             let name = pair_name.as_str().to_string();
 
-            component_parameters.push(ComponentParameter { name, value });
+            component_parameters.push(ComponentParameter {
+                name,
+                value,
+                position: Position::from(&pair),
+            });
         }
 
         let body = match inner_pairs.find(|x| x.as_rule() == Rule::tag_template) {

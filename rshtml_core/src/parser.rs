@@ -17,6 +17,8 @@ mod template;
 mod text;
 mod use_directive;
 
+use std::collections::HashMap;
+
 use crate::config::Config;
 use crate::error::{E, rename_rules};
 use crate::node::*;
@@ -48,6 +50,7 @@ use pest_derive::Parser;
 pub struct RsHtmlParser {
     config: Config,
     files: Vec<String>,
+    pub sources: HashMap<String, String>,
 }
 
 impl RsHtmlParser {
@@ -55,6 +58,7 @@ impl RsHtmlParser {
         Self {
             config: Config::default(),
             files: Vec::new(),
+            sources: HashMap::new(),
         }
     }
 
@@ -130,6 +134,9 @@ impl RsHtmlParser {
                 );
             }
 
+            self.sources
+                .entry(path.to_owned())
+                .or_insert_with(|| input.clone());
             self.files.push(path.to_string());
 
             let ast = self.build_ast_node(template_pair)?;

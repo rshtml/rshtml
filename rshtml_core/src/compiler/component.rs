@@ -18,20 +18,11 @@ impl ComponentCompiler {
         body: Vec<Node>,
         position: Position,
     ) -> Result<TokenStream> {
-        let component_node = compiler
+        let component_ts = compiler
             .components
             .get(&name)
+            .cloned()
             .ok_or(anyhow!("Component {} not found", name))?;
-        let component_node = match &component_node {
-            Node::Template(file, node, _) => {
-                Node::Template(file.clone(), node.clone(), position.clone())
-            }
-            _ => {
-                return Err(anyhow!(
-                    "The component must return a template as the top node."
-                ));
-            }
-        };
 
         let mut token_stream = TokenStream::new();
 
@@ -76,8 +67,6 @@ impl ComponentCompiler {
         let body_ts = quote! {let child_content = |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body_ts  Ok(())};};
 
         token_stream.extend(body_ts);
-
-        let component_ts = compiler.compile(component_node);
 
         token_stream.extend(component_ts);
 
