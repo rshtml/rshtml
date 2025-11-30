@@ -1,0 +1,210 @@
+mod child_content;
+mod component;
+mod extends_directive;
+mod rust_block;
+mod rust_expr_simple;
+mod template;
+mod use_directive;
+
+use crate::{
+    analyzer::{
+        child_content::ChildContentAnalyzer, component::ComponentAnalyzer,
+        extends_directive::ExtendsDirectiveAnalyzer, rust_block::RustBlockAnalyzer,
+        rust_expr_simple::RustExprSimpleAnalyzer, template::TemplateAnalyzer,
+        use_directive::UseDirectiveAnalyzer,
+    },
+    node::Node,
+    position::Position,
+};
+use anyhow::Result;
+use std::{collections::HashMap, path::PathBuf};
+
+pub struct Analyzer {
+    pub files: Vec<(String, Position)>,
+    components: HashMap<String, Component>,
+    layout_directive: PathBuf,
+    pub layout: Option<Node>,
+    pub sources: HashMap<String, String>,
+    pub no_warn: bool,
+    pub position: Position,
+    is_component: Option<String>,
+}
+
+impl Analyzer {
+    pub fn new(sources: HashMap<String, String>, no_warn: bool) -> Self {
+        Self {
+            files: Vec::new(),
+            components: HashMap::new(),
+            layout_directive: PathBuf::new(),
+            layout: None,
+            sources,
+            no_warn,
+            position: Position::default(),
+            is_component: None,
+        }
+    }
+
+    pub fn analyze(&mut self, node: &Node) -> Result<()> {
+        match node {
+            Node::Template(file, nodes, position) => {
+                TemplateAnalyzer::analyze(self, file, nodes, position)
+            }
+            Node::Text(_) => Ok(()),
+            Node::InnerText(_) => Ok(()),
+            Node::Comment(_) => Ok(()),
+            Node::ExtendsDirective(path, layout) => {
+                ExtendsDirectiveAnalyzer::analyze(self, path, layout)
+            }
+            Node::RenderDirective(_) => Ok(()),
+            Node::RustBlock(content, position) => {
+                RustBlockAnalyzer::analyze(self, content, position)
+            }
+            Node::RustExprSimple(expr, is_escaped, position) => {
+                RustExprSimpleAnalyzer::analyze(self, expr, is_escaped, position)
+            }
+            Node::RustExprParen(_, _, _) => Ok(()),
+            Node::MatchExpr(_, _, _) => Ok(()),
+            Node::RustExpr(_, _) => Ok(()),
+            Node::SectionDirective(_, _, _) => Ok(()),
+            Node::SectionBlock(_, _) => Ok(()),
+            Node::RenderBody => Ok(()),
+            Node::Component(name, parameters, body, position) => {
+                ComponentAnalyzer::analyze(self, name, parameters, body, position)
+            }
+            Node::ChildContent => ChildContentAnalyzer::analyze(self),
+            Node::Raw(_) => Ok(()),
+            Node::UseDirective(name, path, component) => {
+                UseDirectiveAnalyzer::analyze(self, name, path, component)
+            }
+            Node::ContinueDirective => Ok(()),
+            Node::BreakDirective => Ok(()),
+        }
+    }
+
+    fn warning(&self, title: &str, lines: &[usize], info: &str, name_len: usize) {
+        let yellow = "\x1b[33m";
+        let reset = "\x1b[0m";
+
+        let lines = if lines.is_empty() {
+            &[(self.position.0).0]
+        } else {
+            lines
+        };
+
+        let (source_snippet, left_pad) = if lines.is_empty() {
+            (
+                self.source_first_line().unwrap_or_default(),
+                ((self.position.0).0).to_string().len(),
+            )
+        } else {
+            (
+                self.extract_source_snippet().unwrap_or_default(),
+                ((self.position.1).0).to_string().len(),
+            )
+        };
+
+        let lp = " ".repeat(left_pad);
+        let file_info = self.files_to_info();
+        let info = if info.len() == 0 {
+            "".to_string()
+        } else {
+            let hyphen = "-".repeat(name_len + 1);
+            format!("{lp} | {hyphen} {info}\n")
+        };
+
+        let mut source = String::new();
+
+        let first_line = (self.position.0).0;
+
+        for (i, source_line) in source_snippet.lines().enumerate() {
+            let current_line = first_line + i;
+            let lp = left_pad - current_line.to_string().len();
+            let lp = " ".repeat(lp);
+
+            if lines.contains(&current_line) {
+                source.push_str(format!("{lp}{current_line} | {source_line}\n").as_str());
+            }
+        }
+
+        let lp = " ".repeat(left_pad);
+        let warn = format!(
+            "{yellow}warning:{reset} {title}\n{lp} --> {file_info}\n{lp} |\n{source}{info}{lp} |",
+        );
+
+        eprintln!("{warn}");
+    }
+
+    fn files_to_info(&self) -> String {
+        let positions = self
+            .files
+            .iter()
+            .skip(1)
+            .map(|(_, pos)| pos)
+            .chain(std::iter::once(&self.position));
+
+        let mappings: Vec<String> = self
+            .files
+            .iter()
+            .zip(positions)
+            .map(|((file, _), pos)| pos.as_info(file))
+            .collect();
+
+        mappings.join(" > ")
+    }
+
+    fn extract_source_snippet(&self) -> Option<String> {
+        let file_path = self.files.last().map(|x| x.0.clone())?;
+
+        let snippet = self
+            .sources
+            .get(&file_path)?
+            .lines()
+            .enumerate()
+            .skip((self.position.0).0.saturating_sub(1))
+            .take((self.position.1).0 - (self.position.0).0 + 1)
+            .map(|(i, line)| {
+                let skip_count =
+                    (i == (self.position.0).0 - 1) as usize * ((self.position.0).1 - 1);
+                let take_count = ((i == (self.position.1).0 - 1) as usize
+                    * (((self.position.1).1 - 1).saturating_sub(skip_count)))
+                    + ((1 - (i == (self.position.1).0 - 1) as usize) * usize::MAX);
+
+                line.chars()
+                    .skip(skip_count)
+                    .take(take_count)
+                    .collect::<String>()
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        Some(snippet)
+    }
+
+    fn source_first_line(&self) -> Option<String> {
+        let file_path = self.files.last().map(|x| x.0.clone())?;
+        let first_line = self
+            .sources
+            .get(&file_path)?
+            .lines()
+            .nth((self.position.0).0.saturating_sub(1))
+            .map(|s| s.to_string());
+
+        first_line
+    }
+}
+
+struct Component {
+    parameters: Vec<String>,
+    code_block_vars: Vec<String>,
+    has_child_content: bool,
+}
+
+impl Component {
+    fn new() -> Self {
+        Self {
+            parameters: Vec::new(),
+            code_block_vars: Vec::new(),
+            has_child_content: false,
+        }
+    }
+}

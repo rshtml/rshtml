@@ -1,5 +1,6 @@
 #![doc(hidden)]
 
+mod analyzer;
 mod compiler;
 pub mod config;
 mod error;
@@ -25,14 +26,17 @@ pub fn process_template(
     template_name: String,
     struct_name: &Ident,
     struct_generics: &Generics,
-    _no_warn: bool,
+    no_warn: bool,
 ) -> TokenStream {
     let config = Config::load_from_toml_or_default();
     let layout = config.layout.clone();
     let extract_file_on_debug = config.extract_file_on_debug;
 
-    let (compiled_ast_tokens, sections, text_size) = match parse_and_compile(&template_name, config)
-    {
+    let (compiled_ast_tokens, sections, text_size) = match parse_and_compile(
+        &template_name,
+        config,
+        no_warn,
+    ) {
         Ok(tokens) => tokens,
         Err(err) => {
             let error_message = format!(
@@ -94,9 +98,20 @@ pub fn process_template(
 fn parse_and_compile(
     template_path: &str,
     config: Config,
+    no_warn: bool,
 ) -> Result<(TokenStream, TokenStream, usize)> {
     let mut rshtml_parser = RsHtmlParser::new();
     let node = rshtml_parser.run(template_path, config)?;
+
+    let mut analyzer = analyzer::Analyzer::new(rshtml_parser.sources, no_warn);
+    analyzer.analyze(&node)?;
+
+    if let Some(layout) = analyzer.layout.clone() {
+        analyzer
+            .files
+            .push((template_path.to_string(), Position::default()));
+        analyzer.analyze(&layout)?;
+    }
 
     let mut compiler = compiler::Compiler::new();
     let ts = compiler.compile(node)?;
