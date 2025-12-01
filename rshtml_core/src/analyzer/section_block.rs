@@ -1,10 +1,13 @@
 use crate::{analyzer::Analyzer, node::Node, position::Position};
-use anyhow::Result;
 
 pub struct SectionBlockAnalyzer;
 
 impl SectionBlockAnalyzer {
-    pub fn analyze(analyzer: &mut Analyzer, name: &String, content: &Vec<Node>) -> Result<()> {
+    pub fn analyze(
+        analyzer: &mut Analyzer,
+        name: &String,
+        content: &Vec<Node>,
+    ) -> Result<(), Vec<String>> {
         for node in content {
             analyzer.analyze(node)?;
         }

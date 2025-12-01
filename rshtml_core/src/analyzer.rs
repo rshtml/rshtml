@@ -23,7 +23,6 @@ use crate::{
     node::Node,
     position::Position,
 };
-use anyhow::Result;
 use std::{collections::HashMap, path::PathBuf};
 
 pub struct Analyzer {
@@ -34,12 +33,12 @@ pub struct Analyzer {
     sources: HashMap<String, String>,
     sections: HashMap<String, Position>,
     pub no_warn: bool,
-    pub position: Position,
     is_component: Option<String>,
+    render_directives: Vec<String>,
 }
 
 impl Analyzer {
-    pub fn new(sources: HashMap<String, String>, no_warn: bool) -> Self {
+    fn new(sources: HashMap<String, String>, no_warn: bool) -> Self {
         Self {
             files: Vec::new(),
             components: HashMap::new(),
@@ -48,12 +47,12 @@ impl Analyzer {
             sources,
             sections: HashMap::new(),
             no_warn,
-            position: Position::default(),
             is_component: None,
+            render_directives: Vec::new(),
         }
     }
 
-    pub fn analyze(&mut self, node: &Node) -> Result<()> {
+    fn analyze(&mut self, node: &Node) -> Result<(), Vec<String>> {
         match node {
             Node::Template(file, nodes, position) => {
                 TemplateAnalyzer::analyze(self, file, nodes, position)
@@ -96,37 +95,71 @@ impl Analyzer {
         }
     }
 
-    pub fn message(&self, title: &str, lines: &[usize], info: &str, name_len: usize) -> String {
+    pub fn run(
+        template_path: String,
+        node: &Node,
+        sources: HashMap<String, String>,
+        no_warn: bool,
+    ) -> anyhow::Result<()> {
+        let mut analyzer = Self::new(sources, no_warn);
+        let mut errs = Vec::new();
+
+        if let Err(e) = analyzer.analyze(&node) {
+            errs.extend(e);
+        }
+
+        if let Some(layout) = analyzer.layout.clone() {
+            analyzer.files.push((template_path, Position::default()));
+            if let Err(e) = analyzer.analyze(&layout) {
+                errs.extend(e);
+            }
+        }
+
+        RenderDirectiveAnalyzer::analyze_renders(&analyzer);
+
+        errs.is_empty()
+            .then(|| ())
+            .ok_or(anyhow::anyhow!(errs.join("\n\n")))
+    }
+
+    pub fn message(
+        &self,
+        position: &Position,
+        title: &str,
+        lines: &[usize],
+        info: &str,
+        name_len: usize,
+    ) -> String {
         let lines = if lines.is_empty() {
-            &[(self.position.0).0]
+            &[(position.0).0]
         } else {
             lines
         };
 
         let (source_snippet, left_pad) = if lines.is_empty() {
             (
-                self.source_first_line().unwrap_or_default(),
-                ((self.position.0).0).to_string().len(),
+                self.source_first_line(position).unwrap_or_default(),
+                ((position.0).0).to_string().len(),
             )
         } else {
             (
-                self.extract_source_snippet().unwrap_or_default(),
-                ((self.position.1).0).to_string().len(),
+                self.extract_source_snippet(position).unwrap_or_default(),
+                ((position.1).0).to_string().len(),
             )
         };
 
         let lp = " ".repeat(left_pad);
-        let file_info = self.files_to_info();
+        let file_info = self.files_to_info(position);
         let info = if info.is_empty() {
             "".to_string()
         } else {
-            let hyphen = "-".repeat(name_len + 1);
+            let hyphen = "-".repeat(name_len);
             format!("{lp} | {hyphen} {info}\n")
         };
 
         let mut source = String::new();
 
-        let first_line = (self.position.0).0;
+        let first_line = (position.0).0;
 
         for (i, source_line) in source_snippet.lines().enumerate() {
             let current_line = first_line + i;
@@ -150,22 +183,29 @@ impl Analyzer {
         warn
     }
 
-    pub fn warning(&self, title: &str, lines: &[usize], info: &str, name_len: usize) {
+    pub fn warning(
+        &self,
+        position: &Position,
+        title: &str,
+        lines: &[usize],
+        info: &str,
+        name_len: usize,
+    ) {
         let yellow = "\x1b[33m";
         let reset = "\x1b[0m";
 
-        let warn = self.message(title, lines, info, name_len);
+        let warn = self.message(position, title, lines, info, name_len);
 
         eprintln!("{yellow}warning:{reset} {warn}");
     }
 
-    fn files_to_info(&self) -> String {
+    fn files_to_info(&self, position: &Position) -> String {
         let positions = self
             .files
             .iter()
             .skip(1)
             .map(|(_, pos)| pos)
-            .chain(std::iter::once(&self.position));
+            .chain(std::iter::once(position));
 
         let mappings: Vec<String> = self
             .files
@@ -177,7 +217,7 @@ impl Analyzer {
         mappings.join(" > ")
     }
 
-    fn extract_source_snippet(&self) -> Option<String> {
+    fn extract_source_snippet(&self, position: &Position) -> Option<String> {
         let file_path = self.files.last().map(|x| x.0.clone())?;
 
         let snippet = self
@@ -185,14 +225,13 @@ impl Analyzer {
             .get(&file_path)?
             .lines()
             .enumerate()
-            .skip((self.position.0).0.saturating_sub(1))
-            .take((self.position.1).0 - (self.position.0).0 + 1)
+            .skip((position.0).0.saturating_sub(1))
+            .take((position.1).0 - (position.0).0 + 1)
             .map(|(i, line)| {
-                let skip_count =
-                    (i == (self.position.0).0 - 1) as usize * ((self.position.0).1 - 1);
-                let take_count = ((i == (self.position.1).0 - 1) as usize
-                    * (((self.position.1).1 - 1).saturating_sub(skip_count)))
-                    + ((1 - (i == (self.position.1).0 - 1) as usize) * usize::MAX);
+                let skip_count = (i == (position.0).0 - 1) as usize * ((position.0).1 - 1);
+                let take_count = ((i == (position.1).0 - 1) as usize
+                    * (((position.1).1 - 1).saturating_sub(skip_count)))
+                    + ((1 - (i == (position.1).0 - 1) as usize) * usize::MAX);
 
                 line.chars()
                     .skip(skip_count)
@@ -205,12 +244,12 @@ impl Analyzer {
         Some(snippet)
     }
 
-    fn source_first_line(&self) -> Option<String> {
+    fn source_first_line(&self, position: &Position) -> Option<String> {
         let file_path = self.files.last().map(|x| x.0.clone())?;
         self.sources
             .get(&file_path)?
             .lines()
-            .nth((self.position.0).0.saturating_sub(1))
+            .nth((position.0).0.saturating_sub(1))
             .map(|s| s.to_string())
     }
 }

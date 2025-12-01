@@ -1,5 +1,4 @@
 use crate::{analyzer::Analyzer, position::Position};
-use anyhow::Result;
 
 pub struct RustExprSimpleAnalyzer;
 
@@ -9,7 +8,7 @@ impl RustExprSimpleAnalyzer {
         expr: &str,
         _is_escaped: &bool,
         _position: &Position,
-    ) -> Result<()> {
+    ) -> Result<(), Vec<String>> {
         if let Some(name) = &analyzer.is_component
             && Self::is_valid_attribute_name(expr)
         {

@@ -103,15 +103,12 @@ fn parse_and_compile(
     let mut rshtml_parser = RsHtmlParser::new();
     let node = rshtml_parser.run(template_path, config)?;
 
-    let mut analyzer = analyzer::Analyzer::new(rshtml_parser.sources, no_warn);
-    analyzer.analyze(&node)?;
-
-    if let Some(layout) = analyzer.layout.clone() {
-        analyzer
-            .files
-            .push((template_path.to_string(), Position::default()));
-        analyzer.analyze(&layout)?;
-    }
+    analyzer::Analyzer::run(
+        template_path.to_owned(),
+        &node,
+        rshtml_parser.sources,
+        no_warn,
+    )?;
 
     let mut compiler = compiler::Compiler::new();
     let ts = compiler.compile(node)?;

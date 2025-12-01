@@ -1,5 +1,4 @@
 use crate::{analyzer::Analyzer, node::Node, position::Position};
-use anyhow::Result;
 
 pub struct RustExprAnalyzer;
 
@@ -8,13 +7,16 @@ impl RustExprAnalyzer {
         analyzer: &mut Analyzer,
         exprs: &Vec<(String, Vec<Node>)>,
         _position: &Position,
-    ) -> Result<()> {
+    ) -> Result<(), Vec<String>> {
+        let mut errs = Vec::new();
         for (_expr, inner_nodes) in exprs {
             for inner_node in inner_nodes {
-                analyzer.analyze(inner_node)?;
+                if let Err(e) = analyzer.analyze(inner_node) {
+                    errs.extend(e);
+                }
             }
         }
 
-        Ok(())
+        errs.is_empty().then(|| ()).ok_or(errs)
     }
 }

@@ -2,7 +2,6 @@ use crate::{
     analyzer::{Analyzer, Component},
     node::Node,
 };
-use anyhow::Result;
 use std::path::PathBuf;
 
 pub struct UseDirectiveAnalyzer;
@@ -13,7 +12,7 @@ impl UseDirectiveAnalyzer {
         name: &String,
         _path: &PathBuf,
         component: &Node,
-    ) -> Result<()> {
+    ) -> Result<(), Vec<String>> {
         analyzer
             .components
             .entry(name.to_owned())

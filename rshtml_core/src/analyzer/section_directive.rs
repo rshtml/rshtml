@@ -3,7 +3,6 @@ use crate::{
     node::{Node, SectionDirectiveContent},
     position::Position,
 };
-use anyhow::Result;
 
 pub struct SectionDirectiveAnalyzer;
 
@@ -13,7 +12,7 @@ impl SectionDirectiveAnalyzer {
         name: &String,
         content: &SectionDirectiveContent,
         position: &Position,
-    ) -> Result<()> {
+    ) -> Result<(), Vec<String>> {
         match content {
             SectionDirectiveContent::Text(text) => {
                 analyzer.analyze(&Node::Text(text.to_owned()))?

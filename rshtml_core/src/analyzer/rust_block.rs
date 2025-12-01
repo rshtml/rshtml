@@ -1,11 +1,14 @@
 use crate::{analyzer::Analyzer, position::Position};
-use anyhow::{Result, anyhow};
 use syn::{Block, Pat, Stmt, parse_str};
 
 pub struct RustBlockAnalyzer;
 
 impl RustBlockAnalyzer {
-    pub fn analyze(analyzer: &mut Analyzer, content: &str, _position: &Position) -> Result<()> {
+    pub fn analyze(
+        analyzer: &mut Analyzer,
+        content: &str,
+        _position: &Position,
+    ) -> Result<(), Vec<String>> {
         let component_name = if let Some(name) = &analyzer.is_component {
             name.to_string()
         } else {
@@ -36,7 +39,7 @@ impl RustBlockAnalyzer {
         let component = analyzer
             .components
             .get(&component_name)
-            .ok_or(anyhow!("Couldn't find component {component_name}"))?;
+            .ok_or(vec![format!("Couldn't find component {component_name}")])?;
 
         variables.retain(|x| !component.parameters.contains(x));
 

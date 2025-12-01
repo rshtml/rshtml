@@ -3,8 +3,6 @@ use crate::{
     node::{ComponentParameter, Node},
     position::Position,
 };
-use anyhow::Result;
-use anyhow::anyhow;
 use std::collections::HashMap;
 
 pub struct ComponentAnalyzer;
@@ -16,14 +14,12 @@ impl ComponentAnalyzer {
         parameters: &Vec<ComponentParameter>,
         body: &[Node],
         position: &Position,
-    ) -> Result<()> {
-        analyzer.position = position.clone();
-
+    ) -> Result<(), Vec<String>> {
         let component = analyzer
             .components
             .get(name)
             .cloned()
-            .ok_or(anyhow!("Component {} not found", name))?;
+            .ok_or(vec![format!("Component {} not found", name)])?;
 
         let params = &component.parameters;
         let code_block_vars = &component.code_block_vars;
@@ -58,6 +54,7 @@ impl ComponentAnalyzer {
                     .for_each(|(_, pos)| lines.push((pos.0).0));
 
                 analyzer.warning(
+                    position,
                     &format!("unused {p} {unused} for component `<{name}>`"),
                     &lines,
                     "",
@@ -67,17 +64,19 @@ impl ComponentAnalyzer {
 
             if body.is_empty() && *has_child_content {
                 analyzer.warning(
+                    position,
                     &format!("undefined body for component `<{name}>`"),
                     &[],
                     "`@child_content` is used, but the component body is undefined.",
-                    name.len(),
+                    name.len() + 1,
                 );
             } else if !body.is_empty() && !has_child_content {
                 analyzer.warning(
+                    position,
                     &format!("defined body for component `<{name}>`"),
                     &[],
                     "`@child_content` is not used, but the component body is defined.",
-                    name.len(),
+                    name.len() + 1,
                 );
             }
         }
@@ -101,13 +100,14 @@ impl ComponentAnalyzer {
             };
 
             let message = analyzer.message(
+                position,
                 "",
                 &[],
                 &format!("{missing} {p} not found for this component"),
-                name.len(),
+                name.len() + 1,
             );
 
-            return Err(anyhow!(message));
+            return Err(vec![message]);
         }
 
         Ok(())
