@@ -1,6 +1,7 @@
 use crate::Node;
 use crate::error::E;
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::position::Position;
 use pest::error::Error;
 use pest::iterators::Pair;
 
@@ -9,6 +10,7 @@ pub struct RenderDirectiveParser;
 impl IParser for RenderDirectiveParser {
     fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let span = pair.as_span();
+        let position = Position::from(&pair);
 
         let path_pair = pair
             .into_inner()
@@ -21,6 +23,6 @@ impl IParser for RenderDirectiveParser {
             .trim_matches('\'')
             .to_string();
 
-        Ok(Node::RenderDirective(path_str))
+        Ok(Node::RenderDirective(path_str, position))
     }
 }

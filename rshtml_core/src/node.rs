@@ -32,7 +32,7 @@ pub enum Node {
     InnerText(String),                     // text inside a block (@@ -> @, @{ -> {, @} -> })
     Comment(String),                       // comment content
     ExtendsDirective(PathBuf, Box<Node>),  // extends directive @extends("layout.html")
-    RenderDirective(String),               // yield directive @yield("content")
+    RenderDirective(String, Position),     // yield directive @yield("content")
     RustBlock(String, Position),           // @{ ... } block content (with trim)
     RustExprSimple(String, bool, Position), // @expr ... (simple expression)
     RustExprParen(String, bool, Position), // @(expr) (expression parentheses)

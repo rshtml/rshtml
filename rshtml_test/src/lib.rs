@@ -6,7 +6,7 @@ use std::fmt::Write;
 
 #[derive(RsHtml)]
 //#[rshtml(path = "about.rs.html")]
-#[rshtml(no_warn)]
+// #[rshtml(no_warn)]
 pub struct HomePage {
     pub title: String,
     pub content: String,
