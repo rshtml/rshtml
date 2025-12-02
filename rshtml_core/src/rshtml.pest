@@ -58,7 +58,7 @@ rust_expr_head = @{
 rust_expr_simple = @{
     !(WHITESPACE*
     ~ ("{"|"if"|"for"|"while"|"else"|"match"|"include"|"extends"|"render"|"section"|"render_body"|"raw"|"use"|"child_content")
-    ~ WHITESPACE+
+    ~ (WHITESPACE+ | !rust_identifier)
     )
     ~ "#"? ~ "&"* ~ rust_identifier ~ chain_segment*
 }
