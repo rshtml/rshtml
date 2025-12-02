@@ -73,7 +73,7 @@ pub fn view_node(node: &Node, indent: usize) {
                 }
             }
         }
-        Node::SectionBlock(section_head, body) => {
+        Node::SectionBlock(section_head, body, _) => {
             println!("- SectionBlock:");
             print_indent(indent + 1);
             println!("- StringLine: {section_head:?}");
@@ -120,7 +120,7 @@ pub fn view_node(node: &Node, indent: usize) {
             println!("- ChildContent");
         }
         Node::Raw(s) => println!("- Raw: {s:?}"),
-        Node::UseDirective(component_name, import_path, component) => {
+        Node::UseDirective(component_name, import_path, component, _) => {
             println!("- UseDirective:");
             print_indent(indent + 1);
             println!("- ComponentName: {component_name:?}");
