@@ -6,8 +6,8 @@ impl RustExprSimpleAnalyzer {
     pub fn analyze(
         analyzer: &mut Analyzer,
         expr: &str,
-        _is_escaped: &bool,
-        _position: &Position,
+        is_escaped: &bool,
+        position: &Position,
     ) -> Result<(), Vec<String>> {
         if let Some(name) = &analyzer.is_component
             && Self::is_valid_attribute_name(expr)
@@ -16,6 +16,18 @@ impl RustExprSimpleAnalyzer {
                 .components
                 .entry(name.to_owned())
                 .and_modify(|(component, _)| component.parameters.push(expr.to_owned()));
+        }
+
+        if let Some(field) = analyzer.get_struct_field(expr)
+            && !analyzer.struct_fields.contains(&field)
+        {
+            analyzer.caution(
+                position,
+                "attempt to use undefined struct field",
+                &[],
+                " ",
+                expr.len() + !*is_escaped as usize,
+            );
         }
 
         Ok(())

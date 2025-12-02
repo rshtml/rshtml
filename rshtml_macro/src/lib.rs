@@ -2,7 +2,7 @@
 
 use proc_macro::TokenStream;
 use rshtml_core::process_template;
-use syn::{DeriveInput, LitStr, parse_macro_input};
+use syn::{Data, DeriveInput, Fields, LitStr, parse_macro_input};
 
 #[proc_macro_derive(RsHtml, attributes(rshtml))]
 pub fn rshtml_derive(input: TokenStream) -> TokenStream {
@@ -10,6 +10,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
 
     let struct_name = &input.ident;
     let struct_generics = &input.generics;
+    let struct_fields = get_struct_fields(&input.data);
 
     let (template_name, no_warn) = match parse_template_path_from_attrs(&input.attrs) {
         Ok(rshtml_config) => {
@@ -40,6 +41,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
         template_name,
         struct_name,
         struct_generics,
+        struct_fields,
         no_warn,
     ))
 }
@@ -98,4 +100,24 @@ fn to_snake_case(s: &str) -> String {
     }
 
     result
+}
+
+fn get_struct_fields(data: &Data) -> Vec<String> {
+    match data {
+        Data::Struct(data_struct) => match &data_struct.fields {
+            Fields::Named(fields_named) => fields_named
+                .named
+                .iter()
+                .filter_map(|f| f.ident.as_ref().map(|id| id.to_string()))
+                .collect(),
+            Fields::Unnamed(fields_unnamed) => fields_unnamed
+                .unnamed
+                .iter()
+                .enumerate()
+                .map(|(index, _field)| index.to_string())
+                .collect(),
+            _ => Vec::new(),
+        },
+        _ => Vec::new(),
+    }
 }

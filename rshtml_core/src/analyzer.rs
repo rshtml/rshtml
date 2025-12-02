@@ -11,6 +11,8 @@ mod section_directive;
 mod template;
 mod use_directive;
 
+use syn::{Member, parse_str};
+
 use crate::{
     analyzer::{
         child_content::ChildContentAnalyzer, component::ComponentAnalyzer,
@@ -36,10 +38,11 @@ pub struct Analyzer {
     no_warn: bool,
     is_component: Option<String>,
     render_directives: Vec<String>,
+    struct_fields: Vec<String>,
 }
 
 impl Analyzer {
-    fn new(sources: HashMap<String, String>, no_warn: bool) -> Self {
+    fn new(sources: HashMap<String, String>, struct_fields: Vec<String>, no_warn: bool) -> Self {
         Self {
             files: Vec::new(),
             use_directives: Vec::new(),
@@ -51,6 +54,7 @@ impl Analyzer {
             no_warn,
             is_component: None,
             render_directives: Vec::new(),
+            struct_fields,
         }
     }
 
@@ -101,9 +105,10 @@ impl Analyzer {
         template_path: String,
         node: &Node,
         sources: HashMap<String, String>,
+        struct_fields: Vec<String>,
         no_warn: bool,
     ) -> anyhow::Result<()> {
-        let mut analyzer = Self::new(sources, no_warn);
+        let mut analyzer = Self::new(sources, struct_fields, no_warn);
         let mut errs = Vec::new();
 
         if let Err(e) = analyzer.analyze(node) {
@@ -202,6 +207,22 @@ impl Analyzer {
         eprintln!("{yellow}warning:{reset} {warn}");
     }
 
+    pub fn caution(
+        &self,
+        position: &Position,
+        title: &str,
+        lines: &[usize],
+        info: &str,
+        name_len: usize,
+    ) {
+        let magenta = "\x1b[1;35m";
+        let reset = "\x1b[0m";
+
+        let cau = self.message(position, title, lines, info, name_len);
+
+        eprintln!("{magenta}caution:{reset} {cau}");
+    }
+
     fn files_to_info(&self, position: &Position) -> String {
         let positions = self
             .files
@@ -254,6 +275,22 @@ impl Analyzer {
             .lines()
             .nth((position.0).0.saturating_sub(1))
             .map(|s| s.to_string())
+    }
+
+    fn get_struct_field(&self, expr: &str) -> Option<String> {
+        let rest = expr
+            .trim()
+            .trim_start_matches('&')
+            .trim()
+            .strip_prefix("self.")?;
+
+        let candidate = rest.split('.').next().unwrap_or(rest);
+
+        if parse_str::<Member>(candidate).is_ok() {
+            Some(candidate.to_string())
+        } else {
+            None
+        }
     }
 }
 
