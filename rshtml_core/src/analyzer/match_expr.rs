@@ -18,6 +18,6 @@ impl MatchExprAnalyzer {
             }
         }
 
-        errs.is_empty().then(|| ()).ok_or(errs)
+        errs.is_empty().then_some(()).ok_or(errs)
     }
 }

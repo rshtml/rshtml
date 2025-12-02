@@ -106,7 +106,7 @@ impl Analyzer {
         let mut analyzer = Self::new(sources, no_warn);
         let mut errs = Vec::new();
 
-        if let Err(e) = analyzer.analyze(&node) {
+        if let Err(e) = analyzer.analyze(node) {
             errs.extend(e);
         }
 
@@ -121,7 +121,7 @@ impl Analyzer {
         RenderDirectiveAnalyzer::analyze_renders(&analyzer);
 
         errs.is_empty()
-            .then(|| ())
+            .then_some(())
             .ok_or(anyhow::anyhow!(errs.join("\n\n")))
     }
 
