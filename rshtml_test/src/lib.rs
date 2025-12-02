@@ -5,7 +5,7 @@ use serde::Serialize;
 use std::fmt::Write;
 
 #[derive(RsHtml)]
-#[rshtml(path = "home.rs.html"/*, no_warn*/)]
+// #[rshtml(path = "home.rs.html", no_warn)]
 pub struct HomePage {
     pub title: String,
     pub content: String,
