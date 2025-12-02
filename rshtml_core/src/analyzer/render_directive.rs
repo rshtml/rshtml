@@ -17,10 +17,10 @@ impl RenderDirectiveAnalyzer {
         analyzer
             .sections
             .iter()
-            .filter(|x| !analyzer.render_directives.contains(x.0))
+            .filter(|x| !analyzer.render_directives.contains(&x.0))
             .for_each(|x| {
-                let name = x.0;
-                let position = x.1;
+                let name = &x.0;
+                let position = &x.1;
 
                 analyzer.warning(
                     position,

@@ -15,8 +15,9 @@ impl ComponentAnalyzer {
         body: &[Node],
         position: &Position,
     ) -> Result<(), Vec<String>> {
-        let component = if let Some(name) = analyzer.components.get(name) {
-            name.to_owned()
+        let component = if let Some((component, is_used)) = analyzer.components.get_mut(name) {
+            *is_used = true;
+            component.to_owned()
         } else {
             let message = analyzer.message(
                 position,

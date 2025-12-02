@@ -36,7 +36,7 @@ impl RustBlockAnalyzer {
             }
         }
 
-        let component = analyzer
+        let (component, _) = analyzer
             .components
             .get(&component_name)
             .ok_or(vec![format!("Couldn't find component {component_name}")])?;
@@ -46,7 +46,7 @@ impl RustBlockAnalyzer {
         analyzer
             .components
             .entry(component_name)
-            .and_modify(|component| component.code_block_vars.append(&mut variables));
+            .and_modify(|(component, _)| component.code_block_vars.append(&mut variables));
 
         Ok(())
     }

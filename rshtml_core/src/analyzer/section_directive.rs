@@ -22,9 +22,19 @@ impl SectionDirectiveAnalyzer {
             )?,
         };
 
+        if !analyzer.no_warn && analyzer.sections.iter().any(|(n, _)| n == name) {
+            analyzer.warning(
+                position,
+                &format!("attempt to redefine section `{name}`"),
+                &[],
+                &format!("section `{name}` is redefined"),
+                "section".len(),
+            );
+        }
+
         analyzer
             .sections
-            .insert(name.to_owned(), position.to_owned());
+            .push((name.to_owned(), position.to_owned()));
 
         Ok(())
     }

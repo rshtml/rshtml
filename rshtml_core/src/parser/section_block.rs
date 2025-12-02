@@ -1,6 +1,7 @@
 use crate::Node;
 use crate::error::E;
 use crate::parser::{IParser, RsHtmlParser, Rule};
+use crate::position::Position;
 use pest::error::Error;
 use pest::iterators::Pair;
 
@@ -9,6 +10,7 @@ pub struct SectionBlockParser;
 impl IParser for SectionBlockParser {
     fn parse(parser: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_span = pair.as_span();
+        let position = Position::from(&pair);
 
         let section_head_pair = pair
             .clone()
@@ -33,6 +35,6 @@ impl IParser for SectionBlockParser {
             .ok_or(E::pos(Rule::inner_template).span(pair_span))?;
 
         let body = parser.build_nodes_from_pairs(inner_pairs.into_inner())?;
-        Ok(Node::SectionBlock(section_head, body))
+        Ok(Node::SectionBlock(section_head, body, position))
     }
 }

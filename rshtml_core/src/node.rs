@@ -39,12 +39,12 @@ pub enum Node {
     MatchExpr(String, Vec<(String, Vec<Node>)>, Position), // @match expr { ... => ... }
     RustExpr(Vec<(String, Vec<Node>)>, Position), // @if ...  { ... } else { ... } / @for ... { ... }
     SectionDirective(String, SectionDirectiveContent, Position), // @section("content")
-    SectionBlock(String, Vec<Node>),              // @section content { ... }
+    SectionBlock(String, Vec<Node>, Position),    // @section content { ... }
     RenderBody,                                   // @render_body (main body of subpage)
     Component(String, Vec<ComponentParameter>, Vec<Node>, Position), // @componentName(param1 = value1, param2 = value2) { ... } also <CompName p=""/> tags
-    ChildContent,                             // @child_content (component child content)
-    Raw(String),                              // @raw {} (raw content)
-    UseDirective(String, PathBuf, Box<Node>), // @use "component.rs.html" as Component
-    ContinueDirective,                        // @continue for the loops
-    BreakDirective,                           // @break for the loops
+    ChildContent, // @child_content (component child content)
+    Raw(String),  // @raw {} (raw content)
+    UseDirective(String, PathBuf, Box<Node>, Position), // @use "component.rs.html" as Component
+    ContinueDirective, // @continue for the loops
+    BreakDirective, // @break for the loops
 }

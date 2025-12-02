@@ -1,5 +1,6 @@
 use crate::Node;
 use crate::compiler::Compiler;
+use crate::position::Position;
 use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -13,6 +14,7 @@ impl UseDirectiveCompiler {
         name: String,
         _path: PathBuf,
         component: Node,
+        _position: Position,
     ) -> Result<TokenStream> {
         if !compiler.components.contains_key(&name) {
             let component_ts = compiler.compile(component)?;

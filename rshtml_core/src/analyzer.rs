@@ -26,13 +26,14 @@ use crate::{
 use std::{collections::HashMap, path::PathBuf};
 
 pub struct Analyzer {
-    pub files: Vec<(String, Position)>,
-    components: HashMap<String, Component>,
+    files: Vec<(String, Position)>,
+    use_directives: Vec<(String, PathBuf, Position)>,
+    components: HashMap<String, (Component, bool)>,
     layout_directive: PathBuf,
     pub layout: Option<Node>,
     sources: HashMap<String, String>,
-    sections: HashMap<String, Position>,
-    pub no_warn: bool,
+    sections: Vec<(String, Position)>,
+    no_warn: bool,
     is_component: Option<String>,
     render_directives: Vec<String>,
 }
@@ -41,11 +42,12 @@ impl Analyzer {
     fn new(sources: HashMap<String, String>, no_warn: bool) -> Self {
         Self {
             files: Vec::new(),
+            use_directives: Vec::new(),
             components: HashMap::new(),
             layout_directive: PathBuf::new(),
             layout: None,
             sources,
-            sections: HashMap::new(),
+            sections: Vec::new(),
             no_warn,
             is_component: None,
             render_directives: Vec::new(),
@@ -78,15 +80,17 @@ impl Analyzer {
             Node::SectionDirective(name, content, position) => {
                 SectionDirectiveAnalyzer::analyze(self, name, content, position)
             }
-            Node::SectionBlock(name, content) => SectionBlockAnalyzer::analyze(self, name, content),
+            Node::SectionBlock(name, content, position) => {
+                SectionBlockAnalyzer::analyze(self, name, content, position)
+            }
             Node::RenderBody => Ok(()),
             Node::Component(name, parameters, body, position) => {
                 ComponentAnalyzer::analyze(self, name, parameters, body, position)
             }
             Node::ChildContent => ChildContentAnalyzer::analyze(self),
             Node::Raw(_) => Ok(()),
-            Node::UseDirective(name, path, component) => {
-                UseDirectiveAnalyzer::analyze(self, name, path, component)
+            Node::UseDirective(name, path, component, position) => {
+                UseDirectiveAnalyzer::analyze(self, name, path, component, position)
             }
             Node::ContinueDirective => Ok(()),
             Node::BreakDirective => Ok(()),
@@ -113,6 +117,7 @@ impl Analyzer {
             }
         }
 
+        UseDirectiveAnalyzer::analyze_uses(&analyzer);
         RenderDirectiveAnalyzer::analyze_renders(&analyzer);
 
         errs.is_empty()

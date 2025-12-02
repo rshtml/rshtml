@@ -90,15 +90,17 @@ impl Compiler {
             Node::SectionDirective(name, content, position) => {
                 SectionDirectiveCompiler::compile(self, name, content, position)
             }
-            Node::SectionBlock(name, content) => SectionBlockCompiler::compile(self, name, content),
+            Node::SectionBlock(name, content, position) => {
+                SectionBlockCompiler::compile(self, name, content, position)
+            }
             Node::RenderBody => RenderBodyCompiler::compile(self),
             Node::Component(name, parameters, body, position) => {
                 ComponentCompiler::compile(self, name, parameters, body, position)
             }
             Node::ChildContent => Ok(quote! {child_content(__f__)?;}),
             Node::Raw(body) => RawCompiler::compile(self, body),
-            Node::UseDirective(name, path, component) => {
-                UseDirectiveCompiler::compile(self, name, path, *component)
+            Node::UseDirective(name, path, component, position) => {
+                UseDirectiveCompiler::compile(self, name, path, *component, position)
             }
             Node::ContinueDirective => Ok(quote! {continue;}),
             Node::BreakDirective => Ok(quote! {break;}),

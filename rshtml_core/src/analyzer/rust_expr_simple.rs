@@ -15,7 +15,7 @@ impl RustExprSimpleAnalyzer {
             analyzer
                 .components
                 .entry(name.to_owned())
-                .and_modify(|component| component.parameters.push(expr.to_owned()));
+                .and_modify(|(component, _)| component.parameters.push(expr.to_owned()));
         }
 
         Ok(())
