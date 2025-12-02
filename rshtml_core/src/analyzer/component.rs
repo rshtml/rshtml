@@ -15,11 +15,18 @@ impl ComponentAnalyzer {
         body: &[Node],
         position: &Position,
     ) -> Result<(), Vec<String>> {
-        let component = analyzer
-            .components
-            .get(name)
-            .cloned()
-            .ok_or(vec![format!("Component {} not found", name)])?;
+        let component = if let Some(name) = analyzer.components.get(name) {
+            name.to_owned()
+        } else {
+            let message = analyzer.message(
+                position,
+                "attempt to use a missing component",
+                &[],
+                &format!("component `{name}` is used but not found"),
+                name.len() + 1,
+            );
+            return Err(vec![message]);
+        };
 
         let params = &component.parameters;
         let code_block_vars = &component.code_block_vars;

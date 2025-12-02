@@ -1,26 +1,10 @@
 pub struct RenderDirectiveAnalyzer;
 
-use crate::{analyzer::Analyzer, position::Position};
+use crate::analyzer::Analyzer;
 
 impl RenderDirectiveAnalyzer {
-    pub fn analyze(
-        analyzer: &mut Analyzer,
-        name: &str,
-        position: &Position,
-    ) -> Result<(), Vec<String>> {
+    pub fn analyze(analyzer: &mut Analyzer, name: &str) -> Result<(), Vec<String>> {
         analyzer.render_directives.push(name.to_owned());
-
-        if !analyzer.sections.contains_key(name) {
-            let message = analyzer.message(
-                position,
-                &format!("attempt to use an undefined section"),
-                &[],
-                &format!("render is used, but the section `{name}` isn't defined."),
-                "render".len(),
-            );
-
-            return Err(vec![message]);
-        }
 
         Ok(())
     }

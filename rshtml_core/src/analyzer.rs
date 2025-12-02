@@ -63,9 +63,7 @@ impl Analyzer {
             Node::ExtendsDirective(path, layout) => {
                 ExtendsDirectiveAnalyzer::analyze(self, path, layout)
             }
-            Node::RenderDirective(name, position) => {
-                RenderDirectiveAnalyzer::analyze(self, name, position)
-            }
+            Node::RenderDirective(name) => RenderDirectiveAnalyzer::analyze(self, name),
             Node::RustBlock(content, position) => {
                 RustBlockAnalyzer::analyze(self, content, position)
             }

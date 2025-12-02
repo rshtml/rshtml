@@ -73,9 +73,7 @@ impl Compiler {
             Node::ExtendsDirective(path, layout) => {
                 ExtendsDirectiveCompiler::compile(self, path, *layout)
             }
-            Node::RenderDirective(name, position) => {
-                RenderDirectiveCompiler::compile(self, name, position)
-            }
+            Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, name),
             Node::RustBlock(content, position) => {
                 RustBlockCompiler::compile(self, content, position)
             }
