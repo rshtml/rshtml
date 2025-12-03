@@ -3,7 +3,6 @@ mod component;
 mod extends_directive;
 mod match_expr;
 mod render_directive;
-mod rust_block;
 mod rust_expr;
 mod rust_expr_paren;
 mod rust_expr_simple;
@@ -18,11 +17,10 @@ use crate::{
     analyzer::{
         child_content::ChildContentAnalyzer, component::ComponentAnalyzer,
         extends_directive::ExtendsDirectiveAnalyzer, match_expr::MatchExprAnalyzer,
-        render_directive::RenderDirectiveAnalyzer, rust_block::RustBlockAnalyzer,
-        rust_expr::RustExprAnalyzer, rust_expr_paren::RustExprParenAnalyzer,
-        rust_expr_simple::RustExprSimpleAnalyzer, section_block::SectionBlockAnalyzer,
-        section_directive::SectionDirectiveAnalyzer, template::TemplateAnalyzer,
-        use_directive::UseDirectiveAnalyzer,
+        render_directive::RenderDirectiveAnalyzer, rust_expr::RustExprAnalyzer,
+        rust_expr_paren::RustExprParenAnalyzer, rust_expr_simple::RustExprSimpleAnalyzer,
+        section_block::SectionBlockAnalyzer, section_directive::SectionDirectiveAnalyzer,
+        template::TemplateAnalyzer, use_directive::UseDirectiveAnalyzer,
     },
     node::Node,
     position::Position,
@@ -32,7 +30,7 @@ use std::{collections::HashMap, path::PathBuf};
 pub struct Analyzer {
     files: Vec<(String, Position)>,
     use_directives: Vec<(String, PathBuf, Position)>,
-    components: HashMap<String, (Component, bool)>,
+    components: HashMap<String, (bool, bool)>, // has_child_content, is_used
     layout_directive: PathBuf,
     layout: Option<Node>,
     sources: HashMap<String, String>,
@@ -73,9 +71,7 @@ impl Analyzer {
                 ExtendsDirectiveAnalyzer::analyze(self, path, layout)
             }
             Node::RenderDirective(name) => RenderDirectiveAnalyzer::analyze(self, name),
-            Node::RustBlock(content, position) => {
-                RustBlockAnalyzer::analyze(self, content, position)
-            }
+            Node::RustBlock(_, _) => Ok(()),
             Node::RustExprSimple(expr, is_escaped, position) => {
                 RustExprSimpleAnalyzer::analyze(self, expr, is_escaped, position)
             }
@@ -284,23 +280,6 @@ impl Analyzer {
             Some(candidate.to_string())
         } else {
             None
-        }
-    }
-}
-
-#[derive(Clone)]
-struct Component {
-    parameters: Vec<String>,
-    code_block_vars: Vec<String>,
-    has_child_content: bool,
-}
-
-impl Component {
-    fn new() -> Self {
-        Self {
-            parameters: Vec::new(),
-            code_block_vars: Vec::new(),
-            has_child_content: false,
         }
     }
 }

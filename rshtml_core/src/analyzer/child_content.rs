@@ -8,7 +8,7 @@ impl ChildContentAnalyzer {
             analyzer
                 .components
                 .entry(name.clone())
-                .and_modify(|(component, _)| component.has_child_content = true);
+                .and_modify(|(has_child_content, _)| *has_child_content = true);
         }
 
         Ok(())
