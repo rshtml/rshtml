@@ -58,6 +58,10 @@ impl RustBlockAnalyzer {
                 if name != "_" {
                     vars.push(name);
                 }
+
+                if let Some((_at_token, subpat)) = &pat_ident.subpat {
+                    Self::extract_idents_from_pat(subpat, vars);
+                }
             }
             Pat::Type(pat_type) => {
                 Self::extract_idents_from_pat(&pat_type.pat, vars);
@@ -83,6 +87,14 @@ impl RustBlockAnalyzer {
             Pat::Slice(pat_slice) => {
                 for p in &pat_slice.elems {
                     Self::extract_idents_from_pat(p, vars);
+                }
+            }
+            Pat::Paren(pat_paren) => {
+                Self::extract_idents_from_pat(&pat_paren.pat, vars);
+            }
+            Pat::Or(pat_or) => {
+                for case in &pat_or.cases {
+                    Self::extract_idents_from_pat(case, vars);
                 }
             }
             _ => {}

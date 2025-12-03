@@ -120,7 +120,7 @@ rust_code = @{
         _line_comment |
         _block_comment |
         _string_literal |
-        !( "@:" | "{" | "}" | "\"" | "r\"" | "r#\"" ) ~ ANY
+        !( "{" | "}" | "\"" | "r\"" | "r#\"" ) ~ ANY
     )+
 }
 
