@@ -17,8 +17,8 @@ impl UseDirectiveCompiler {
         _position: Position,
     ) -> Result<TokenStream> {
         if !compiler.components.contains_key(&name) {
-            let component_ts = compiler.compile(component)?;
-            compiler.components.insert(name, component_ts);
+            let component_ts = compiler.compile(component.to_owned())?;
+            compiler.components.insert(name, (component, component_ts));
         }
 
         Ok(quote! {})

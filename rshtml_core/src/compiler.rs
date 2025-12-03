@@ -42,7 +42,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub struct Compiler {
-    components: HashMap<String, TokenStream>,
+    components: HashMap<String, (Node, TokenStream)>,
     layout_directive: PathBuf,
     pub layout: Option<Node>,
     sections: HashMap<String, TokenStream>,
