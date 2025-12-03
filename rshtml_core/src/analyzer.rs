@@ -228,21 +228,10 @@ impl Analyzer {
     }
 
     fn files_to_info(&self, position: &Position) -> String {
-        let positions = self
-            .files
-            .iter()
-            .skip(1)
-            .map(|(_, pos)| pos)
-            .chain(std::iter::once(position));
-
-        let mappings: Vec<String> = self
-            .files
-            .iter()
-            .zip(positions)
-            .map(|((file, _), pos)| pos.as_info(file))
-            .collect();
-
-        mappings.join(" > ")
+        self.files
+            .last()
+            .map(|(file, _)| position.as_info(file))
+            .unwrap_or("<unknown>".to_string())
     }
 
     fn extract_source_snippet(&self, position: &Position) -> Option<String> {
