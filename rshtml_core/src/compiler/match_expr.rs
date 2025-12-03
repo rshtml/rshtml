@@ -41,7 +41,7 @@ impl MatchExprCompiler {
            }
         };
 
-        let ts = compiler.with_info(ts, position);
+        let ts = compiler.with_info(ts, position, None);
 
         Ok(ts)
     }

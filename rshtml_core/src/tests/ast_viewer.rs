@@ -22,6 +22,10 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::Comment(comment) => {
             println!("- Comment: {comment:?}");
         }
+        Node::IncludeDirective(path, template) => {
+            println!("- IncludeDirective: {path:?}");
+            view_node(template, indent + 1);
+        }
         Node::ExtendsDirective(path, _) => {
             println!("- ExtendsDirective: {path:?}");
         }

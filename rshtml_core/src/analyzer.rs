@@ -34,7 +34,7 @@ pub struct Analyzer {
     use_directives: Vec<(String, PathBuf, Position)>,
     components: HashMap<String, (Component, bool)>,
     layout_directive: PathBuf,
-    pub layout: Option<Node>,
+    layout: Option<Node>,
     sources: HashMap<String, String>,
     sections: Vec<(String, Position)>,
     no_warn: bool,
@@ -68,6 +68,7 @@ impl Analyzer {
             Node::Text(_) => Ok(()),
             Node::InnerText(_) => Ok(()),
             Node::Comment(_) => Ok(()),
+            Node::IncludeDirective(_, _) => Ok(()),
             Node::ExtendsDirective(path, layout) => {
                 ExtendsDirectiveAnalyzer::analyze(self, path, layout)
             }

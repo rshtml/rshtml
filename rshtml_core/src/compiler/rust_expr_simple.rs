@@ -16,7 +16,7 @@ impl RustExprSimpleCompiler {
 
         let expr_ts = compiler.escape_or_raw(expr_ts, is_escaped);
 
-        let expr_ts = compiler.with_info(expr_ts, position);
+        let expr_ts = compiler.with_info(expr_ts, position, None);
 
         Ok(expr_ts)
     }

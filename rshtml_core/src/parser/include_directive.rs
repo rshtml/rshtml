@@ -4,6 +4,7 @@ use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::position::Position;
 use pest::error::Error;
 use pest::iterators::Pair;
+use std::path::PathBuf;
 
 pub struct IncludeDirectiveParser;
 
@@ -41,6 +42,9 @@ impl IParser for IncludeDirectiveParser {
             }
         };
 
-        Ok(Node::Template(file, nodes, position))
+        Ok(Node::IncludeDirective(
+            PathBuf::from(path),
+            Box::new(Node::Template(file, nodes, position)),
+        ))
     }
 }

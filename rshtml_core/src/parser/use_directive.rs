@@ -49,6 +49,16 @@ impl IParser for UseDirectiveParser {
             }
         };
 
+        let component_node = match component_node {
+            Node::Template(file, nodes, _) => Node::Template(file, nodes, position.to_owned()),
+            _ => {
+                return Err(
+                    E::mes("The component file must contain Template as the top node.")
+                        .span(pair_span),
+                );
+            }
+        };
+
         Ok(Node::UseDirective(
             component_name.clone(),
             import_path.to_path_buf(),

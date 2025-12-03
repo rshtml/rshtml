@@ -1,5 +1,6 @@
 mod component;
 mod extends_directive;
+mod include_directive;
 mod inner_text;
 mod match_expr;
 mod raw;
@@ -18,6 +19,7 @@ mod use_directive;
 use crate::Node;
 use crate::compiler::component::ComponentCompiler;
 use crate::compiler::extends_directive::ExtendsDirectiveCompiler;
+use crate::compiler::include_directive::IncludeDirectiveCompiler;
 use crate::compiler::inner_text::InnerTextCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
 use crate::compiler::raw::RawCompiler;
@@ -70,6 +72,9 @@ impl Compiler {
             Node::Text(text) => TextCompiler::compile(self, text),
             Node::InnerText(inner_text) => InnerTextCompiler::compile(self, inner_text),
             Node::Comment(_) => Ok(quote! {}),
+            Node::IncludeDirective(path, template) => {
+                IncludeDirectiveCompiler::compile(self, path, *template)
+            }
             Node::ExtendsDirective(path, layout) => {
                 ExtendsDirectiveCompiler::compile(self, path, *layout)
             }
@@ -124,7 +129,12 @@ impl Compiler {
         }
     }
 
-    fn with_info(&self, expr_ts: TokenStream, position: Position) -> TokenStream {
+    fn with_info(
+        &self,
+        expr_ts: TokenStream,
+        position: Position,
+        infos: Option<(&str, &str, bool)>,
+    ) -> TokenStream {
         if cfg!(debug_assertions) {
             let positions = self
                 .files
@@ -141,8 +151,13 @@ impl Compiler {
                 .collect();
 
             let mapping = mappings.join(" > ");
-            if expr_ts.is_empty() {
-                quote! {#mapping;}
+
+            if let Some((start, end, is_scoped)) = infos {
+                if is_scoped {
+                    quote! {{#start;#mapping;#expr_ts #end;}}
+                } else {
+                    quote! {#start;#mapping;#expr_ts #end;}
+                }
             } else {
                 quote! {{#mapping;#expr_ts}}
             }
