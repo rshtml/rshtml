@@ -44,7 +44,13 @@ fn test_template_format_without_parsing() {
 #[test]
 pub fn test_process_simple() {
     let ident = syn::Ident::new("HomePage", Span::call_site());
-    process_template("home.rs.html".to_string(), &ident, &Generics::default());
+    process_template(
+        "home.rs.html".to_string(),
+        &ident,
+        &Generics::default(),
+        Vec::new(),
+        true,
+    );
 }
 
 #[test]

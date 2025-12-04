@@ -15,14 +15,13 @@ impl RustBlockCompiler {
         let code_ts =
             TokenStream::from_str(&content).map_err(|err| anyhow!("Lex Error: {}", err))?;
 
-        let info_ts = compiler.with_info(TokenStream::new(), position);
+        let code_ts = compiler.with_info(
+            code_ts,
+            position,
+            Some(("Rust Code Block Start", "Rust Code Block End", false)),
+        );
 
-        let code_ts = quote! {
-             "Rust Code Block Start";
-             #info_ts
-             #code_ts
-             "Rust Code Block End";
-        };
+        let code_ts = quote! { #code_ts };
 
         Ok(code_ts)
     }

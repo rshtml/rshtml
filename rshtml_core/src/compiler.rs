@@ -1,5 +1,6 @@
 mod component;
 mod extends_directive;
+mod include_directive;
 mod inner_text;
 mod match_expr;
 mod raw;
@@ -18,6 +19,7 @@ mod use_directive;
 use crate::Node;
 use crate::compiler::component::ComponentCompiler;
 use crate::compiler::extends_directive::ExtendsDirectiveCompiler;
+use crate::compiler::include_directive::IncludeDirectiveCompiler;
 use crate::compiler::inner_text::InnerTextCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
 use crate::compiler::raw::RawCompiler;
@@ -40,7 +42,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub struct Compiler {
-    components: HashMap<String, TokenStream>,
+    components: HashMap<String, (Node, TokenStream)>,
     layout_directive: PathBuf,
     pub layout: Option<Node>,
     sections: HashMap<String, TokenStream>,
@@ -70,6 +72,9 @@ impl Compiler {
             Node::Text(text) => TextCompiler::compile(self, text),
             Node::InnerText(inner_text) => InnerTextCompiler::compile(self, inner_text),
             Node::Comment(_) => Ok(quote! {}),
+            Node::IncludeDirective(path, template) => {
+                IncludeDirectiveCompiler::compile(self, path, *template)
+            }
             Node::ExtendsDirective(path, layout) => {
                 ExtendsDirectiveCompiler::compile(self, path, *layout)
             }
@@ -90,15 +95,17 @@ impl Compiler {
             Node::SectionDirective(name, content, position) => {
                 SectionDirectiveCompiler::compile(self, name, content, position)
             }
-            Node::SectionBlock(name, content) => SectionBlockCompiler::compile(self, name, content),
+            Node::SectionBlock(name, content, position) => {
+                SectionBlockCompiler::compile(self, name, content, position)
+            }
             Node::RenderBody => RenderBodyCompiler::compile(self),
             Node::Component(name, parameters, body, position) => {
                 ComponentCompiler::compile(self, name, parameters, body, position)
             }
             Node::ChildContent => Ok(quote! {child_content(__f__)?;}),
             Node::Raw(body) => RawCompiler::compile(self, body),
-            Node::UseDirective(name, path, component) => {
-                UseDirectiveCompiler::compile(self, name, path, *component)
+            Node::UseDirective(name, path, component, position) => {
+                UseDirectiveCompiler::compile(self, name, path, *component, position)
             }
             Node::ContinueDirective => Ok(quote! {continue;}),
             Node::BreakDirective => Ok(quote! {break;}),
@@ -122,7 +129,12 @@ impl Compiler {
         }
     }
 
-    fn with_info(&self, expr_ts: TokenStream, position: Position) -> TokenStream {
+    fn with_info(
+        &self,
+        expr_ts: TokenStream,
+        position: Position,
+        infos: Option<(&str, &str, bool)>,
+    ) -> TokenStream {
         if cfg!(debug_assertions) {
             let positions = self
                 .files
@@ -139,8 +151,13 @@ impl Compiler {
                 .collect();
 
             let mapping = mappings.join(" > ");
-            if expr_ts.is_empty() {
-                quote! {#mapping;}
+
+            if let Some((start, end, is_scoped)) = infos {
+                if is_scoped {
+                    quote! {{#start;#mapping;#expr_ts #end;}}
+                } else {
+                    quote! {#start;#mapping;#expr_ts #end;}
+                }
             } else {
                 quote! {{#mapping;#expr_ts}}
             }

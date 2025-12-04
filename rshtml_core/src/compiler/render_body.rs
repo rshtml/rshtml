@@ -1,6 +1,7 @@
 use crate::compiler::Compiler;
 use anyhow::Result;
 use proc_macro2::TokenStream;
+use quote::quote;
 
 pub struct RenderBodyCompiler;
 
@@ -12,6 +13,6 @@ impl RenderBodyCompiler {
             token_stream.extend(section_body.clone());
         }
 
-        Ok(token_stream)
+        Ok(quote! {{#token_stream}})
     }
 }

@@ -18,7 +18,7 @@ impl ComponentCompiler {
         body: Vec<Node>,
         position: Position,
     ) -> Result<TokenStream> {
-        let component_ts = compiler
+        let (component_node, component_ts) = compiler
             .components
             .get(&name)
             .cloned()
@@ -68,18 +68,31 @@ impl ComponentCompiler {
 
         token_stream.extend(body_ts);
 
-        token_stream.extend(component_ts);
+        if cfg!(debug_assertions) {
+            let component_node = match component_node {
+                Node::Template(file, node, _) => Node::Template(file, node, position.clone()),
+                _ => {
+                    return Err(anyhow!(
+                        "The component must return a template as the top node."
+                    ));
+                }
+            };
+            let ts = compiler.compile(component_node)?;
+            token_stream.extend(ts);
+        } else {
+            token_stream.extend(component_ts);
+        }
 
-        let info_ts = compiler.with_info(TokenStream::new(), position);
+        let token_stream = compiler.with_info(
+            token_stream,
+            position,
+            Some((
+                &format!("Component {} Start", name),
+                &format!("Component {} End", name),
+                true,
+            )),
+        );
 
-        let info_start = format!("Component {} Start", name);
-        let info_end = format!("Component {} End", name);
-
-        Ok(quote! {{
-           #info_start;
-           #info_ts
-           #token_stream
-           #info_end;
-        }})
+        Ok(quote! {{ #token_stream }})
     }
 }

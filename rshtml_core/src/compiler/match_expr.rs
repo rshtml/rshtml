@@ -11,7 +11,7 @@ pub struct MatchExprCompiler;
 impl MatchExprCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        name: String,
+        head: String,
         arms: Vec<(String, Vec<Node>)>,
         position: Position,
     ) -> Result<TokenStream> {
@@ -33,7 +33,7 @@ impl MatchExprCompiler {
         }
 
         let name_head =
-            TokenStream::from_str(&name).map_err(|err| anyhow!("Lex Error: {}", err))?;
+            TokenStream::from_str(&head).map_err(|err| anyhow!("Lex Error: {}", err))?;
 
         let ts = quote! {
            #name_head {
@@ -41,7 +41,7 @@ impl MatchExprCompiler {
            }
         };
 
-        let ts = compiler.with_info(ts, position);
+        let ts = compiler.with_info(ts, position, None);
 
         Ok(ts)
     }

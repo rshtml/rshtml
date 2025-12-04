@@ -83,7 +83,9 @@
   <p>myvar is false</p>
 }
 
-<Card title=@x footer=false prop3="hey" prop4={<p>what is this</p>}>
+<Card title=@x footer=false my_prop={
+  <p>this is my prop @self.title</p>
+}>
   <p>hello</p>
   <p>world</p>
   @if true {

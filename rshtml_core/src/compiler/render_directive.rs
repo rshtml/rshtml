@@ -1,6 +1,7 @@
 use crate::compiler::Compiler;
 use anyhow::Result;
 use proc_macro2::TokenStream;
+use quote::quote;
 
 pub struct RenderDirectiveCompiler;
 
@@ -12,6 +13,6 @@ impl RenderDirectiveCompiler {
             token_stream.extend(section.clone());
         }
 
-        Ok(token_stream)
+        Ok(quote! {{#token_stream}})
     }
 }
