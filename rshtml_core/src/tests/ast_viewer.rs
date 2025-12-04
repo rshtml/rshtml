@@ -22,12 +22,18 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::Comment(comment) => {
             println!("- Comment: {comment:?}");
         }
+        Node::PropsDirective(props, _) => {
+            println!("- Props:");
+            for prop in props {
+                print_indent(indent + 1);
+                println!("- Name: {:?}", prop.0);
+                print_indent(indent + 1);
+                println!("- Type: {:?}", prop.1);
+            }
+        }
         Node::IncludeDirective(path, template) => {
             println!("- IncludeDirective: {path:?}");
             view_node(template, indent + 1);
-        }
-        Node::ExtendsDirective(path, _) => {
-            println!("- ExtendsDirective: {path:?}");
         }
         Node::RenderDirective(path) => {
             println!("- RenderDirective: {path:?}");

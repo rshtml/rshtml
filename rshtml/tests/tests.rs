@@ -120,6 +120,21 @@ mod tests {
     }
 
     #[test]
+    pub fn test_props_directive() {
+        #[derive(RsHtml)]
+        struct PropsDirectivePage {
+            value: i32,
+            data: String,
+        }
+
+        let mut page = PropsDirectivePage {
+            value: 10,
+            data: "Hello".to_string(),
+        };
+        println!("{}", page.render().unwrap());
+    }
+
+    #[test]
     pub fn test_code_block() {
         #[derive(RsHtml)]
         struct CodeBlockPage {}
@@ -145,54 +160,6 @@ mod tests {
         }
 
         let mut page = IncludePage {
-            value: 10,
-            data: "Hello".to_string(),
-        };
-        println!("{}", page.render().unwrap());
-    }
-
-    #[test]
-    pub fn test_layout() {
-        #[derive(RsHtml)]
-        struct ExtendsPage {
-            value: i32,
-            data: String,
-            for_escape: String,
-        }
-
-        impl ExtendsPage {
-            fn my_func(&self) -> String {
-                let mut hold = "Func".to_string();
-                hold.push_str(self.data.clone().as_str());
-                hold
-            }
-        }
-
-        let mut page = ExtendsPage {
-            value: 10,
-            data: "Hello".to_string(),
-            for_escape: "'<script/>'".to_string(),
-        };
-
-        println!("{}", page.render().unwrap());
-    }
-
-    #[test]
-    pub fn test_layout_2() {
-        #[derive(RsHtml)]
-        struct Extends2Page {
-            value: i32,
-            data: String,
-        }
-        impl Extends2Page {
-            fn my_func(&self) -> String {
-                let mut hold = "Func".to_string();
-                hold.push_str(self.data.clone().as_str());
-                hold
-            }
-        }
-
-        let mut page = Extends2Page {
             value: 10,
             data: "Hello".to_string(),
         };

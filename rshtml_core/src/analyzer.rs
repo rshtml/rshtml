@@ -1,6 +1,5 @@
 mod child_content;
 mod component;
-mod extends_directive;
 mod match_expr;
 mod render_directive;
 mod rust_expr;
@@ -16,11 +15,11 @@ use syn::{Member, parse_str};
 use crate::{
     analyzer::{
         child_content::ChildContentAnalyzer, component::ComponentAnalyzer,
-        extends_directive::ExtendsDirectiveAnalyzer, match_expr::MatchExprAnalyzer,
-        render_directive::RenderDirectiveAnalyzer, rust_expr::RustExprAnalyzer,
-        rust_expr_paren::RustExprParenAnalyzer, rust_expr_simple::RustExprSimpleAnalyzer,
-        section_block::SectionBlockAnalyzer, section_directive::SectionDirectiveAnalyzer,
-        template::TemplateAnalyzer, use_directive::UseDirectiveAnalyzer,
+        match_expr::MatchExprAnalyzer, render_directive::RenderDirectiveAnalyzer,
+        rust_expr::RustExprAnalyzer, rust_expr_paren::RustExprParenAnalyzer,
+        rust_expr_simple::RustExprSimpleAnalyzer, section_block::SectionBlockAnalyzer,
+        section_directive::SectionDirectiveAnalyzer, template::TemplateAnalyzer,
+        use_directive::UseDirectiveAnalyzer,
     },
     node::Node,
     position::Position,
@@ -31,7 +30,6 @@ pub struct Analyzer {
     files: Vec<(String, Position)>,
     use_directives: Vec<(String, PathBuf, Position)>,
     components: HashMap<String, (bool, bool)>, // has_child_content, is_used
-    layout_directive: PathBuf,
     layout: Option<Node>,
     sources: HashMap<String, String>,
     sections: Vec<(String, Position)>,
@@ -47,7 +45,6 @@ impl Analyzer {
             files: Vec::new(),
             use_directives: Vec::new(),
             components: HashMap::new(),
-            layout_directive: PathBuf::new(),
             layout: None,
             sources,
             sections: Vec::new(),
@@ -66,10 +63,8 @@ impl Analyzer {
             Node::Text(_) => (),
             Node::InnerText(_) => (),
             Node::Comment(_) => (),
+            Node::PropsDirective(_, _) => (),
             Node::IncludeDirective(_, _) => (),
-            Node::ExtendsDirective(path, layout) => {
-                ExtendsDirectiveAnalyzer::analyze(self, path, layout)
-            }
             Node::RenderDirective(name) => RenderDirectiveAnalyzer::analyze(self, name),
             Node::RustBlock(_, _) => (),
             Node::RustExprSimple(expr, is_escaped, position) => {

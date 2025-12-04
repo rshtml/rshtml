@@ -1,10 +1,10 @@
 mod block;
 mod comment_block;
 mod component;
-mod extends_directive;
 mod include_directive;
 mod inner_text;
 mod match_expr;
+mod props_directive;
 mod raw_block;
 mod render_directive;
 mod rust_block;
@@ -25,10 +25,10 @@ use crate::node::*;
 use crate::parser::block::BlockParser;
 use crate::parser::comment_block::CommentBlockParser;
 use crate::parser::component::ComponentParser;
-use crate::parser::extends_directive::ExtendsDirectiveParser;
 use crate::parser::include_directive::IncludeDirectiveParser;
 use crate::parser::inner_text::InnerTextParser;
 use crate::parser::match_expr::MatchExprParser;
+use crate::parser::props_directive::PropsDirectiveParser;
 use crate::parser::raw_block::RawBlockParser;
 use crate::parser::render_directive::RenderDirectiveParser;
 use crate::parser::rust_block::RustBlockParser;
@@ -73,7 +73,7 @@ impl RsHtmlParser {
                     let inner_nodes = self.build_nodes_from_pairs(pair.into_inner())?;
                     nodes.extend(inner_nodes);
                 }
-                Rule::extends_directive
+                Rule::props_directive
                 | Rule::comment_block
                 | Rule::block
                 | Rule::text
@@ -93,11 +93,11 @@ impl RsHtmlParser {
             Rule::text => TextParser::parse(self, pair),
             Rule::inner_text => InnerTextParser::parse(self, pair),
             Rule::comment_block => CommentBlockParser::parse(self, pair),
+            Rule::props_directive => PropsDirectiveParser::parse(self, pair),
             Rule::block => BlockParser::parse(self, pair),
             Rule::include_directive => IncludeDirectiveParser::parse(self, pair),
             Rule::render_directive => RenderDirectiveParser::parse(self, pair),
             Rule::render_body_directive => Ok(Node::RenderBody),
-            Rule::extends_directive => ExtendsDirectiveParser::parse(self, pair),
             Rule::rust_block => RustBlockParser::parse(self, pair),
             Rule::rust_expr_simple => RustExprSimpleParser::parse(self, pair),
             Rule::rust_expr_paren => RustExprParenParser::parse(self, pair),

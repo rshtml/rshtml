@@ -30,10 +30,10 @@ pub enum Node {
     Text(String),                          // plain text content (@@ -> @)
     InnerText(String),                     // text inside a block (@@ -> @, @{ -> {, @} -> })
     Comment(String),                       // comment content
-    IncludeDirective(PathBuf, Box<Node>),  // include directive @include("other_view.rs.html")
-    ExtendsDirective(PathBuf, Box<Node>),  // extends directive @extends("layout.rs.html")
-    RenderDirective(String),               // render directive @render("content")
-    RustBlock(String, Position),           // @{ ... } block content (with trim)
+    PropsDirective(Vec<(String, String, Position)>, Position),
+    IncludeDirective(PathBuf, Box<Node>), // include directive @include("other_view.rs.html")
+    RenderDirective(String),              // render directive @render("content")
+    RustBlock(String, Position),          // @{ ... } block content (with trim)
     RustExprSimple(String, bool, Position), // @expr ... (simple expression)
     RustExprParen(String, bool, Position), // @(expr) (expression parentheses)
     MatchExpr(String, Vec<(String, Vec<Node>)>, Position), // @match expr { ... => ... }

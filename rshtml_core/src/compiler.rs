@@ -1,5 +1,4 @@
 mod component;
-mod extends_directive;
 mod include_directive;
 mod inner_text;
 mod match_expr;
@@ -18,7 +17,6 @@ mod use_directive;
 
 use crate::Node;
 use crate::compiler::component::ComponentCompiler;
-use crate::compiler::extends_directive::ExtendsDirectiveCompiler;
 use crate::compiler::include_directive::IncludeDirectiveCompiler;
 use crate::compiler::inner_text::InnerTextCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
@@ -39,11 +37,9 @@ use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashMap;
-use std::path::PathBuf;
 
 pub struct Compiler {
     components: HashMap<String, (Node, TokenStream)>,
-    layout_directive: PathBuf,
     pub layout: Option<Node>,
     sections: HashMap<String, TokenStream>,
     pub section_body: Option<TokenStream>,
@@ -55,7 +51,6 @@ impl Compiler {
     pub fn new() -> Self {
         Compiler {
             components: HashMap::new(),
-            layout_directive: PathBuf::new(),
             layout: None,
             sections: HashMap::new(),
             section_body: None,
@@ -72,11 +67,9 @@ impl Compiler {
             Node::Text(text) => TextCompiler::compile(self, text),
             Node::InnerText(inner_text) => InnerTextCompiler::compile(self, inner_text),
             Node::Comment(_) => Ok(quote! {}),
+            Node::PropsDirective(_, _) => Ok(quote! {}),
             Node::IncludeDirective(path, template) => {
                 IncludeDirectiveCompiler::compile(self, path, *template)
-            }
-            Node::ExtendsDirective(path, layout) => {
-                ExtendsDirectiveCompiler::compile(self, path, *layout)
             }
             Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, name),
             Node::RustBlock(content, position) => {

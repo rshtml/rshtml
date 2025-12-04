@@ -1,24 +1,4 @@
-﻿@extends('layout.rs.html')
-
-@section('header', self.get_header("hello"))
-
-@section('title','Home Page')
-
-@section footer {
-  <p>Footer content goes here.</p>
-  what is going on dude @self.hey
-  <p>Footer content goes here.</p>
-
-  <div>
-    @if self.my_var == "my var" {
-      <p>MyVar is true</p>
-    } else {
-      <p>MyVar is false</p>
-    }
-  </div>
-}
-
-<div>
+﻿<div>
   @for user in &self.users {
     <p>@user.name</p>
   }
