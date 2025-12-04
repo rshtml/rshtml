@@ -112,7 +112,7 @@ fn parse_and_compile(
         rshtml_parser.sources,
         struct_fields,
         no_warn,
-    )?;
+    );
 
     let mut compiler = compiler::Compiler::new();
     let ts = compiler.compile(node)?;

@@ -3,10 +3,8 @@ pub struct RenderDirectiveAnalyzer;
 use crate::analyzer::Analyzer;
 
 impl RenderDirectiveAnalyzer {
-    pub fn analyze(analyzer: &mut Analyzer, name: &str) -> Result<(), Vec<String>> {
+    pub fn analyze(analyzer: &mut Analyzer, name: &str) {
         analyzer.render_directives.push(name.to_owned());
-
-        Ok(())
     }
 
     pub fn analyze_renders(analyzer: &Analyzer) {

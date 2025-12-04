@@ -13,20 +13,21 @@ impl ComponentAnalyzer {
         _parameters: &Vec<ComponentParameter>,
         body: &[Node],
         position: &Position,
-    ) -> Result<(), Vec<String>> {
+    ) {
         let has_child_content =
             if let Some((has_child_content, is_used)) = analyzer.components.get_mut(name) {
                 *is_used = true;
                 *has_child_content
             } else {
-                let message = analyzer.message(
+                analyzer.caution(
                     position,
                     "attempt to use a missing component",
                     &[],
                     &format!("component `{name}` is used but not found"),
                     name.len() + 1,
                 );
-                return Err(vec![message]);
+
+                return;
             };
 
         if !analyzer.no_warn {
@@ -48,7 +49,5 @@ impl ComponentAnalyzer {
                 );
             }
         }
-
-        Ok(())
     }
 }

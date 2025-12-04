@@ -3,14 +3,12 @@ use crate::analyzer::Analyzer;
 pub struct ChildContentAnalyzer;
 
 impl ChildContentAnalyzer {
-    pub fn analyze(analyzer: &mut Analyzer) -> Result<(), Vec<String>> {
+    pub fn analyze(analyzer: &mut Analyzer) {
         if let Some(name) = &analyzer.is_component {
             analyzer
                 .components
                 .entry(name.clone())
                 .and_modify(|(has_child_content, _)| *has_child_content = true);
         }
-
-        Ok(())
     }
 }

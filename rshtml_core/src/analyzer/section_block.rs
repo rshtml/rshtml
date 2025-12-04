@@ -8,9 +8,9 @@ impl SectionBlockAnalyzer {
         name: &String,
         content: &Vec<Node>,
         position: &Position,
-    ) -> Result<(), Vec<String>> {
+    ) {
         for node in content {
-            analyzer.analyze(node)?;
+            analyzer.analyze(node);
         }
 
         if !analyzer.no_warn && analyzer.sections.iter().any(|(n, _)| n == name) {
@@ -26,7 +26,5 @@ impl SectionBlockAnalyzer {
         analyzer
             .sections
             .push((name.to_owned(), position.to_owned()));
-
-        Ok(())
     }
 }

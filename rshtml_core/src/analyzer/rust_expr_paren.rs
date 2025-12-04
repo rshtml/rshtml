@@ -3,12 +3,7 @@ use crate::{analyzer::Analyzer, position::Position};
 pub struct RustExprParenAnalyzer;
 
 impl RustExprParenAnalyzer {
-    pub fn analyze(
-        analyzer: &mut Analyzer,
-        expr: &str,
-        is_escaped: &bool,
-        position: &Position,
-    ) -> Result<(), Vec<String>> {
+    pub fn analyze(analyzer: &mut Analyzer, expr: &str, is_escaped: &bool, position: &Position) {
         let expr_trimed = expr
             .strip_prefix('(')
             .and_then(|sub| sub.strip_suffix(')'))
@@ -25,7 +20,5 @@ impl RustExprParenAnalyzer {
                 expr.len() + !*is_escaped as usize,
             );
         }
-
-        Ok(())
     }
 }

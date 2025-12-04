@@ -10,7 +10,7 @@ impl UseDirectiveAnalyzer {
         path: &PathBuf,
         component: &Node,
         position: &Position,
-    ) -> Result<(), Vec<String>> {
+    ) {
         if !analyzer.no_warn && analyzer.use_directives.iter().any(|(n, _, _)| n == name) {
             analyzer.warning(
                 position,
@@ -33,11 +33,9 @@ impl UseDirectiveAnalyzer {
         let previous_is_component = analyzer.is_component.clone();
         analyzer.is_component = Some(name.to_owned());
 
-        analyzer.analyze(component)?;
+        analyzer.analyze(component);
 
         analyzer.is_component = previous_is_component;
-
-        Ok(())
     }
 
     pub fn analyze_uses(analyzer: &Analyzer) {

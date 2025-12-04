@@ -12,14 +12,12 @@ impl SectionDirectiveAnalyzer {
         name: &String,
         content: &SectionDirectiveContent,
         position: &Position,
-    ) -> Result<(), Vec<String>> {
+    ) {
         match content {
-            SectionDirectiveContent::Text(text) => {
-                analyzer.analyze(&Node::Text(text.to_owned()))?
-            }
+            SectionDirectiveContent::Text(text) => analyzer.analyze(&Node::Text(text.to_owned())),
             SectionDirectiveContent::RustExprSimple(expr, is_escaped) => analyzer.analyze(
                 &Node::RustExprSimple(expr.to_owned(), *is_escaped, position.to_owned()),
-            )?,
+            ),
         };
 
         if !analyzer.no_warn && analyzer.sections.iter().any(|(n, _)| n == name) {
@@ -35,7 +33,5 @@ impl SectionDirectiveAnalyzer {
         analyzer
             .sections
             .push((name.to_owned(), position.to_owned()));
-
-        Ok(())
     }
 }

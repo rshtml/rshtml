@@ -58,20 +58,20 @@ impl Analyzer {
         }
     }
 
-    fn analyze(&mut self, node: &Node) -> Result<(), Vec<String>> {
+    fn analyze(&mut self, node: &Node) {
         match node {
             Node::Template(file, nodes, position) => {
                 TemplateAnalyzer::analyze(self, file, nodes, position)
             }
-            Node::Text(_) => Ok(()),
-            Node::InnerText(_) => Ok(()),
-            Node::Comment(_) => Ok(()),
-            Node::IncludeDirective(_, _) => Ok(()),
+            Node::Text(_) => (),
+            Node::InnerText(_) => (),
+            Node::Comment(_) => (),
+            Node::IncludeDirective(_, _) => (),
             Node::ExtendsDirective(path, layout) => {
                 ExtendsDirectiveAnalyzer::analyze(self, path, layout)
             }
             Node::RenderDirective(name) => RenderDirectiveAnalyzer::analyze(self, name),
-            Node::RustBlock(_, _) => Ok(()),
+            Node::RustBlock(_, _) => (),
             Node::RustExprSimple(expr, is_escaped, position) => {
                 RustExprSimpleAnalyzer::analyze(self, expr, is_escaped, position)
             }
@@ -88,17 +88,17 @@ impl Analyzer {
             Node::SectionBlock(name, content, position) => {
                 SectionBlockAnalyzer::analyze(self, name, content, position)
             }
-            Node::RenderBody => Ok(()),
+            Node::RenderBody => (),
             Node::Component(name, parameters, body, position) => {
                 ComponentAnalyzer::analyze(self, name, parameters, body, position)
             }
             Node::ChildContent => ChildContentAnalyzer::analyze(self),
-            Node::Raw(_) => Ok(()),
+            Node::Raw(_) => (),
             Node::UseDirective(name, path, component, position) => {
                 UseDirectiveAnalyzer::analyze(self, name, path, component, position)
             }
-            Node::ContinueDirective => Ok(()),
-            Node::BreakDirective => Ok(()),
+            Node::ContinueDirective => (),
+            Node::BreakDirective => (),
         }
     }
 
@@ -108,27 +108,18 @@ impl Analyzer {
         sources: HashMap<String, String>,
         struct_fields: Vec<String>,
         no_warn: bool,
-    ) -> anyhow::Result<()> {
+    ) {
         let mut analyzer = Self::new(sources, struct_fields, no_warn);
-        let mut errs = Vec::new();
 
-        if let Err(e) = analyzer.analyze(node) {
-            errs.extend(e);
-        }
+        analyzer.analyze(node);
 
         if let Some(layout) = analyzer.layout.clone() {
             analyzer.files.push((template_path, Position::default()));
-            if let Err(e) = analyzer.analyze(&layout) {
-                errs.extend(e);
-            }
+            analyzer.analyze(&layout);
         }
 
         UseDirectiveAnalyzer::analyze_uses(&analyzer);
         RenderDirectiveAnalyzer::analyze_renders(&analyzer);
-
-        errs.is_empty()
-            .then_some(())
-            .ok_or(anyhow::anyhow!(errs.join("\n\n")))
     }
 
     pub fn message(

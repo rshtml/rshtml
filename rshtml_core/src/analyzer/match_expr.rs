@@ -8,16 +8,11 @@ impl MatchExprAnalyzer {
         _head: &String,
         arms: &Vec<(String, Vec<Node>)>,
         _position: &Position,
-    ) -> Result<(), Vec<String>> {
-        let mut errs = Vec::new();
+    ) {
         for (_arm_name, arm_nodes) in arms {
             for node in arm_nodes {
-                if let Err(e) = analyzer.analyze(node) {
-                    errs.extend(e);
-                }
+                analyzer.analyze(node)
             }
         }
-
-        errs.is_empty().then_some(()).ok_or(errs)
     }
 }

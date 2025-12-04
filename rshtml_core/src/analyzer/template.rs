@@ -3,27 +3,17 @@ use crate::{analyzer::Analyzer, node::Node, position::Position};
 pub struct TemplateAnalyzer;
 
 impl TemplateAnalyzer {
-    pub fn analyze(
-        analyzer: &mut Analyzer,
-        file: &str,
-        nodes: &Vec<Node>,
-        position: &Position,
-    ) -> Result<(), Vec<String>> {
+    pub fn analyze(analyzer: &mut Analyzer, file: &str, nodes: &Vec<Node>, position: &Position) {
         if !file.is_empty() {
             analyzer.files.push((file.to_owned(), position.clone()));
         }
 
-        let mut errs = Vec::new();
         for node in nodes {
-            if let Err(e) = analyzer.analyze(node) {
-                errs.extend(e);
-            }
+            analyzer.analyze(node)
         }
 
         if !file.is_empty() {
             analyzer.files.pop();
         }
-
-        errs.is_empty().then_some(()).ok_or(errs)
     }
 }
