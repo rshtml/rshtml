@@ -32,7 +32,7 @@ pub fn process_template(
     let layout = config.layout.clone();
     let extract_file_on_debug = config.extract_file_on_debug;
 
-    let (compiled_ast_tokens, sections, text_size, components) = match parse_and_compile(
+    let (compiled_ast_tokens, text_size, components) = match parse_and_compile(
         &template_name,
         config,
         struct_fields,
@@ -55,13 +55,10 @@ pub fn process_template(
     // dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
     let rs = quote! {
-        #[allow(non_upper_case_globals)]
-        const layout: &str = #layout;
-        fn has_section(section: &str) -> bool {#sections.contains(&section)}
         #[allow(unused_imports)]
         use ::std::fmt::Write;
     };
-
+    //pub struct Block(pub Box<dyn Fn(&mut dyn std::fmt::Write) -> std::fmt::Result>);
     let generated_code = quote! {
         const _ : () = {
 
@@ -105,7 +102,7 @@ fn parse_and_compile(
     config: Config,
     struct_fields: Vec<String>,
     no_warn: bool,
-) -> Result<(TokenStream, TokenStream, usize, TokenStream)> {
+) -> Result<(TokenStream, usize, TokenStream)> {
     let mut rshtml_parser = RsHtmlParser::new();
     let node = rshtml_parser.run(template_path, config)?;
 
@@ -130,10 +127,5 @@ fn parse_and_compile(
     //     return Ok((layout_ts, compiler.section_names(), compiler.text_size));
     // }
 
-    Ok((
-        ts,
-        compiler.section_names(),
-        compiler.text_size,
-        compiler.components(),
-    ))
+    Ok((ts, compiler.text_size, compiler.components()))
 }

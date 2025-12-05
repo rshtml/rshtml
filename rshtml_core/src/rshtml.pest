@@ -29,7 +29,7 @@ comment_content = @{ (("*" ~ !("@")) | (!("*") ~ ANY))* }
 
 block = !{
     component
-  | ("@" ~ ((raw_block | include_directive | section_block | child_content_directive | use_directive) | (rust_block | rust_expr | rust_expr_paren | match_expr | continue_directive | break_directive | rust_expr_simple)))
+  | ("@" ~ ((raw_block | child_content_directive | use_directive) | (rust_block | rust_expr | rust_expr_paren | match_expr | continue_directive | break_directive | rust_expr_simple)))
 }
 
 // endregion
@@ -177,9 +177,9 @@ string_line = @{
 
 // region @include directive @include('other_view.html')
 
-include_directive = {
-    &"include" ~ "include" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ WHITESPACE* ~ ")"
-}
+// include_directive = {
+//     &"include" ~ "include" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ WHITESPACE* ~ ")"
+// }
 
 // endregion
 
@@ -193,8 +193,8 @@ include_directive = {
 
 // region @section directive and block @section('section_name'), @section content { ... }
 
-section_block =  { &(section_head ~ WHITESPACE* ~ "{") ~ section_head ~ WHITESPACE* ~ "{" ~ inner_template ~ "}" }
-section_head  = ${ "section" ~ WHITESPACE+ ~ rust_identifier }
+// section_block =  { &(section_head ~ WHITESPACE* ~ "{") ~ section_head ~ WHITESPACE* ~ "{" ~ inner_template ~ "}" }
+// section_head  = ${ "section" ~ WHITESPACE+ ~ rust_identifier }
 
 // one line section
 // section_directive = {

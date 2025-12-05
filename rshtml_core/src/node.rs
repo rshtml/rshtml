@@ -25,13 +25,11 @@ pub enum Node {
     InnerText(String),                     // text inside a block (@@ -> @, @{ -> {, @} -> })
     Comment(String),                       // comment content
     PropsDirective(Vec<(String, String, Position)>, Position),
-    IncludeDirective(PathBuf, Box<Node>), // include directive @include("other_view.rs.html")
-    RustBlock(String, Position),          // @{ ... } block content (with trim)
+    RustBlock(String, Position), // @{ ... } block content (with trim)
     RustExprSimple(String, bool, Position), // @expr ... (simple expression)
     RustExprParen(String, bool, Position), // @(expr) (expression parentheses)
     MatchExpr(String, Vec<(String, Vec<Node>)>, Position), // @match expr { ... => ... }
     RustExpr(Vec<(String, Vec<Node>)>, Position), // @if ...  { ... } else { ... } / @for ... { ... }
-    SectionBlock(String, Vec<Node>, Position),    // @section content { ... }
     Component(String, Vec<ComponentParameter>, Vec<Node>, Position), // <ComponentName param1 = value1, param2 = value2> tags
     ChildContent, // @child_content (component child content)
     Raw(String),  // @raw {} (raw content)

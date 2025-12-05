@@ -1,7 +1,6 @@
 mod block;
 mod comment_block;
 mod component;
-mod include_directive;
 mod inner_text;
 mod match_expr;
 mod props_directive;
@@ -10,7 +9,6 @@ mod rust_block;
 mod rust_expr;
 mod rust_expr_paren;
 mod rust_expr_simple;
-mod section_block;
 mod template;
 mod text;
 mod use_directive;
@@ -23,7 +21,6 @@ use crate::node::*;
 use crate::parser::block::BlockParser;
 use crate::parser::comment_block::CommentBlockParser;
 use crate::parser::component::ComponentParser;
-use crate::parser::include_directive::IncludeDirectiveParser;
 use crate::parser::inner_text::InnerTextParser;
 use crate::parser::match_expr::MatchExprParser;
 use crate::parser::props_directive::PropsDirectiveParser;
@@ -32,7 +29,6 @@ use crate::parser::rust_block::RustBlockParser;
 use crate::parser::rust_expr::RustExprParser;
 use crate::parser::rust_expr_paren::RustExprParenParser;
 use crate::parser::rust_expr_simple::RustExprSimpleParser;
-use crate::parser::section_block::SectionBlockParser;
 use crate::parser::template::TemplateParser;
 use crate::parser::text::TextParser;
 use crate::parser::use_directive::UseDirectiveParser;
@@ -91,13 +87,11 @@ impl RsHtmlParser {
             Rule::comment_block => CommentBlockParser::parse(self, pair),
             Rule::props_directive => PropsDirectiveParser::parse(self, pair),
             Rule::block => BlockParser::parse(self, pair),
-            Rule::include_directive => IncludeDirectiveParser::parse(self, pair),
             Rule::rust_block => RustBlockParser::parse(self, pair),
             Rule::rust_expr_simple => RustExprSimpleParser::parse(self, pair),
             Rule::rust_expr_paren => RustExprParenParser::parse(self, pair),
             Rule::rust_expr => RustExprParser::parse(self, pair),
             Rule::match_expr => MatchExprParser::parse(self, pair),
-            Rule::section_block => SectionBlockParser::parse(self, pair),
             Rule::component => ComponentParser::parse(self, pair),
             Rule::child_content_directive => Ok(Node::ChildContent),
             Rule::raw_block => RawBlockParser::parse(self, pair),

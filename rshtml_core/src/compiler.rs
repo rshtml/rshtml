@@ -1,5 +1,4 @@
 mod component;
-mod include_directive;
 mod inner_text;
 mod match_expr;
 mod props_directive;
@@ -8,14 +7,12 @@ mod rust_block;
 mod rust_expr;
 mod rust_expr_paren;
 mod rust_expr_simple;
-mod section_block;
 mod template;
 mod text;
 mod use_directive;
 
 use crate::Node;
 use crate::compiler::component::ComponentCompiler;
-use crate::compiler::include_directive::IncludeDirectiveCompiler;
 use crate::compiler::inner_text::InnerTextCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
 use crate::compiler::props_directive::PropsDirectiveCompiler;
@@ -24,7 +21,6 @@ use crate::compiler::rust_block::RustBlockCompiler;
 use crate::compiler::rust_expr::RustExprCompiler;
 use crate::compiler::rust_expr_paren::RustExprParenCompiler;
 use crate::compiler::rust_expr_simple::RustExprSimpleCompiler;
-use crate::compiler::section_block::SectionBlockCompiler;
 use crate::compiler::template::TemplateCompiler;
 use crate::compiler::text::TextCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
@@ -43,7 +39,6 @@ use syn::parse_str;
 pub struct Compiler {
     use_directives: Vec<(PathBuf, String)>,
     components: HashMap<String, Component>,
-    sections: HashMap<String, TokenStream>,
     pub text_size: usize,
     pub files: Vec<(String, Position)>,
 }
@@ -53,7 +48,6 @@ impl Compiler {
         Compiler {
             use_directives: Vec::new(),
             components: HashMap::new(),
-            sections: HashMap::new(),
             text_size: 0,
             files: Vec::new(),
         }
@@ -70,9 +64,6 @@ impl Compiler {
             Node::PropsDirective(props, position) => {
                 PropsDirectiveCompiler::compile(self, props, position)
             }
-            Node::IncludeDirective(path, template) => {
-                IncludeDirectiveCompiler::compile(self, path, *template)
-            }
             Node::RustBlock(content, position) => {
                 RustBlockCompiler::compile(self, content, position)
             }
@@ -86,9 +77,6 @@ impl Compiler {
                 MatchExprCompiler::compile(self, head, arms, position)
             }
             Node::RustExpr(exprs, position) => RustExprCompiler::compile(self, exprs, position),
-            Node::SectionBlock(name, content, position) => {
-                SectionBlockCompiler::compile(self, name, content, position)
-            }
             Node::Component(name, parameters, body, position) => {
                 ComponentCompiler::compile(self, name, parameters, body, position)
             }
@@ -100,15 +88,6 @@ impl Compiler {
             Node::ContinueDirective => Ok(quote! {continue;}),
             Node::BreakDirective => Ok(quote! {break;}),
         }
-    }
-
-    pub fn section_names(&self) -> TokenStream {
-        let mut token_stream = TokenStream::new();
-        self.sections
-            .keys()
-            .for_each(|x| token_stream.extend(quote! {#x,}));
-
-        quote! {[#token_stream]}
     }
 
     pub fn components(&self) -> TokenStream {

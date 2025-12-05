@@ -4,7 +4,6 @@ mod match_expr;
 mod rust_expr;
 mod rust_expr_paren;
 mod rust_expr_simple;
-mod section_block;
 mod template;
 mod use_directive;
 
@@ -15,8 +14,7 @@ use crate::{
         child_content::ChildContentAnalyzer, component::ComponentAnalyzer,
         match_expr::MatchExprAnalyzer, rust_expr::RustExprAnalyzer,
         rust_expr_paren::RustExprParenAnalyzer, rust_expr_simple::RustExprSimpleAnalyzer,
-        section_block::SectionBlockAnalyzer, template::TemplateAnalyzer,
-        use_directive::UseDirectiveAnalyzer,
+        template::TemplateAnalyzer, use_directive::UseDirectiveAnalyzer,
     },
     node::Node,
     position::Position,
@@ -29,7 +27,6 @@ pub struct Analyzer {
     components: HashMap<String, (bool, bool)>, // has_child_content, is_used
     layout: Option<Node>,
     sources: HashMap<String, String>,
-    sections: Vec<(String, Position)>,
     no_warn: bool,
     is_component: Option<String>,
     struct_fields: Vec<String>,
@@ -43,7 +40,6 @@ impl Analyzer {
             components: HashMap::new(),
             layout: None,
             sources,
-            sections: Vec::new(),
             no_warn,
             is_component: None,
             struct_fields,
@@ -59,7 +55,6 @@ impl Analyzer {
             Node::InnerText(_) => (),
             Node::Comment(_) => (),
             Node::PropsDirective(_, _) => (),
-            Node::IncludeDirective(_, _) => (),
             Node::RustBlock(_, _) => (),
             Node::RustExprSimple(expr, is_escaped, position) => {
                 RustExprSimpleAnalyzer::analyze(self, expr, is_escaped, position)
@@ -71,9 +66,6 @@ impl Analyzer {
                 MatchExprAnalyzer::analyze(self, head, arms, position)
             }
             Node::RustExpr(exprs, position) => RustExprAnalyzer::analyze(self, exprs, position),
-            Node::SectionBlock(name, content, position) => {
-                SectionBlockAnalyzer::analyze(self, name, content, position)
-            }
             Node::Component(name, parameters, body, position) => {
                 ComponentAnalyzer::analyze(self, name, parameters, body, position)
             }

@@ -31,10 +31,6 @@ pub fn view_node(node: &Node, indent: usize) {
                 println!("- Type: {:?}", prop.1);
             }
         }
-        Node::IncludeDirective(path, template) => {
-            println!("- IncludeDirective: {path:?}");
-            view_node(template, indent + 1);
-        }
         Node::RustBlock(content, _) => {
             println!("- RustBlock: {content:?}");
         }
@@ -66,14 +62,6 @@ pub fn view_node(node: &Node, indent: usize) {
                 for inner_node in values {
                     view_node(inner_node, indent + 3);
                 }
-            }
-        }
-        Node::SectionBlock(section_head, body, _) => {
-            println!("- SectionBlock:");
-            print_indent(indent + 1);
-            println!("- StringLine: {section_head:?}");
-            for inner_node in body {
-                view_node(inner_node, indent + 1);
             }
         }
         Node::Component(name, parameters, body, _) => {
