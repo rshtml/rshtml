@@ -29,7 +29,7 @@ comment_content = @{ (("*" ~ !("@")) | (!("*") ~ ANY))* }
 
 block = !{
     component
-  | ("@" ~ ((raw_block | render_directive | include_directive | section_directive | section_block | render_body_directive | child_content_directive | use_directive) | (rust_block | rust_expr | rust_expr_paren | match_expr | continue_directive | break_directive | rust_expr_simple)))
+  | ("@" ~ ((raw_block | include_directive | section_block | child_content_directive | use_directive) | (rust_block | rust_expr | rust_expr_paren | match_expr | continue_directive | break_directive | rust_expr_simple)))
 }
 
 // endregion
@@ -185,9 +185,9 @@ include_directive = {
 
 // region @extends directive @extends('layout.rs.html')
 
-extends_directive = {
-    "@" ~ "extends" ~ WHITESPACE* ~ ("(" ~ WHITESPACE* ~ string_line? ~ WHITESPACE* ~ ")")?
-}
+// extends_directive = {
+//     "@" ~ "extends" ~ WHITESPACE* ~ ("(" ~ WHITESPACE* ~ string_line? ~ WHITESPACE* ~ ")")?
+// }
 
 // endregion
 
@@ -197,25 +197,25 @@ section_block =  { &(section_head ~ WHITESPACE* ~ "{") ~ section_head ~ WHITESPA
 section_head  = ${ "section" ~ WHITESPACE+ ~ rust_identifier }
 
 // one line section
-section_directive = {
-    &("section" ~ WHITESPACE* ~ "(") ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ "," ~ (string_line | (rust_expr_simple)) ~ WHITESPACE* ~ ")"
-}
+// section_directive = {
+//     &("section" ~ WHITESPACE* ~ "(") ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ "," ~ (string_line | (rust_expr_simple)) ~ WHITESPACE* ~ ")"
+// }
 
 // endregion
 
 // region @render directive @render('section_name')
 
-render_directive = {
-    &"render" ~ "render" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ WHITESPACE* ~ ")"
-}
+// render_directive = {
+//     &"render" ~ "render" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ WHITESPACE* ~ ")"
+// }
 
 // endregion
 
 // region @render_body directive @render_body
 
-render_body_directive = @{
-    &"render_body" ~ "render_body" ~ ("(" ~ ")" | &(!rust_identifier))
-}
+// render_body_directive = @{
+//     &"render_body" ~ "render_body" ~ ("(" ~ ")" | &(!rust_identifier))
+// }
 
 // endregion
 

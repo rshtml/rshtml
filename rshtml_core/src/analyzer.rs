@@ -1,12 +1,10 @@
 mod child_content;
 mod component;
 mod match_expr;
-mod render_directive;
 mod rust_expr;
 mod rust_expr_paren;
 mod rust_expr_simple;
 mod section_block;
-mod section_directive;
 mod template;
 mod use_directive;
 
@@ -15,10 +13,9 @@ use syn::{Member, parse_str};
 use crate::{
     analyzer::{
         child_content::ChildContentAnalyzer, component::ComponentAnalyzer,
-        match_expr::MatchExprAnalyzer, render_directive::RenderDirectiveAnalyzer,
-        rust_expr::RustExprAnalyzer, rust_expr_paren::RustExprParenAnalyzer,
-        rust_expr_simple::RustExprSimpleAnalyzer, section_block::SectionBlockAnalyzer,
-        section_directive::SectionDirectiveAnalyzer, template::TemplateAnalyzer,
+        match_expr::MatchExprAnalyzer, rust_expr::RustExprAnalyzer,
+        rust_expr_paren::RustExprParenAnalyzer, rust_expr_simple::RustExprSimpleAnalyzer,
+        section_block::SectionBlockAnalyzer, template::TemplateAnalyzer,
         use_directive::UseDirectiveAnalyzer,
     },
     node::Node,
@@ -35,7 +32,6 @@ pub struct Analyzer {
     sections: Vec<(String, Position)>,
     no_warn: bool,
     is_component: Option<String>,
-    render_directives: Vec<String>,
     struct_fields: Vec<String>,
 }
 
@@ -50,7 +46,6 @@ impl Analyzer {
             sections: Vec::new(),
             no_warn,
             is_component: None,
-            render_directives: Vec::new(),
             struct_fields,
         }
     }
@@ -65,7 +60,6 @@ impl Analyzer {
             Node::Comment(_) => (),
             Node::PropsDirective(_, _) => (),
             Node::IncludeDirective(_, _) => (),
-            Node::RenderDirective(name) => RenderDirectiveAnalyzer::analyze(self, name),
             Node::RustBlock(_, _) => (),
             Node::RustExprSimple(expr, is_escaped, position) => {
                 RustExprSimpleAnalyzer::analyze(self, expr, is_escaped, position)
@@ -77,13 +71,9 @@ impl Analyzer {
                 MatchExprAnalyzer::analyze(self, head, arms, position)
             }
             Node::RustExpr(exprs, position) => RustExprAnalyzer::analyze(self, exprs, position),
-            Node::SectionDirective(name, content, position) => {
-                SectionDirectiveAnalyzer::analyze(self, name, content, position)
-            }
             Node::SectionBlock(name, content, position) => {
                 SectionBlockAnalyzer::analyze(self, name, content, position)
             }
-            Node::RenderBody => (),
             Node::Component(name, parameters, body, position) => {
                 ComponentAnalyzer::analyze(self, name, parameters, body, position)
             }
@@ -114,7 +104,6 @@ impl Analyzer {
         }
 
         UseDirectiveAnalyzer::analyze_uses(&analyzer);
-        RenderDirectiveAnalyzer::analyze_renders(&analyzer);
     }
 
     pub fn message(

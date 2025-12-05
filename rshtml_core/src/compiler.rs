@@ -3,14 +3,11 @@ mod include_directive;
 mod inner_text;
 mod match_expr;
 mod raw;
-mod render_body;
-mod render_directive;
 mod rust_block;
 mod rust_expr;
 mod rust_expr_paren;
 mod rust_expr_simple;
 mod section_block;
-mod section_directive;
 mod template;
 mod text;
 mod use_directive;
@@ -21,14 +18,11 @@ use crate::compiler::include_directive::IncludeDirectiveCompiler;
 use crate::compiler::inner_text::InnerTextCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
 use crate::compiler::raw::RawCompiler;
-use crate::compiler::render_body::RenderBodyCompiler;
-use crate::compiler::render_directive::RenderDirectiveCompiler;
 use crate::compiler::rust_block::RustBlockCompiler;
 use crate::compiler::rust_expr::RustExprCompiler;
 use crate::compiler::rust_expr_paren::RustExprParenCompiler;
 use crate::compiler::rust_expr_simple::RustExprSimpleCompiler;
 use crate::compiler::section_block::SectionBlockCompiler;
-use crate::compiler::section_directive::SectionDirectiveCompiler;
 use crate::compiler::template::TemplateCompiler;
 use crate::compiler::text::TextCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
@@ -71,7 +65,6 @@ impl Compiler {
             Node::IncludeDirective(path, template) => {
                 IncludeDirectiveCompiler::compile(self, path, *template)
             }
-            Node::RenderDirective(name) => RenderDirectiveCompiler::compile(self, name),
             Node::RustBlock(content, position) => {
                 RustBlockCompiler::compile(self, content, position)
             }
@@ -85,13 +78,9 @@ impl Compiler {
                 MatchExprCompiler::compile(self, head, arms, position)
             }
             Node::RustExpr(exprs, position) => RustExprCompiler::compile(self, exprs, position),
-            Node::SectionDirective(name, content, position) => {
-                SectionDirectiveCompiler::compile(self, name, content, position)
-            }
             Node::SectionBlock(name, content, position) => {
                 SectionBlockCompiler::compile(self, name, content, position)
             }
-            Node::RenderBody => RenderBodyCompiler::compile(self),
             Node::Component(name, parameters, body, position) => {
                 ComponentCompiler::compile(self, name, parameters, body, position)
             }

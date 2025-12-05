@@ -6,13 +6,11 @@ mod inner_text;
 mod match_expr;
 mod props_directive;
 mod raw_block;
-mod render_directive;
 mod rust_block;
 mod rust_expr;
 mod rust_expr_paren;
 mod rust_expr_simple;
 mod section_block;
-mod section_directive;
 mod template;
 mod text;
 mod use_directive;
@@ -30,13 +28,11 @@ use crate::parser::inner_text::InnerTextParser;
 use crate::parser::match_expr::MatchExprParser;
 use crate::parser::props_directive::PropsDirectiveParser;
 use crate::parser::raw_block::RawBlockParser;
-use crate::parser::render_directive::RenderDirectiveParser;
 use crate::parser::rust_block::RustBlockParser;
 use crate::parser::rust_expr::RustExprParser;
 use crate::parser::rust_expr_paren::RustExprParenParser;
 use crate::parser::rust_expr_simple::RustExprSimpleParser;
 use crate::parser::section_block::SectionBlockParser;
-use crate::parser::section_directive::SectionDirectiveParser;
 use crate::parser::template::TemplateParser;
 use crate::parser::text::TextParser;
 use crate::parser::use_directive::UseDirectiveParser;
@@ -96,14 +92,11 @@ impl RsHtmlParser {
             Rule::props_directive => PropsDirectiveParser::parse(self, pair),
             Rule::block => BlockParser::parse(self, pair),
             Rule::include_directive => IncludeDirectiveParser::parse(self, pair),
-            Rule::render_directive => RenderDirectiveParser::parse(self, pair),
-            Rule::render_body_directive => Ok(Node::RenderBody),
             Rule::rust_block => RustBlockParser::parse(self, pair),
             Rule::rust_expr_simple => RustExprSimpleParser::parse(self, pair),
             Rule::rust_expr_paren => RustExprParenParser::parse(self, pair),
             Rule::rust_expr => RustExprParser::parse(self, pair),
             Rule::match_expr => MatchExprParser::parse(self, pair),
-            Rule::section_directive => SectionDirectiveParser::parse(self, pair),
             Rule::section_block => SectionBlockParser::parse(self, pair),
             Rule::component => ComponentParser::parse(self, pair),
             Rule::child_content_directive => Ok(Node::ChildContent),

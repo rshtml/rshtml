@@ -1,4 +1,4 @@
-﻿use crate::node::{ComponentParameterValue, Node, SectionDirectiveContent};
+﻿use crate::node::{ComponentParameterValue, Node};
 
 fn print_indent(indent: usize) {
     print!("{}", "  ".repeat(indent));
@@ -35,9 +35,6 @@ pub fn view_node(node: &Node, indent: usize) {
             println!("- IncludeDirective: {path:?}");
             view_node(template, indent + 1);
         }
-        Node::RenderDirective(path) => {
-            println!("- RenderDirective: {path:?}");
-        }
         Node::RustBlock(content, _) => {
             println!("- RustBlock: {content:?}");
         }
@@ -71,18 +68,6 @@ pub fn view_node(node: &Node, indent: usize) {
                 }
             }
         }
-        Node::SectionDirective(name, body, _) => {
-            println!("- SectionDirective:");
-            print_indent(indent + 1);
-            println!("- StringLine: {name:?}");
-            print_indent(indent + 1);
-            match body {
-                SectionDirectiveContent::Text(s) => println!("- StringLine: {s:?}"),
-                SectionDirectiveContent::RustExprSimple(s, _) => {
-                    println!("- RustExprSimple: {s:?}")
-                }
-            }
-        }
         Node::SectionBlock(section_head, body, _) => {
             println!("- SectionBlock:");
             print_indent(indent + 1);
@@ -90,9 +75,6 @@ pub fn view_node(node: &Node, indent: usize) {
             for inner_node in body {
                 view_node(inner_node, indent + 1);
             }
-        }
-        Node::RenderBody => {
-            println!("- RenderBody");
         }
         Node::Component(name, parameters, body, _) => {
             println!("- Component:");
