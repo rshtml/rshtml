@@ -2,6 +2,7 @@ mod component;
 mod include_directive;
 mod inner_text;
 mod match_expr;
+mod props_directive;
 mod raw;
 mod rust_block;
 mod rust_expr;
@@ -17,6 +18,7 @@ use crate::compiler::component::ComponentCompiler;
 use crate::compiler::include_directive::IncludeDirectiveCompiler;
 use crate::compiler::inner_text::InnerTextCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
+use crate::compiler::props_directive::PropsDirectiveCompiler;
 use crate::compiler::raw::RawCompiler;
 use crate::compiler::rust_block::RustBlockCompiler;
 use crate::compiler::rust_expr::RustExprCompiler;
@@ -28,15 +30,20 @@ use crate::compiler::text::TextCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
 use crate::position::Position;
 use anyhow::Result;
+use anyhow::anyhow;
+use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashMap;
+use std::path::PathBuf;
+use syn::Ident;
+use syn::Type;
+use syn::parse_str;
 
 pub struct Compiler {
-    components: HashMap<String, (Node, TokenStream)>,
-    pub layout: Option<Node>,
+    use_directives: Vec<(PathBuf, String)>,
+    components: HashMap<String, Component>,
     sections: HashMap<String, TokenStream>,
-    pub section_body: Option<TokenStream>,
     pub text_size: usize,
     pub files: Vec<(String, Position)>,
 }
@@ -44,10 +51,9 @@ pub struct Compiler {
 impl Compiler {
     pub fn new() -> Self {
         Compiler {
+            use_directives: Vec::new(),
             components: HashMap::new(),
-            layout: None,
             sections: HashMap::new(),
-            section_body: None,
             text_size: 0,
             files: Vec::new(),
         }
@@ -61,7 +67,9 @@ impl Compiler {
             Node::Text(text) => TextCompiler::compile(self, text),
             Node::InnerText(inner_text) => InnerTextCompiler::compile(self, inner_text),
             Node::Comment(_) => Ok(quote! {}),
-            Node::PropsDirective(_, _) => Ok(quote! {}),
+            Node::PropsDirective(props, position) => {
+                PropsDirectiveCompiler::compile(self, props, position)
+            }
             Node::IncludeDirective(path, template) => {
                 IncludeDirectiveCompiler::compile(self, path, *template)
             }
@@ -101,6 +109,15 @@ impl Compiler {
             .for_each(|x| token_stream.extend(quote! {#x,}));
 
         quote! {[#token_stream]}
+    }
+
+    pub fn components(&self) -> TokenStream {
+        let mut token_stream = TokenStream::new();
+        self.components.values().for_each(|component_data| {
+            token_stream.extend(component_data.token_stream.to_owned());
+        });
+
+        token_stream
     }
 
     fn escape_or_raw(&self, expr_ts: TokenStream, is_escaped: bool) -> TokenStream {
@@ -146,5 +163,41 @@ impl Compiler {
         } else {
             expr_ts
         }
+    }
+}
+
+#[derive(Clone)]
+struct Component {
+    token_stream: TokenStream,
+    props: Vec<(String, String)>,
+}
+
+impl Component {
+    fn new() -> Self {
+        Self {
+            token_stream: TokenStream::new(),
+            props: Vec::new(),
+        }
+    }
+
+    fn props_to_ts(&self) -> Result<TokenStream> {
+        let mut args = Vec::new();
+
+        for (prop_name, prop_type) in &self.props {
+            let prop_name = Ident::new(&prop_name, Span::call_site());
+            let prop_type = parse_str::<Type>(&prop_type).map_err(|e| anyhow!(e))?;
+
+            args.push(quote! { #prop_name: #prop_type});
+        }
+
+        Ok(quote! {#(#args),*})
+    }
+
+    fn prop_names_to_ts(&self) -> TokenStream {
+        let args = self
+            .props
+            .iter()
+            .map(|prop| Ident::new(&prop.0, Span::call_site()));
+        quote! {#(#args),*}
     }
 }

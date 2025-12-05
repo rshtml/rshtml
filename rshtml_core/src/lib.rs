@@ -14,7 +14,6 @@ mod tests;
 
 use crate::config::Config;
 use crate::parser::RsHtmlParser;
-use crate::position::Position;
 use anyhow::Result;
 use node::Node;
 use proc_macro2::{Ident, TokenStream};
@@ -33,7 +32,7 @@ pub fn process_template(
     let layout = config.layout.clone();
     let extract_file_on_debug = config.extract_file_on_debug;
 
-    let (compiled_ast_tokens, sections, text_size) = match parse_and_compile(
+    let (compiled_ast_tokens, sections, text_size, components) = match parse_and_compile(
         &template_name,
         config,
         struct_fields,
@@ -53,7 +52,7 @@ pub fn process_template(
 
     let (impl_generics, type_generics, where_clause) = struct_generics.split_for_impl();
 
-    //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
+    // dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
     let rs = quote! {
         #[allow(non_upper_case_globals)]
@@ -67,6 +66,10 @@ pub fn process_template(
         const _ : () = {
 
             #rs
+
+            impl #impl_generics #struct_name #type_generics #where_clause {
+                #components
+            }
 
             impl #impl_generics rshtml::traits::RsHtml for #struct_name #type_generics #where_clause {
                 fn fmt(&mut self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
@@ -102,7 +105,7 @@ fn parse_and_compile(
     config: Config,
     struct_fields: Vec<String>,
     no_warn: bool,
-) -> Result<(TokenStream, TokenStream, usize)> {
+) -> Result<(TokenStream, TokenStream, usize, TokenStream)> {
     let mut rshtml_parser = RsHtmlParser::new();
     let node = rshtml_parser.run(template_path, config)?;
 
@@ -117,15 +120,20 @@ fn parse_and_compile(
     let mut compiler = compiler::Compiler::new();
     let ts = compiler.compile(node)?;
 
-    if let Some(layout) = compiler.layout.clone() {
-        compiler.section_body = Some(ts);
-        compiler
-            .files
-            .push((template_path.to_string(), Position::default()));
-        let layout_ts = compiler.compile(layout)?;
+    // if let Some(layout) = compiler.layout.clone() {
+    //     compiler.section_body = Some(ts);
+    //     compiler
+    //         .files
+    //         .push((template_path.to_string(), Position::default()));
+    //     let layout_ts = compiler.compile(layout)?;
 
-        return Ok((layout_ts, compiler.section_names(), compiler.text_size));
-    }
+    //     return Ok((layout_ts, compiler.section_names(), compiler.text_size));
+    // }
 
-    Ok((ts, compiler.section_names(), compiler.text_size))
+    Ok((
+        ts,
+        compiler.section_names(),
+        compiler.text_size,
+        compiler.components(),
+    ))
 }

@@ -1,4 +1,6 @@
-﻿<div class="card" style="width: 18rem;">
+﻿@props(title: i32, footer: bool)
+
+<div class="card" style="width: 18rem;">
     <div class="card-header">
         @title {{-- Title slot --}}
     </div>
@@ -10,4 +12,3 @@
     </div>
     @include("header.rs.html")
 </div>
-@my_prop
