@@ -48,8 +48,8 @@ impl Analyzer {
 
     fn analyze(&mut self, node: &Node) {
         match node {
-            Node::Template(file, nodes, position) => {
-                TemplateAnalyzer::analyze(self, file, nodes, position)
+            Node::Template(file, name, nodes, position) => {
+                TemplateAnalyzer::analyze(self, file, name, nodes, position)
             }
             Node::Text(_) => (),
             Node::InnerText(_) => (),

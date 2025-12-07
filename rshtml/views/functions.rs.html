@@ -5,9 +5,3 @@
     let users = @#json(&self.users)
     @#json_let("my_users", &self.users)
 </script>
-
-@if has_section("section") {
-    <p>section defined</p>
-} else {
-    <p>section not defined</p>
-}

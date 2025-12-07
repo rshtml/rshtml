@@ -57,8 +57,10 @@ pub fn process_template(
     let rs = quote! {
         #[allow(unused_imports)]
         use ::std::fmt::Write;
+        #[allow(unused_imports)]
+        use rshtml::Block;
     };
-    //pub struct Block(pub Box<dyn Fn(&mut dyn std::fmt::Write) -> std::fmt::Result>);
+
     let generated_code = quote! {
         const _ : () = {
 
@@ -69,14 +71,14 @@ pub fn process_template(
             }
 
             impl #impl_generics rshtml::traits::RsHtml for #struct_name #type_generics #where_clause {
-                fn fmt(&mut self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
+                fn fmt(&self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
 
                     #compiled_ast_tokens
 
                     Ok(())
                 }
 
-                fn render(&mut self) -> Result<String, ::std::fmt::Error> {
+                fn render(&self) -> Result<String, ::std::fmt::Error> {
                     let mut buf = String::with_capacity(#text_size);
                     self.fmt(&mut buf)?;
                     Ok(buf)
@@ -115,17 +117,7 @@ fn parse_and_compile(
     );
 
     let mut compiler = compiler::Compiler::new();
-    let ts = compiler.compile(node)?;
+    let ts = compiler.run(node)?;
 
-    // if let Some(layout) = compiler.layout.clone() {
-    //     compiler.section_body = Some(ts);
-    //     compiler
-    //         .files
-    //         .push((template_path.to_string(), Position::default()));
-    //     let layout_ts = compiler.compile(layout)?;
-
-    //     return Ok((layout_ts, compiler.section_names(), compiler.text_size));
-    // }
-
-    Ok((ts, compiler.text_size, compiler.components()))
+    Ok((ts, compiler.text_size, compiler.component_fns()))
 }

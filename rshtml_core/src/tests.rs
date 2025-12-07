@@ -12,7 +12,7 @@ use syn::Generics;
 
 #[test]
 fn test_template_format() {
-    let views = ["Card.rs.html"];
+    let views = ["home.rs.html"];
 
     let ast = match RsHtmlParser::new().run(views[0], Config::default()) {
         Ok(ast) => ast,
@@ -24,7 +24,7 @@ fn test_template_format() {
 
     ast_viewer::view_node(&ast, 0);
 
-    assert!(matches!(ast, Node::Template(_, _, _)));
+    assert!(matches!(ast, Node::Template(_, _, _, _)));
 }
 
 #[test]

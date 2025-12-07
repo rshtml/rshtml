@@ -14,6 +14,7 @@ mod text;
 mod use_directive;
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use crate::config::Config;
 use crate::error::{E, rename_rules};
@@ -152,6 +153,13 @@ impl RsHtmlParser {
     pub fn run(&mut self, path: &str, config: Config) -> Result<Node, Box<Error<Rule>>> {
         self.config = config;
         self.parse_template(path).map_err(|err| rename_rules(*err))
+    }
+
+    fn extract_component_name(&self, path: &str) -> Option<String> {
+        let path = PathBuf::from(path);
+        let filename = path.file_name().and_then(|n| n.to_str())?;
+        let component_name = filename.strip_suffix(".rs.html").unwrap_or(filename);
+        Some(component_name.to_owned())
     }
 }
 

@@ -7,8 +7,8 @@ fn print_indent(indent: usize) {
 pub fn view_node(node: &Node, indent: usize) {
     print_indent(indent);
     match node {
-        Node::Template(_, nodes, _) => {
-            println!("- Template:");
+        Node::Template(_, name, nodes, _) => {
+            println!("- Template ({name}):");
             for inner_node in nodes {
                 view_node(inner_node, indent + 1);
             }

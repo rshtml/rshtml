@@ -7,7 +7,7 @@ mod tests {
         #[derive(RsHtml)]
         struct EmptyPage {}
 
-        let mut page = EmptyPage {};
+        let page = EmptyPage {};
         println!("{}", page.render().unwrap());
     }
 
@@ -19,7 +19,7 @@ mod tests {
             count: i32,
         }
 
-        let mut page = IfElsePage {
+        let page = IfElsePage {
             is_ok: true,
             count: 10,
         };
@@ -33,7 +33,7 @@ mod tests {
             users: Vec<String>,
         }
 
-        let mut page = ForPage {
+        let page = ForPage {
             users: vec!["Alice".to_string(), "Bob".to_string()],
         };
         println!("{}", page.render().unwrap());
@@ -46,14 +46,7 @@ mod tests {
             count: i32,
         }
 
-        impl WhilePage {
-            fn increment(&mut self) -> String {
-                self.count += 1;
-                "".to_string()
-            }
-        }
-
-        let mut page = WhilePage { count: 1 };
+        let page = WhilePage { count: 5 };
         println!("{}", page.render().unwrap());
     }
 
@@ -65,7 +58,7 @@ mod tests {
             data: Option<String>,
         }
 
-        let mut page = MatchPage {
+        let page = MatchPage {
             value: 10,
             data: Some("Hello".to_string()),
         };
@@ -77,7 +70,7 @@ mod tests {
         #[derive(RsHtml)]
         struct CommentPage {}
 
-        let mut page = CommentPage {};
+        let page = CommentPage {};
         println!("{}", page.render().unwrap());
     }
 
@@ -96,7 +89,7 @@ mod tests {
             }
         }
 
-        let mut page = SimpleExpressionPage {
+        let page = SimpleExpressionPage {
             value: 10,
             data: Some("Hello".to_string()),
             for_escape: "'<script/>'".to_string(),
@@ -112,22 +105,7 @@ mod tests {
             data: String,
         }
 
-        let mut page = ParenthesesExpressionPage {
-            value: 10,
-            data: "Hello".to_string(),
-        };
-        println!("{}", page.render().unwrap());
-    }
-
-    #[test]
-    pub fn test_props_directive() {
-        #[derive(RsHtml)]
-        struct PropsDirectivePage {
-            value: i32,
-            data: String,
-        }
-
-        let mut page = PropsDirectivePage {
+        let page = ParenthesesExpressionPage {
             value: 10,
             data: "Hello".to_string(),
         };
@@ -139,7 +117,7 @@ mod tests {
         #[derive(RsHtml)]
         struct CodeBlockPage {}
 
-        let mut page = CodeBlockPage {};
+        let page = CodeBlockPage {};
         println!("{}", page.render().unwrap());
     }
 
@@ -148,7 +126,7 @@ mod tests {
         #[derive(RsHtml)]
         struct RawBlockPage {}
 
-        let mut page = RawBlockPage {};
+        let page = RawBlockPage {};
         println!("{}", page.render().unwrap());
     }
 
@@ -183,6 +161,8 @@ mod tests {
             ],
         };
 
+        page.value = 11;
+
         println!("{}", page.render().unwrap());
     }
 
@@ -194,7 +174,7 @@ mod tests {
             users: Vec<String>,
         }
 
-        let mut page = ContinueBreakPage {
+        let page = ContinueBreakPage {
             users: vec!["Alice".to_string(), "Bob".to_string(), "John".to_string()],
         };
         println!("{}", page.render().unwrap());
@@ -208,7 +188,7 @@ mod tests {
             users: Vec<String>,
         }
 
-        let mut page = FunctionsPage {
+        let page = FunctionsPage {
             date: chrono::Utc::now(),
             users: vec!["Alice".to_string(), "Bob".to_string(), "John".to_string()],
         };
@@ -222,7 +202,7 @@ mod tests {
             my_var: String,
         }
 
-        let mut page = EscapingPage {
+        let page = EscapingPage {
             my_var: "<p>This is <strong>bold</strong> text.</p>".to_string(),
         };
         println!("{}", page.render().unwrap());

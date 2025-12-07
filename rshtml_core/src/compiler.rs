@@ -37,10 +37,12 @@ use syn::Type;
 use syn::parse_str;
 
 pub struct Compiler {
-    use_directives: Vec<(PathBuf, String)>,
+    use_directives: Vec<(PathBuf, String, Position)>,
     components: HashMap<String, Component>,
     pub text_size: usize,
     pub files: Vec<(String, Position)>,
+    is_root: bool,
+    component_name: String,
 }
 
 impl Compiler {
@@ -50,13 +52,15 @@ impl Compiler {
             components: HashMap::new(),
             text_size: 0,
             files: Vec::new(),
+            is_root: false,
+            component_name: String::new(),
         }
     }
 
     pub fn compile(&mut self, node: Node) -> Result<TokenStream> {
         match node {
-            Node::Template(file, nodes, position) => {
-                TemplateCompiler::compile(self, file, nodes, position)
+            Node::Template(file, name, nodes, position) => {
+                TemplateCompiler::compile(self, file, name, nodes, position)
             }
             Node::Text(text) => TextCompiler::compile(self, text),
             Node::InnerText(inner_text) => InnerTextCompiler::compile(self, inner_text),
@@ -90,7 +94,14 @@ impl Compiler {
         }
     }
 
-    pub fn components(&self) -> TokenStream {
+    pub fn run(&mut self, node: Node) -> Result<TokenStream> {
+        self.is_root = true;
+        let ts = self.compile(node)?;
+
+        Ok(ts)
+    }
+
+    pub fn component_fns(&self) -> TokenStream {
         let mut token_stream = TokenStream::new();
         self.components.values().for_each(|component_data| {
             token_stream.extend(component_data.token_stream.to_owned());
@@ -105,6 +116,15 @@ impl Compiler {
         } else {
             quote! {write!(__f__, "{}", #expr_ts)?;}
         }
+    }
+
+    fn generate_fn_name(&self, name: &str) -> String {
+        let mut hash: u64 = 5381;
+        for c in name.bytes() {
+            hash = ((hash << 5).wrapping_add(hash)).wrapping_add(c as u64);
+        }
+
+        format!("__rshtml__{}_{:x}", name, hash)
     }
 
     fn with_info(
@@ -145,15 +165,17 @@ impl Compiler {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct Component {
+    fn_name: Ident,
     token_stream: TokenStream,
     props: Vec<(String, String)>,
 }
 
 impl Component {
-    fn new() -> Self {
+    fn new(fn_name: Ident) -> Self {
         Self {
+            fn_name,
             token_stream: TokenStream::new(),
             props: Vec::new(),
         }
@@ -164,7 +186,8 @@ impl Component {
 
         for (prop_name, prop_type) in &self.props {
             let prop_name = Ident::new(&prop_name, Span::call_site());
-            let prop_type = parse_str::<Type>(&prop_type).map_err(|e| anyhow!(e))?;
+            let prop_type = parse_str::<Type>(&prop_type)
+                .map_err(|e| anyhow!("Invalid prop type: {prop_type}, {e}"))?;
 
             args.push(quote! { #prop_name: #prop_type});
         }

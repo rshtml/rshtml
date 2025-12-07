@@ -3,11 +3,10 @@ use crate::compiler::Compiler;
 use crate::node::{ComponentParameter, ComponentParameterValue};
 use crate::position::Position;
 use anyhow::{Result, anyhow};
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::quote;
 use std::ops::AddAssign;
 use std::str::FromStr;
-use syn::Ident;
 
 pub struct ComponentCompiler;
 
@@ -54,22 +53,31 @@ impl ComponentCompiler {
                     quote! {let #name_ts = #expr_ts;}
                 }
                 ComponentParameterValue::Block(value) => {
-                    let block_ts =
-                        compiler.compile(Node::Template(String::new(), value, position.clone()))?;
-                    quote! {let #name_ts = |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#block_ts Ok(())};}
+                    let mut block_ts = TokenStream::new();
+                    for v in value {
+                        let ts = compiler.compile(v)?;
+                        block_ts.extend(ts);
+                    }
+
+                    quote! {let #name_ts = Block::from(|__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#block_ts Ok(())});}
                 }
             };
 
             token_stream.extend(parameter_ts);
         }
 
-        let body_ts = compiler.compile(Node::Template(String::new(), body, position.clone()))?;
+        let mut body_ts = TokenStream::new();
+        for b in body {
+            let ts = compiler.compile(b)?;
+            body_ts.extend(ts);
+        }
+
         let body_ts = quote! {let child_content = |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body_ts  Ok(())};};
 
         token_stream.extend(body_ts);
 
         let args = component_data.prop_names_to_ts();
-        let fn_name = Ident::new(&name, Span::call_site());
+        let fn_name = component_data.fn_name;
         let component_ts = quote! {self.#fn_name(__f__, child_content, #args)?;};
 
         token_stream.extend(component_ts);
