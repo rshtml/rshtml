@@ -1,3 +1,6 @@
-@while self.count < 10 {
-    <p> Counter is: @self.count </p>
+@{let mut x = 0;}
+
+@while x < self.count {
+    <p> Counter is: @x </p>
+    @{x += 1;}
 }

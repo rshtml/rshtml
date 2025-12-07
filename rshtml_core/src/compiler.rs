@@ -185,8 +185,8 @@ impl Component {
         let mut args = Vec::new();
 
         for (prop_name, prop_type) in &self.props {
-            let prop_name = Ident::new(&prop_name, Span::call_site());
-            let prop_type = parse_str::<Type>(&prop_type)
+            let prop_name = Ident::new(prop_name, Span::call_site());
+            let prop_type = parse_str::<Type>(prop_type)
                 .map_err(|e| anyhow!("Invalid prop type: {prop_type}, {e}"))?;
 
             args.push(quote! { #prop_name: #prop_type});

@@ -67,6 +67,6 @@ impl TemplateCompiler {
             compiler.files.pop();
         }
 
-        return fn_call_ts;
+        fn_call_ts
     }
 }
