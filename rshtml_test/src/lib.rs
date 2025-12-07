@@ -64,7 +64,7 @@ mod tests {
             },
         ];
 
-        let mut homepage = HomePage {
+        let homepage = HomePage {
             title: "Hello".to_string(),
             content: "World".to_string(),
             card_count: 1,
