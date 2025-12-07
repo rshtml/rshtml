@@ -230,7 +230,7 @@ child_content_directive = @{
 // region @props directive @props
 
 props_directive  =  { "@" ~ "props" ~ ("(" ~ (prop ~ ("," ~ prop)* ~ ","?)? ~ ")" ~ ";"?) }
-prop             =  { (prop_name ~ ":" ~ prop_type) }
+prop             =  { (prop_name ~ (":" ~ prop_type)?) }
 prop_name        = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 prop_type        = @{ (prop_type_nested | !("(" | "[" | "{" | "<" |  "," | ")") ~ ANY)+ }
 prop_type_nested = _{

@@ -28,11 +28,12 @@ impl IParser for PropsDirectiveParser {
 
             let prop_type_pair = prop_inner_pair
                 .find(|p| p.as_rule() == Rule::prop_type)
-                .ok_or(E::pos(Rule::prop_type).span(prop_pair_span))?;
+                .map(|p| p.as_str().to_string())
+                .unwrap_or("impl ::std::fmt::Display".into());
 
             props.push((
                 prop_name_pair.as_str().to_string(),
-                prop_type_pair.as_str().to_string(),
+                prop_type_pair,
                 prop_position,
             ));
         }
