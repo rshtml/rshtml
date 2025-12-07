@@ -52,7 +52,7 @@ impl TemplateCompiler {
 
             if let Some(component_data) = compiler.components.get_mut(&name) {
                 let args = component_data.props_to_ts()?;
-                let component_ts = quote! { fn #fn_name (&self,
+                let component_ts = quote! { fn #fn_name(&self,
                 __f__: &mut dyn ::std::fmt::Write,
                 child_content: impl Fn(&mut dyn ::std::fmt::Write) -> ::std::fmt::Result,
                 #args) -> ::std::fmt::Result {#component_ts  Ok(())} };

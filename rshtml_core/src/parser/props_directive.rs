@@ -28,7 +28,10 @@ impl IParser for PropsDirectiveParser {
 
             let prop_type = prop_inner_pair
                 .find(|p| p.as_rule() == Rule::prop_type)
-                .map(|p| p.as_str().to_string())
+                .map(|p| match p.as_str() {
+                    "Block" => "impl ::std::fmt::Display".to_string(),
+                    other => other.to_string(),
+                })
                 .unwrap_or("impl ::std::fmt::Display".into());
 
             props.push((

@@ -1,1 +1,10 @@
-﻿<div>this is the bar @self.title     aaaa</div>
+﻿@use "layout.rs.html" as Layout;
+
+<Layout title="my title" header = {
+  <p>this is header</p>
+}
+content=@Some("this is content".to_string())
+footer="hey footer"
+>
+  <div>this is the bar @self.title     aaaa</div>
+</Layout>

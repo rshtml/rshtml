@@ -1,19 +1,21 @@
 use std::fmt;
 
-#[allow(clippy::type_complexity)]
-pub struct Block<'a>(pub Box<dyn Fn(&mut dyn fmt::Write) -> fmt::Result + 'a>);
+pub struct Block<T>(pub T);
 
-impl<'a> fmt::Display for Block<'a> {
+impl<T> fmt::Display for Block<T>
+where
+    T: Fn(&mut dyn fmt::Write) -> fmt::Result,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         (self.0)(f)
     }
 }
 
-impl<'a, F> From<F> for Block<'a>
+impl<T> From<T> for Block<T>
 where
-    F: Fn(&mut dyn fmt::Write) -> fmt::Result + 'a,
+    T: Fn(&mut dyn fmt::Write) -> fmt::Result,
 {
-    fn from(f: F) -> Self {
-        Block(Box::new(f))
+    fn from(f: T) -> Self {
+        Block(f)
     }
 }

@@ -1,4 +1,4 @@
-﻿@props(title: i32, footer: bool)
+﻿@props(title: i32, footer, my_prop: Block, my_prop2: Block)
 
 <div class="card" style="width: 18rem;">
     <div class="card-header">
@@ -11,3 +11,7 @@
         @footer {{-- Footer slot --}}
     </div>
 </div>
+
+@my_prop
+
+@my_prop2

@@ -59,7 +59,7 @@ impl ComponentCompiler {
                         block_ts.extend(ts);
                     }
 
-                    quote! {let #name_ts = Block::from(|__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#block_ts Ok(())});}
+                    quote! {let #name_ts = ::rshtml::Block::from(|__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#block_ts Ok(())});}
                 }
             };
 

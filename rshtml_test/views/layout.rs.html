@@ -1,23 +1,25 @@
-﻿<!DOCTYPE html>
+﻿@props(title, header, content: Option<String>, footer)
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>RsHtml Template - @render('title')</title>
+    <title>RsHtml Template - @title</title>
     @* this comment is in layout *@
 </head>
 <body>
 
-@render("header")
+@header
 
 @if self.is_ok {
-    @render_body
+    @child_content()
 } else {
     <h1>Something went wrong</h1>
     <p>Please try again later.</p>
 }
 
-@if has_section("content") {
-    @render("content")
+@if content.is_some() {
+    @content.unwrap()
     <p>section content defined</p>
 } else {
     <p>section content not defined</p>
@@ -27,7 +29,7 @@
     <p>Item @i</p>
 }
 
-@render("footer")
+@footer
 
 </body>
 </html>

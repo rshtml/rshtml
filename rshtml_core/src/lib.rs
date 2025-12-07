@@ -55,8 +55,6 @@ pub fn process_template(
     let rs = quote! {
         #[allow(unused_imports)]
         use ::std::fmt::Write;
-        #[allow(unused_imports)]
-        use rshtml::Block;
     };
 
     let generated_code = quote! {
