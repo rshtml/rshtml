@@ -4,29 +4,18 @@ use std::path::{Path, PathBuf};
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     pub base_path: PathBuf,
-    pub layout: String,
     pub extract_file_on_debug: bool,
 }
 
 impl Config {
-    pub fn new<P: AsRef<Path>>(
-        base_path: PathBuf,
-        layout: String,
-        extract_file_on_debug: bool,
-    ) -> Self {
+    pub fn new<P: AsRef<Path>>(base_path: PathBuf, extract_file_on_debug: bool) -> Self {
         Config {
             base_path,
-            layout,
             extract_file_on_debug,
         }
     }
 
-    pub fn set_views(
-        &mut self,
-        path: Option<String>,
-        layout: Option<String>,
-        extract_file_on_debug: Option<bool>,
-    ) {
+    pub fn set_views(&mut self, path: Option<String>, extract_file_on_debug: Option<bool>) {
         if let Some(p) = path {
             let manifest_dir =
                 std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
@@ -34,10 +23,6 @@ impl Config {
             let mut base_path = PathBuf::from(&manifest_dir);
             base_path.push(p);
             self.base_path = base_path;
-        }
-
-        if let Some(l) = layout {
-            self.layout = l;
         }
 
         if let Some(ef) = extract_file_on_debug {
@@ -49,7 +34,6 @@ impl Config {
         #[derive(Deserialize, Debug, Clone)]
         pub struct Views {
             pub path: Option<String>,
-            pub layout: Option<String>,
             pub extract_file_on_debug: Option<bool>,
         }
 
@@ -84,7 +68,7 @@ impl Config {
                 && let Some(toml_config) = metadata.rshtml
                 && let Some(views) = toml_config.views
             {
-                config.set_views(views.path, views.layout, views.extract_file_on_debug);
+                config.set_views(views.path, views.extract_file_on_debug);
             }
         }
 
@@ -101,7 +85,6 @@ impl Default for Config {
 
         Config {
             base_path: views_base_path.clone(),
-            layout: String::from("layout.rs.html"),
             extract_file_on_debug: false,
         }
     }

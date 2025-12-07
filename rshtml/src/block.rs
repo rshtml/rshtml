@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[allow(clippy::type_complexity)]
 pub struct Block<'a>(pub Box<dyn Fn(&mut dyn fmt::Write) -> fmt::Result + 'a>);
 
 impl<'a> fmt::Display for Block<'a> {

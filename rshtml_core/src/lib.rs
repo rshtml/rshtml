@@ -18,7 +18,6 @@ use anyhow::Result;
 use node::Node;
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
-use std::clone::Clone;
 use syn::Generics;
 
 pub fn process_template(
@@ -29,7 +28,6 @@ pub fn process_template(
     no_warn: bool,
 ) -> TokenStream {
     let config = Config::load_from_toml_or_default();
-    let layout = config.layout.clone();
     let extract_file_on_debug = config.extract_file_on_debug;
 
     let (compiled_ast_tokens, text_size, components) = match parse_and_compile(

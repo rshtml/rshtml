@@ -57,5 +57,4 @@ pub fn test_process_simple() {
 pub fn test_config() {
     let config = Config::default();
     assert!(config.base_path.ends_with("views"));
-    assert_eq!(config.layout, "layout.rs.html".to_string());
 }
