@@ -11,6 +11,18 @@
 
 @* hello comment *@
 
+@* @fn my_fn(i: i32, x) { *@
+  @* <div>heyy</div> *@
+@* } *@
+
+@* @fn mymy { *@
+  @* <p>helloo</p> *@
+@* } *@
+
+@* @fn myy() { *@
+  @* <h1>hiii</h1> *@
+@* } *@
+
 @{
 
   struct MyStruct {
@@ -18,6 +30,7 @@
   }
 
   let my_structs = vec![MyStruct{name: "Amy".to_string()}];
+  let greetings = vec!["hi", "hello", "hey"];
   
   let x = 7;
   let y = 10;
@@ -65,7 +78,7 @@
 
 <Card title=@x footer=false my_prop={
   <p>this is my prop @self.title</p>
-} my_prop2 = {hey}>
+} my_prop2 = {hey} greetings=@greetings>
   <p>hello</p>
   <p>world</p>
   @if true {

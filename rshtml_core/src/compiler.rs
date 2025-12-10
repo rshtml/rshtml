@@ -1,4 +1,5 @@
 mod component;
+mod fn_directive;
 mod inner_text;
 mod match_expr;
 mod props_directive;
@@ -13,6 +14,7 @@ mod use_directive;
 
 use crate::Node;
 use crate::compiler::component::ComponentCompiler;
+use crate::compiler::fn_directive::FnDirectiveCompiler;
 use crate::compiler::inner_text::InnerTextCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
 use crate::compiler::props_directive::PropsDirectiveCompiler;
@@ -85,6 +87,9 @@ impl Compiler {
                 ComponentCompiler::compile(self, name, parameters, body, position)
             }
             Node::ChildContent => Ok(quote! {child_content(__f__)?;}),
+            Node::FnDirective(name, params, body, position) => {
+                FnDirectiveCompiler::compile(self, name, params, body, position)
+            }
             Node::Raw(body) => RawCompiler::compile(self, body),
             Node::UseDirective(name, path, component, position) => {
                 UseDirectiveCompiler::compile(self, name, path, *component, position)

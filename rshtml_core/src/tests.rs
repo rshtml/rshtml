@@ -29,7 +29,7 @@ fn test_template_format() {
 
 #[test]
 fn test_template_format_without_parsing() {
-    let template = fs::read_to_string("views/Card.rs.html").unwrap();
+    let template = fs::read_to_string("views/home.rs.html").unwrap();
     let pairs = match RsHtmlParser::parse(Rule::template, template.as_str()) {
         Ok(pairs) => pairs,
         Err(err) => {

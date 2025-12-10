@@ -70,6 +70,7 @@ impl Analyzer {
                 ComponentAnalyzer::analyze(self, name, parameters, body, position)
             }
             Node::ChildContent => ChildContentAnalyzer::analyze(self),
+            Node::FnDirective(_, _, _, _) => (),
             Node::Raw(_) => (),
             Node::UseDirective(name, path, component, position) => {
                 UseDirectiveAnalyzer::analyze(self, name, path, component, position)

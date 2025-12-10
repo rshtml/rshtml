@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, ops::Deref};
 
 pub struct Block<T>(pub T);
 
@@ -17,5 +17,15 @@ where
 {
     fn from(f: T) -> Self {
         Block(f)
+    }
+}
+
+impl<T> Deref for Block<T>
+where
+    T: Fn(&mut dyn fmt::Write) -> fmt::Result,
+{
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

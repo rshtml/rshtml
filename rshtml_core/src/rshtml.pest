@@ -29,7 +29,7 @@ comment_content = @{ (("*" ~ !("@")) | (!("*") ~ ANY))* }
 
 block = !{
     component
-  | ("@" ~ ((raw_block | child_content_directive | use_directive) | (rust_block | rust_expr | rust_expr_paren | match_expr | continue_directive | break_directive | rust_expr_simple)))
+  | ("@" ~ ((raw_block | child_content_directive | use_directive | fn_directive) | (rust_block | rust_expr | rust_expr_paren | match_expr | continue_directive | break_directive | rust_expr_simple)))
 }
 
 // endregion
@@ -50,7 +50,7 @@ rust_expr_head = @{
 // region --- Simple Rust Expressions (@identifier...) ---
 
 rust_expr_simple = @{
-    !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "else" | "match" | "include" | "props" | "render" | "section" | "render_body" | "raw" | "use" | "child_content") ~ (WHITESPACE+ | !rust_identifier)) ~ "#"? ~ "&"* ~ rust_identifier ~ chain_segment*
+    !(WHITESPACE* ~ ("{" | "if" | "for" | "while" | "else" | "match" | "props" | "fn" | "raw" | "use" | "child_content") ~ (WHITESPACE+ | !rust_identifier)) ~ "#"? ~ "&"* ~ rust_identifier ~ chain_segment*
 }
 
 chain_segment = {
@@ -178,7 +178,7 @@ string_line = @{
 // region @include directive @include('other_view.html')
 
 // include_directive = {
-//     &"include" ~ "include" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ WHITESPACE* ~ ")"
+// &"include" ~ "include" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ WHITESPACE* ~ ")"
 // }
 
 // endregion
@@ -186,7 +186,7 @@ string_line = @{
 // region @extends directive @extends('layout.rs.html')
 
 // extends_directive = {
-//     "@" ~ "extends" ~ WHITESPACE* ~ ("(" ~ WHITESPACE* ~ string_line? ~ WHITESPACE* ~ ")")?
+// "@" ~ "extends" ~ WHITESPACE* ~ ("(" ~ WHITESPACE* ~ string_line? ~ WHITESPACE* ~ ")")?
 // }
 
 // endregion
@@ -198,7 +198,7 @@ string_line = @{
 
 // one line section
 // section_directive = {
-//     &("section" ~ WHITESPACE* ~ "(") ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ "," ~ (string_line | (rust_expr_simple)) ~ WHITESPACE* ~ ")"
+// &("section" ~ WHITESPACE* ~ "(") ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ "," ~ (string_line | (rust_expr_simple)) ~ WHITESPACE* ~ ")"
 // }
 
 // endregion
@@ -206,7 +206,7 @@ string_line = @{
 // region @render directive @render('section_name')
 
 // render_directive = {
-//     &"render" ~ "render" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ WHITESPACE* ~ ")"
+// &"render" ~ "render" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ WHITESPACE* ~ ")"
 // }
 
 // endregion
@@ -214,7 +214,7 @@ string_line = @{
 // region @render_body directive @render_body
 
 // render_body_directive = @{
-//     &"render_body" ~ "render_body" ~ ("(" ~ ")" | &(!rust_identifier))
+// &"render_body" ~ "render_body" ~ ("(" ~ ")" | &(!rust_identifier))
 // }
 
 // endregion
@@ -232,13 +232,21 @@ child_content_directive = @{
 props_directive  =  { "@" ~ "props" ~ ("(" ~ (prop ~ ("," ~ prop)* ~ ","?)? ~ ")" ~ ";"?) }
 prop             =  { (prop_name ~ (":" ~ prop_type)?) }
 prop_name        = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
-prop_type        = @{ (prop_type_nested | !("(" | "[" | "{" | "<" |  "," | ")") ~ ANY)+ }
+prop_type        = @{ (prop_type_nested | !("(" | "[" | "{" | "<" | "," | ")") ~ ANY)+ }
 prop_type_nested = _{
     ("(" ~ (prop_type_nested | (!")" ~ ANY))* ~ ")")
   | ("[" ~ (prop_type_nested | (!"]" ~ ANY))* ~ "]")
   | ("{" ~ (prop_type_nested | (!"}" ~ ANY))* ~ "}")
   | ("<" ~ (prop_type_nested | (!">" ~ ANY))* ~ ">")
 }
+
+// endregion
+
+// region @def directive @def def_name(param1: i32, param2) {}
+
+fn_directive =  { fn_head ~ (fn_params)? ~ "{" ~ inner_template ~ "}" }
+fn_head      = ${ "fn" ~ WHITESPACE+ ~ rust_identifier }
+fn_params    =  { ("(" ~ (prop ~ ("," ~ prop)* ~ ","?)? ~ ")") }
 
 // endregion
 

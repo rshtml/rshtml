@@ -1,4 +1,4 @@
-﻿@props(title: i32, footer, my_prop: Block, my_prop2: Block)
+﻿@props(title: i32, footer, my_prop: Block, my_prop2, greetings: Vec<&str>)
 
 <div class="card" style="width: 18rem;">
     <div class="card-header">
@@ -15,3 +15,7 @@
 @my_prop
 
 @my_prop2
+
+@for g in greetings {
+    g: @g
+}
