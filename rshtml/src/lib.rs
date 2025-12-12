@@ -138,5 +138,5 @@ pub use rshtml_macro::RsHtml;
 mod track_views_folder;
 pub use track_views_folder::track_views_folder;
 
-mod block;
-pub use block::Block;
+mod f;
+pub use f::F;

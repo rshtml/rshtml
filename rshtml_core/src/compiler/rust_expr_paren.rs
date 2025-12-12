@@ -14,7 +14,8 @@ impl RustExprParenCompiler {
     ) -> Result<TokenStream> {
         let expr_ts = TokenStream::from_str(&expr).map_err(|err| anyhow!("Lex Error: {}", err))?;
 
-        let expr_ts = compiler.escape_or_raw(expr_ts, is_escaped);
+        let expr_ts = compiler.escape_or_raw(expr_ts, is_escaped, "message");
+        // TODO: A caution should be given because display implementation is not being used instead of message.
 
         let expr_ts = compiler.with_info(expr_ts, position, None);
 

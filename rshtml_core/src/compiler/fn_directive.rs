@@ -3,7 +3,7 @@ pub struct FnDirectiveCompiler;
 use crate::{compiler::Compiler, node::Node, position::Position};
 use anyhow::{Result, anyhow};
 use proc_macro2::{Span, TokenStream};
-use quote::quote;
+use quote::{format_ident, quote};
 use std::str::FromStr;
 use syn::{Ident, Type, parse_str};
 
@@ -16,6 +16,7 @@ impl FnDirectiveCompiler {
         _position: Position,
     ) -> Result<TokenStream> {
         let args = Self::params_to_ts(&params)?;
+        let arg_names = Self::param_names_to_ts(&params);
 
         let mut body_ts = TokenStream::new();
         for b in body {
@@ -23,11 +24,24 @@ impl FnDirectiveCompiler {
             body_ts.extend(ts);
         }
 
+        let fn_name = format_ident!("_{}", &name);
         let name_ts = TokenStream::from_str(&name).map_err(|e| anyhow!("Lex Error: {e}"))?;
 
-        Ok(
-            quote! {let #name_ts = ::rshtml::Block::from(|__f__: &mut dyn ::std::fmt::Write, #args| -> ::std::fmt::Result {#body_ts  Ok(())});},
-        )
+        let fn_ts = quote! {
+            fn #fn_name(&self, __f__: &mut dyn ::std::fmt::Write, #args) -> std::fmt::Result {#body_ts Ok(())}
+        };
+
+        let fn_closure = quote! {let mut #name_ts = |#args| -> ::std::fmt::Result {self.#fn_name(__f__, #arg_names)};};
+
+        compiler
+            .components
+            .entry(compiler.component_name.to_owned())
+            .and_modify(|component_data| {
+                component_data.fns.push(fn_ts);
+                component_data.fn_closures.push(fn_closure);
+            });
+
+        Ok(quote! {})
     }
 
     fn params_to_ts(params: &Vec<(String, String, Position)>) -> Result<TokenStream> {
@@ -42,5 +56,12 @@ impl FnDirectiveCompiler {
         }
 
         Ok(quote! {#(#args),*})
+    }
+
+    fn param_names_to_ts(params: &Vec<(String, String, Position)>) -> TokenStream {
+        let args = params
+            .iter()
+            .map(|prop| Ident::new(&prop.0, Span::call_site()));
+        quote! {#(#args),*}
     }
 }

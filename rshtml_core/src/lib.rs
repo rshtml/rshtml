@@ -33,6 +33,8 @@ pub fn process_template(
     let (compiled_ast_tokens, text_size, components) = match parse_and_compile(
         &template_name,
         config,
+        struct_name,
+        struct_generics,
         struct_fields,
         no_warn,
     ) {
@@ -62,11 +64,11 @@ pub fn process_template(
 
             #rs
 
-            impl #impl_generics #struct_name #type_generics #where_clause {
+            // impl #impl_generics #struct_name #type_generics #where_clause {
                 #components
-            }
+            // }
 
-            impl #impl_generics rshtml::traits::RsHtml for #struct_name #type_generics #where_clause {
+            impl #impl_generics ::rshtml::traits::RsHtml for #struct_name #type_generics #where_clause {
                 fn fmt(&self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
 
                     #compiled_ast_tokens
@@ -98,6 +100,8 @@ pub fn process_template(
 fn parse_and_compile(
     template_path: &str,
     config: Config,
+    struct_name: &Ident,
+    struct_generics: &Generics,
     struct_fields: Vec<String>,
     no_warn: bool,
 ) -> Result<(TokenStream, usize, TokenStream)> {
@@ -112,7 +116,7 @@ fn parse_and_compile(
         no_warn,
     );
 
-    let mut compiler = compiler::Compiler::new();
+    let mut compiler = compiler::Compiler::new(struct_name.to_owned(), struct_generics.to_owned());
     let ts = compiler.run(node)?;
 
     Ok((ts, compiler.text_size, compiler.component_fns()))

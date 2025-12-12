@@ -34,11 +34,14 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use syn::Generics;
 use syn::Ident;
 use syn::Type;
 use syn::parse_str;
 
 pub struct Compiler {
+    struct_name: Ident,
+    struct_generics: Generics,
     use_directives: Vec<(PathBuf, String, Position)>,
     components: HashMap<String, Component>,
     pub text_size: usize,
@@ -48,8 +51,10 @@ pub struct Compiler {
 }
 
 impl Compiler {
-    pub fn new() -> Self {
+    pub fn new(struct_name: Ident, struct_generics: Generics) -> Self {
         Compiler {
+            struct_name,
+            struct_generics,
             use_directives: Vec::new(),
             components: HashMap::new(),
             text_size: 0,
@@ -115,11 +120,11 @@ impl Compiler {
         token_stream
     }
 
-    fn escape_or_raw(&self, expr_ts: TokenStream, is_escaped: bool) -> TokenStream {
+    fn escape_or_raw(&self, expr_ts: TokenStream, is_escaped: bool, message: &str) -> TokenStream {
         if is_escaped {
-            quote! {write!(rshtml::EscapingWriter { inner: __f__ }, "{}", &(#expr_ts))?;}
+            quote! { ::rshtml::F(&(#expr_ts)).render(&mut ::rshtml::EscapingWriter { inner: __f__ }, #message)?; }
         } else {
-            quote! {write!(__f__, "{}", #expr_ts)?;}
+            quote! { ::rshtml::F(&(#expr_ts)).render(__f__, #message)?; }
         }
     }
 
@@ -129,7 +134,7 @@ impl Compiler {
             hash = ((hash << 5).wrapping_add(hash)).wrapping_add(c as u64);
         }
 
-        format!("__rshtml__{}_{:x}", name, hash)
+        format!("{}_{:x}", name, hash)
     }
 
     fn with_info(
@@ -175,6 +180,8 @@ struct Component {
     fn_name: Ident,
     token_stream: TokenStream,
     props: Vec<(String, String)>,
+    fns: Vec<TokenStream>,
+    fn_closures: Vec<TokenStream>,
 }
 
 impl Component {
@@ -183,6 +190,8 @@ impl Component {
             fn_name,
             token_stream: TokenStream::new(),
             props: Vec::new(),
+            fns: Vec::new(),
+            fn_closures: Vec::new(),
         }
     }
 
