@@ -10,7 +10,13 @@ pub struct RustExprParenParser;
 impl IParser for RustExprParenParser {
     fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
         let pair_str = pair.as_str();
-        Ok(Node::RustExprParen(
+
+        let pair_str = pair_str
+            .strip_prefix('(')
+            .and_then(|sub| sub.strip_suffix(')'))
+            .unwrap_or(pair_str);
+
+        Ok(Node::Expr(
             pair_str.escaped_or_raw(),
             pair_str.is_escaped(),
             Position::from(&pair),

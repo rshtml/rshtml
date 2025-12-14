@@ -25,9 +25,10 @@ pub enum Node {
     InnerText(String), // text inside a block (@@ -> @, @{ -> {, @} -> })
     Comment(String),   // comment content
     PropsDirective(Vec<(String, String, Position)>, Position),
-    RustBlock(String, Position), // @{ ... } block content (with trim)
-    RustExprSimple(String, bool, Position), // @expr ... (simple expression)
-    RustExprParen(String, bool, Position), // @(expr) (expression parentheses)
+    RustBlock(String, Position),  // @{ ... } block content (with trim)
+    Expr(String, bool, Position), // @expr or @(expr) ... (simple expression) or (expression parentheses)
+    // RustExprSimple(String, bool, Position), // @expr ... (simple expression)
+    // RustExprParen(String, bool, Position), // @(expr) (expression parentheses)
     MatchExpr(String, Vec<(String, Vec<Node>)>, Position), // @match expr { ... => ... }
     RustExpr(Vec<(String, Vec<Node>)>, Position), // @if ...  { ... } else { ... } / @for ... { ... }
     Component(String, Vec<ComponentParameter>, Vec<Node>, Position), // <ComponentName param1 = value1, param2 = value2> tags

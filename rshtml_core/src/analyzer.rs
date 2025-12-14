@@ -1,9 +1,8 @@
 mod child_content;
 mod component;
+mod expr;
 mod match_expr;
 mod rust_expr;
-mod rust_expr_paren;
-mod rust_expr_simple;
 mod template;
 mod use_directive;
 
@@ -11,10 +10,9 @@ use syn::{Member, parse_str};
 
 use crate::{
     analyzer::{
-        child_content::ChildContentAnalyzer, component::ComponentAnalyzer,
-        match_expr::MatchExprAnalyzer, rust_expr::RustExprAnalyzer,
-        rust_expr_paren::RustExprParenAnalyzer, rust_expr_simple::RustExprSimpleAnalyzer,
-        template::TemplateAnalyzer, use_directive::UseDirectiveAnalyzer,
+        child_content::ChildContentAnalyzer, component::ComponentAnalyzer, expr::ExprAnalyzer,
+        match_expr::MatchExprAnalyzer, rust_expr::RustExprAnalyzer, template::TemplateAnalyzer,
+        use_directive::UseDirectiveAnalyzer,
     },
     node::Node,
     position::Position,
@@ -56,11 +54,8 @@ impl Analyzer {
             Node::Comment(_) => (),
             Node::PropsDirective(_, _) => (),
             Node::RustBlock(_, _) => (),
-            Node::RustExprSimple(expr, is_escaped, position) => {
-                RustExprSimpleAnalyzer::analyze(self, expr, is_escaped, position)
-            }
-            Node::RustExprParen(expr, is_escaped, position) => {
-                RustExprParenAnalyzer::analyze(self, expr, is_escaped, position)
+            Node::Expr(expr, is_escaped, position) => {
+                ExprAnalyzer::analyze(self, expr, is_escaped, position)
             }
             Node::MatchExpr(head, arms, position) => {
                 MatchExprAnalyzer::analyze(self, head, arms, position)

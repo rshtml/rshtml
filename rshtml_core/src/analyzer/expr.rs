@@ -1,15 +1,10 @@
 use crate::{analyzer::Analyzer, position::Position};
 
-pub struct RustExprParenAnalyzer;
+pub struct ExprAnalyzer;
 
-impl RustExprParenAnalyzer {
+impl ExprAnalyzer {
     pub fn analyze(analyzer: &mut Analyzer, expr: &str, is_escaped: &bool, position: &Position) {
-        let expr_trimed = expr
-            .strip_prefix('(')
-            .and_then(|sub| sub.strip_suffix(')'))
-            .unwrap_or(expr);
-
-        if let Some(field) = analyzer.get_struct_field(expr_trimed)
+        if let Some(field) = analyzer.get_struct_field(expr)
             && !analyzer.struct_fields.contains(&field)
         {
             analyzer.caution(

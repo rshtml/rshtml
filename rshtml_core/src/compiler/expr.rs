@@ -4,9 +4,9 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Expr, parse_quote, parse_str, visit_mut::VisitMut};
 
-pub struct RustExprSimpleCompiler<'a>(&'a Vec<String>, bool);
+pub struct ExprCompiler<'a>(&'a Vec<String>, bool);
 
-impl<'a> RustExprSimpleCompiler<'a> {
+impl<'a> ExprCompiler<'a> {
     pub fn compile(
         compiler: &mut Compiler,
         expr: String,
@@ -21,7 +21,7 @@ impl<'a> RustExprSimpleCompiler<'a> {
             .get(&compiler.component_name)
             .ok_or(anyhow!("component not found"))?;
 
-        let mut visitor = RustExprSimpleCompiler(&component.fn_names, false);
+        let mut visitor = ExprCompiler(&component.fn_names, false);
         visitor.visit_expr_mut(&mut expression);
         let is_fn = visitor.1;
 
@@ -40,7 +40,7 @@ impl<'a> RustExprSimpleCompiler<'a> {
     }
 }
 
-impl<'a> VisitMut for RustExprSimpleCompiler<'a> {
+impl<'a> VisitMut for ExprCompiler<'a> {
     fn visit_expr_mut(&mut self, node: &mut Expr) {
         if let Expr::Call(expr_call) = node
             && let Expr::Path(ref func_path) = *expr_call.func

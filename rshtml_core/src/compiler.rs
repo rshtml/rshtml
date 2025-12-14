@@ -1,4 +1,5 @@
 mod component;
+mod expr;
 mod fn_directive;
 mod inner_text;
 mod match_expr;
@@ -6,14 +7,13 @@ mod props_directive;
 mod raw;
 mod rust_block;
 mod rust_expr;
-mod rust_expr_paren;
-mod rust_expr_simple;
 mod template;
 mod text;
 mod use_directive;
 
 use crate::Node;
 use crate::compiler::component::ComponentCompiler;
+use crate::compiler::expr::ExprCompiler;
 use crate::compiler::fn_directive::FnDirectiveCompiler;
 use crate::compiler::inner_text::InnerTextCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
@@ -21,8 +21,6 @@ use crate::compiler::props_directive::PropsDirectiveCompiler;
 use crate::compiler::raw::RawCompiler;
 use crate::compiler::rust_block::RustBlockCompiler;
 use crate::compiler::rust_expr::RustExprCompiler;
-use crate::compiler::rust_expr_paren::RustExprParenCompiler;
-use crate::compiler::rust_expr_simple::RustExprSimpleCompiler;
 use crate::compiler::template::TemplateCompiler;
 use crate::compiler::text::TextCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
@@ -78,11 +76,8 @@ impl Compiler {
             Node::RustBlock(content, position) => {
                 RustBlockCompiler::compile(self, content, position)
             }
-            Node::RustExprSimple(expr, is_escaped, position) => {
-                RustExprSimpleCompiler::compile(self, expr, is_escaped, position)
-            }
-            Node::RustExprParen(expr, is_escaped, position) => {
-                RustExprParenCompiler::compile(self, expr, is_escaped, position)
+            Node::Expr(expr, is_escaped, position) => {
+                ExprCompiler::compile(self, expr, is_escaped, position)
             }
             Node::MatchExpr(head, arms, position) => {
                 MatchExprCompiler::compile(self, head, arms, position)

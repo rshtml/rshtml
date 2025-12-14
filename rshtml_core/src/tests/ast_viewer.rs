@@ -34,11 +34,8 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::RustBlock(content, _) => {
             println!("- RustBlock: {content:?}");
         }
-        Node::RustExprSimple(expr, _, _) => {
-            println!("- RustExprSimple: {expr:?}");
-        }
-        Node::RustExprParen(expr, _, _) => {
-            println!("- RustExprParen: {expr:?}");
+        Node::Expr(expr, _, _) => {
+            println!("- Expr: {expr:?}");
         }
         Node::RustExpr(clauses, _) => {
             println!("- RustExpr:");
