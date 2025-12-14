@@ -20,8 +20,8 @@ pub struct ComponentParameter {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node {
-    Template(String, String, Vec<Node>, Position), // main template, contains child nodes (path, name, nodes, position)
-    Text(String),                                  // plain text content (@@ -> @)
+    Template(String, String, Vec<String>, Vec<Node>, Position), // main template, contains child nodes (path, name, fn_names, nodes, position)
+    Text(String),                                               // plain text content (@@ -> @)
     InnerText(String), // text inside a block (@@ -> @, @{ -> {, @} -> })
     Comment(String),   // comment content
     PropsDirective(Vec<(String, String, Position)>, Position),

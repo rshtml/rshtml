@@ -39,11 +39,17 @@ impl IParser for UseDirectiveParser {
         };
 
         let (component_node, component_name) = match component_node {
-            Node::Template(file, name, nodes, _) => {
+            Node::Template(file, name, fn_names, nodes, _) => {
                 let component_name = component_name.unwrap_or(name);
 
                 (
-                    Node::Template(file, component_name.to_owned(), nodes, position.to_owned()),
+                    Node::Template(
+                        file,
+                        component_name.to_owned(),
+                        fn_names,
+                        nodes,
+                        position.to_owned(),
+                    ),
                     component_name,
                 )
             }

@@ -16,6 +16,7 @@ impl TemplateCompiler {
         compiler: &mut Compiler,
         file: String,
         name: String,
+        fn_names: Vec<String>,
         nodes: Vec<Node>,
         position: Position,
     ) -> Result<TokenStream> {
@@ -38,9 +39,10 @@ impl TemplateCompiler {
             let prev_component_name = compiler.component_name.to_owned();
             compiler.component_name = name.to_owned();
 
-            compiler
-                .components
-                .insert(name.to_owned(), Component::new(fn_name.to_owned()));
+            compiler.components.insert(
+                name.to_owned(),
+                Component::new(fn_name.to_owned(), fn_names),
+            );
 
             let mut token_stream = TokenStream::new();
             for node in nodes {
@@ -56,7 +58,6 @@ impl TemplateCompiler {
                     compiler.struct_generics.split_for_impl();
 
                 let fns = &component_data.fns;
-                let fn_closures = &component_data.fn_closures;
                 let args = component_data.props_to_ts()?;
 
                 let component_ts = quote! {
@@ -65,11 +66,11 @@ impl TemplateCompiler {
                         use ::rshtml::traits::Render;
                         use ::rshtml::traits::Fx;
 
-                        impl #impl_generics super::#struct_name #type_generics #where_clause {
+                        impl #impl_generics #struct_name #type_generics #where_clause {
                             pub fn #fn_name(&self,
                                 __f__: &mut dyn ::std::fmt::Write,
                                 child_content: impl Fn(&mut dyn ::std::fmt::Write) -> ::std::fmt::Result,
-                                #args) -> ::std::fmt::Result {#(#fn_closures)* #component_ts  Ok(())}
+                                #args) -> ::std::fmt::Result {#component_ts  Ok(())}
 
                             #(#fns)*
                         }

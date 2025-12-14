@@ -32,7 +32,7 @@ impl IParser for FnDirectiveParser {
             .transpose()?
             .map(|node| match node {
                 Node::PropsDirective(props, _) => Ok(props),
-                _ => Err(E::mes(format!("Error parsing fn params")).span(pair_span)),
+                _ => Err(E::mes("Error parsing fn params".to_string()).span(pair_span)),
             })
             .transpose()?
             .unwrap_or_default();
@@ -41,6 +41,8 @@ impl IParser for FnDirectiveParser {
             Some(inner_template) => parser.build_nodes_from_pairs(inner_template.into_inner())?,
             _ => vec![],
         };
+
+        parser.fn_names.push(fn_name.to_owned());
 
         Ok(Node::FnDirective(fn_name, params, body, position))
     }

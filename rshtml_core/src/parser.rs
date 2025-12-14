@@ -46,6 +46,7 @@ pub struct RsHtmlParser {
     config: Config,
     files: Vec<String>,
     pub sources: HashMap<String, String>,
+    fn_names: Vec<String>,
 }
 
 impl RsHtmlParser {
@@ -54,6 +55,7 @@ impl RsHtmlParser {
             config: Config::default(),
             files: Vec::new(),
             sources: HashMap::new(),
+            fn_names: Vec::new(),
         }
     }
 

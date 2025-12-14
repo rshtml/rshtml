@@ -7,6 +7,7 @@ impl TemplateAnalyzer {
         analyzer: &mut Analyzer,
         file: &str,
         _name: &str,
+        _fn_names: &Vec<String>,
         nodes: &Vec<Node>,
         position: &Position,
     ) {

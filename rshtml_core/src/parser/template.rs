@@ -20,10 +20,16 @@ impl IParser for TemplateParser {
             .span(span),
         )?;
 
+        parser.fn_names = Vec::new();
+        let body = parser.build_nodes_from_pairs(pair.into_inner())?;
+        let fn_names = parser.fn_names.to_owned();
+        parser.fn_names = Vec::new();
+
         Ok(Node::Template(
             file,
             component_name,
-            parser.build_nodes_from_pairs(pair.into_inner())?,
+            fn_names,
+            body,
             position,
         ))
     }

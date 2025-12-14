@@ -10,6 +10,12 @@ impl F<fmt::Result> {
     }
 }
 
+impl F<&fmt::Result> {
+    pub fn render(&self, _f: &mut dyn fmt::Write, _e: &'static str) -> fmt::Result {
+        *self.0
+    }
+}
+
 impl<T> F<F<T>>
 where
     T: Fn(&mut dyn fmt::Write) -> fmt::Result,

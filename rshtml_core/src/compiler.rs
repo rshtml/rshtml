@@ -66,8 +66,8 @@ impl Compiler {
 
     pub fn compile(&mut self, node: Node) -> Result<TokenStream> {
         match node {
-            Node::Template(file, name, nodes, position) => {
-                TemplateCompiler::compile(self, file, name, nodes, position)
+            Node::Template(file, name, fn_names, nodes, position) => {
+                TemplateCompiler::compile(self, file, name, fn_names, nodes, position)
             }
             Node::Text(text) => TextCompiler::compile(self, text),
             Node::InnerText(inner_text) => InnerTextCompiler::compile(self, inner_text),
@@ -181,17 +181,17 @@ struct Component {
     token_stream: TokenStream,
     props: Vec<(String, String)>,
     fns: Vec<TokenStream>,
-    fn_closures: Vec<TokenStream>,
+    fn_names: Vec<String>,
 }
 
 impl Component {
-    fn new(fn_name: Ident) -> Self {
+    fn new(fn_name: Ident, fn_names: Vec<String>) -> Self {
         Self {
             fn_name,
             token_stream: TokenStream::new(),
             props: Vec::new(),
             fns: Vec::new(),
-            fn_closures: Vec::new(),
+            fn_names,
         }
     }
 
