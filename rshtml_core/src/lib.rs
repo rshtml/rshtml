@@ -57,16 +57,19 @@ pub fn process_template(
     let rs = quote! {
         #[allow(unused_imports)]
         use ::std::fmt::Write;
+        #[allow(unused_imports)]
+        use ::rshtml::traits::{Render, Fx};
     };
 
     let generated_code = quote! {
+        #[allow(clippy::too_many_arguments)]
         const _ : () = {
 
             #rs
 
-            // impl #impl_generics #struct_name #type_generics #where_clause {
+            impl #impl_generics #struct_name #type_generics #where_clause {
                 #components
-            // }
+            }
 
             impl #impl_generics ::rshtml::traits::RsHtml for #struct_name #type_generics #where_clause {
                 fn fmt(&self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {

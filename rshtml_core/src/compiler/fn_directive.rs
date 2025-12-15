@@ -24,15 +24,14 @@ impl FnDirectiveCompiler {
 
         let fn_name = format_ident!("{}", &name);
 
-        let fn_ts = quote! {
-            fn #fn_name(&self, __f__: &mut dyn ::std::fmt::Write, #args) -> std::fmt::Result {#body_ts Ok(())}
-        };
+        let fn_sign_ts = quote! { fn #fn_name(&self, __f__: &mut dyn ::std::fmt::Write, #args) -> std::fmt::Result; };
+        let fn_body_ts = quote! { fn #fn_name(&self, __f__: &mut dyn ::std::fmt::Write, #args) -> std::fmt::Result {#body_ts Ok(())} };
 
         compiler
             .components
             .entry(compiler.component_name.to_owned())
             .and_modify(|component_data| {
-                component_data.fns.push(fn_ts);
+                component_data.fns.push((fn_sign_ts, fn_body_ts));
             });
 
         Ok(quote! {})

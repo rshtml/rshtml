@@ -25,12 +25,10 @@ impl<'a> ExprCompiler<'a> {
         visitor.visit_expr_mut(&mut expression);
         let is_fn = visitor.1;
 
-        let expr_ts = quote!(#expression);
-
         let expr_ts = if is_fn {
-            expr_ts
+            quote!(#expression;)
         } else {
-            Self::escape_or_raw(expr_ts, is_escaped, "message")
+            Self::escape_or_raw(quote!(#expression), is_escaped, "message")
         };
         // TODO: A caution should be given because display implementation is not being used instead of message.
 
@@ -59,7 +57,7 @@ impl<'a> VisitMut for ExprCompiler<'a> {
             if self.0.contains(&ident.to_string()) {
                 let args = &expr_call.args;
 
-                *node = parse_quote! {{self.#ident(__f__, #args)?;}};
+                *node = parse_quote! {self.#ident(__f__, #args)?};
                 self.1 = true;
             }
         }

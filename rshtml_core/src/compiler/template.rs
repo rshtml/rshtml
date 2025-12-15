@@ -57,24 +57,28 @@ impl TemplateCompiler {
                 let (impl_generics, type_generics, where_clause) =
                     compiler.struct_generics.split_for_impl();
 
-                let fns = &component_data.fns;
+                let (fn_signs, fn_bodies): (Vec<&TokenStream>, Vec<&TokenStream>) =
+                    component_data.fns.iter().map(|(k, v)| (k, v)).unzip();
                 let args = component_data.props_to_ts()?;
 
-                let component_ts = quote! {
-                    mod #fn_name {
-                        use super::*;
-                        use ::rshtml::traits::Render;
-                        use ::rshtml::traits::Fx;
-
-                        impl #impl_generics #struct_name #type_generics #where_clause {
-                            pub fn #fn_name(&self,
-                                __f__: &mut dyn ::std::fmt::Write,
-                                child_content: impl Fn(&mut dyn ::std::fmt::Write) -> ::std::fmt::Result,
-                                #args) -> ::std::fmt::Result {#component_ts  Ok(())}
-
-                            #(#fns)*
+                let component_fns = if component_data.fns.is_empty() {
+                    quote! {}
+                } else {
+                    quote! {
+                        trait __rshtml__fns {
+                            #(#fn_signs)*
+                        }
+                        impl #impl_generics __rshtml__fns for #struct_name #type_generics #where_clause {
+                            #(#fn_bodies)*
                         }
                     }
+                };
+
+                let component_ts = quote! {
+                fn #fn_name(&self,
+                    __f__: &mut dyn ::std::fmt::Write,
+                    child_content: impl Fn(&mut dyn ::std::fmt::Write) -> ::std::fmt::Result,
+                    #args) -> ::std::fmt::Result {#component_fns #component_ts  Ok(())}
                 };
 
                 component_data.token_stream = component_ts.to_owned();

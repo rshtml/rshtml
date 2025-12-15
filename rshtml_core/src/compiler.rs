@@ -167,7 +167,7 @@ struct Component {
     fn_name: Ident,
     token_stream: TokenStream,
     props: Vec<(String, String)>,
-    fns: Vec<TokenStream>,
+    fns: Vec<(TokenStream, TokenStream)>,
     fn_names: Vec<String>,
 }
 
