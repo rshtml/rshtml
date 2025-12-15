@@ -3,6 +3,7 @@
 mod analyzer;
 mod compiler;
 pub mod config;
+mod diagnostic;
 mod error;
 mod node;
 mod parser;
@@ -12,8 +13,8 @@ mod temporary_file;
 #[cfg(test)]
 mod tests;
 
-use crate::config::Config;
 use crate::parser::RsHtmlParser;
+use crate::{config::Config, diagnostic::Diagnostic};
 use anyhow::Result;
 use node::Node;
 use proc_macro2::{Ident, TokenStream};
@@ -111,15 +112,19 @@ fn parse_and_compile(
     let mut rshtml_parser = RsHtmlParser::new();
     let node = rshtml_parser.run(template_path, config)?;
 
-    analyzer::Analyzer::run(
+    let analyzer = analyzer::Analyzer::run(
         template_path.to_owned(),
         &node,
-        rshtml_parser.sources,
+        Diagnostic::new(rshtml_parser.sources),
         struct_fields,
         no_warn,
     );
 
-    let mut compiler = compiler::Compiler::new(struct_name.to_owned(), struct_generics.to_owned());
+    let mut compiler = compiler::Compiler::new(
+        struct_name.to_owned(),
+        struct_generics.to_owned(),
+        analyzer.diagnostic,
+    );
     let ts = compiler.run(node)?;
 
     Ok((ts, compiler.text_size, compiler.component_fns()))

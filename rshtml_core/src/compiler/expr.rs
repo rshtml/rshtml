@@ -28,7 +28,22 @@ impl<'a> ExprCompiler<'a> {
         let expr_ts = if is_fn {
             quote!(#expression;)
         } else {
-            Self::escape_or_raw(quote!(#expression), is_escaped, "message")
+            let file = compiler
+                .files
+                .iter()
+                .last()
+                .map(|x| x.0.as_str())
+                .unwrap_or("<unknown>");
+
+            let message = compiler.diagnostic.caution(
+                file,
+                &position,
+                "attempt to use an expression that does not implement the Display trait.",
+                &[],
+                "this expression does not implement the Display trait.",
+                expr.len(),
+            );
+            Self::escape_or_raw(quote!(#expression), is_escaped, &message)
         };
         // TODO: A caution should be given because display implementation is not being used instead of message.
 

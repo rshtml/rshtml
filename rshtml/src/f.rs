@@ -40,10 +40,7 @@ impl<T> Deref for F<T> {
 
 impl Render for () {
     fn render(&self, _f: &mut dyn fmt::Write, e: &'static str) -> fmt::Result {
-        let magenta = "\x1b[1;35m";
-        let reset = "\x1b[0m";
-
-        eprintln!("{magenta}caution:{reset} {e}");
+        eprintln!("{e}");
         Err(fmt::Error)
     }
 }

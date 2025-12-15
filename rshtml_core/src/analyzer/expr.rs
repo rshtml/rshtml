@@ -1,4 +1,4 @@
-use crate::{analyzer::Analyzer, position::Position};
+use crate::{analyzer::Analyzer, diagnostic::Level, position::Position};
 
 pub struct ExprAnalyzer;
 
@@ -7,12 +7,13 @@ impl ExprAnalyzer {
         if let Some(field) = analyzer.get_struct_field(expr)
             && !analyzer.struct_fields.contains(&field)
         {
-            analyzer.caution(
+            analyzer.diagnostic(
                 position,
                 "attempt to use undefined struct field",
                 &[],
                 " ",
                 expr.len() + !*is_escaped as usize,
+                Level::Caution,
             );
         }
     }

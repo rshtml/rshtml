@@ -22,6 +22,7 @@ use crate::compiler::rust_expr::RustExprCompiler;
 use crate::compiler::template::TemplateCompiler;
 use crate::compiler::text::TextCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
+use crate::diagnostic::Diagnostic;
 use crate::position::Position;
 use anyhow::Result;
 use anyhow::anyhow;
@@ -44,10 +45,11 @@ pub struct Compiler {
     pub files: Vec<(String, Position)>,
     is_root: bool,
     component_name: String,
+    diagnostic: Diagnostic,
 }
 
 impl Compiler {
-    pub fn new(struct_name: Ident, struct_generics: Generics) -> Self {
+    pub fn new(struct_name: Ident, struct_generics: Generics, diagnostic: Diagnostic) -> Self {
         Compiler {
             struct_name,
             struct_generics,
@@ -57,6 +59,7 @@ impl Compiler {
             files: Vec::new(),
             is_root: false,
             component_name: String::new(),
+            diagnostic,
         }
     }
 

@@ -6,38 +6,38 @@ mod rust_expr;
 mod template;
 mod use_directive;
 
-use syn::{Member, parse_str};
-
 use crate::{
     analyzer::{
         child_content::ChildContentAnalyzer, component::ComponentAnalyzer, expr::ExprAnalyzer,
         match_expr::MatchExprAnalyzer, rust_expr::RustExprAnalyzer, template::TemplateAnalyzer,
         use_directive::UseDirectiveAnalyzer,
     },
+    diagnostic::{Diagnostic, Level},
     node::Node,
     position::Position,
 };
 use std::{collections::HashMap, path::PathBuf};
+use syn::{Member, parse_str};
 
 pub struct Analyzer {
     files: Vec<(String, Position)>,
     use_directives: Vec<(String, PathBuf, Position)>,
     components: HashMap<String, (bool, bool)>, // has_child_content, is_used
     layout: Option<Node>,
-    sources: HashMap<String, String>,
     no_warn: bool,
     is_component: Option<String>,
     struct_fields: Vec<String>,
+    pub diagnostic: Diagnostic,
 }
 
 impl Analyzer {
-    fn new(sources: HashMap<String, String>, struct_fields: Vec<String>, no_warn: bool) -> Self {
+    fn new(diagnostic: Diagnostic, struct_fields: Vec<String>, no_warn: bool) -> Self {
         Self {
             files: Vec::new(),
             use_directives: Vec::new(),
             components: HashMap::new(),
             layout: None,
-            sources,
+            diagnostic,
             no_warn,
             is_component: None,
             struct_fields,
@@ -76,11 +76,11 @@ impl Analyzer {
     pub fn run(
         template_path: String,
         node: &Node,
-        sources: HashMap<String, String>,
+        diagnostic: Diagnostic,
         struct_fields: Vec<String>,
         no_warn: bool,
-    ) {
-        let mut analyzer = Self::new(sources, struct_fields, no_warn);
+    ) -> Self {
+        let mut analyzer = Self::new(diagnostic, struct_fields, no_warn);
 
         analyzer.analyze(node);
 
@@ -90,142 +90,35 @@ impl Analyzer {
         }
 
         UseDirectiveAnalyzer::analyze_uses(&analyzer);
+
+        analyzer
     }
 
-    pub fn message(
+    pub fn diagnostic(
         &self,
         position: &Position,
         title: &str,
         lines: &[usize],
         info: &str,
         name_len: usize,
-    ) -> String {
-        let lines = if lines.is_empty() {
-            &[(position.0).0]
-        } else {
-            lines
-        };
-
-        let (source_snippet, left_pad) = if lines.is_empty() {
-            (
-                self.source_first_line(position).unwrap_or_default(),
-                ((position.0).0).to_string().len(),
-            )
-        } else {
-            (
-                self.extract_source_snippet(position).unwrap_or_default(),
-                ((position.1).0).to_string().len(),
-            )
-        };
-
-        let lp = " ".repeat(left_pad);
-        let file_info = self.files_to_info(position);
-        let info = if info.is_empty() {
-            "".to_string()
-        } else {
-            let hyphen = "-".repeat(name_len);
-            format!("{lp} | {hyphen} {info}\n")
-        };
-
-        let mut source = String::new();
-
-        let first_line = (position.0).0;
-
-        for (i, source_line) in source_snippet.lines().enumerate() {
-            let current_line = first_line + i;
-            let lp = left_pad - current_line.to_string().len();
-            let lp = " ".repeat(lp);
-
-            if lines.contains(&current_line) {
-                source.push_str(format!("{lp}{current_line} | {source_line}\n").as_str());
-            }
-        }
-
-        let title = if !title.is_empty() {
-            format!("{title}\n")
-        } else {
-            "".to_string()
-        };
-
-        let lp = " ".repeat(left_pad);
-        let warn = format!("{title}{lp} --> {file_info}\n{lp} |\n{source}{info}{lp} |",);
-
-        warn
-    }
-
-    pub fn warning(
-        &self,
-        position: &Position,
-        title: &str,
-        lines: &[usize],
-        info: &str,
-        name_len: usize,
+        level: Level,
     ) {
-        let yellow = "\x1b[33m";
-        let reset = "\x1b[0m";
-
-        let warn = self.message(position, title, lines, info, name_len);
-
-        eprintln!("{yellow}warning:{reset} {warn}");
-    }
-
-    pub fn caution(
-        &self,
-        position: &Position,
-        title: &str,
-        lines: &[usize],
-        info: &str,
-        name_len: usize,
-    ) {
-        let magenta = "\x1b[1;35m";
-        let reset = "\x1b[0m";
-
-        let cau = self.message(position, title, lines, info, name_len);
-
-        eprintln!("{magenta}caution:{reset} {cau}");
-    }
-
-    fn files_to_info(&self, position: &Position) -> String {
-        self.files
+        let file = self
+            .files
             .last()
-            .map(|(file, _)| position.as_info(file))
-            .unwrap_or("<unknown>".to_string())
-    }
+            .map(|x| x.0.as_str())
+            .unwrap_or("<unknown>");
 
-    fn extract_source_snippet(&self, position: &Position) -> Option<String> {
-        let file_path = self.files.last().map(|x| x.0.clone())?;
+        let message = match level {
+            Level::Warning => self
+                .diagnostic
+                .warning(file, position, title, lines, info, name_len),
+            Level::Caution => self
+                .diagnostic
+                .caution(file, position, title, lines, info, name_len),
+        };
 
-        let snippet = self
-            .sources
-            .get(&file_path)?
-            .lines()
-            .enumerate()
-            .skip((position.0).0.saturating_sub(1))
-            .take((position.1).0 - (position.0).0 + 1)
-            .map(|(i, line)| {
-                let skip_count = (i == (position.0).0 - 1) as usize * ((position.0).1 - 1);
-                let take_count = ((i == (position.1).0 - 1) as usize
-                    * (((position.1).1 - 1).saturating_sub(skip_count)))
-                    + ((1 - (i == (position.1).0 - 1) as usize) * usize::MAX);
-
-                line.chars()
-                    .skip(skip_count)
-                    .take(take_count)
-                    .collect::<String>()
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        Some(snippet)
-    }
-
-    fn source_first_line(&self, position: &Position) -> Option<String> {
-        let file_path = self.files.last().map(|x| x.0.clone())?;
-        self.sources
-            .get(&file_path)?
-            .lines()
-            .nth((position.0).0.saturating_sub(1))
-            .map(|s| s.to_string())
+        eprintln!("{message}");
     }
 
     fn get_struct_field(&self, expr: &str) -> Option<String> {
