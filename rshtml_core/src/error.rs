@@ -13,8 +13,6 @@ pub fn rename_rules(err: Error<Rule>) -> Box<Error<Rule>> {
         Rule::tag_template => "template content".to_string(),
         Rule::text => "html, text".to_string(),
         Rule::inner_text => "html, text".to_string(),
-        Rule::comment_block => "comment".to_string(),
-        Rule::comment_content => "comment".to_string(),
         Rule::props_directive => "property".to_string(),
         Rule::prop_name => "property name".to_string(),
         Rule::prop_type => "property type".to_string(),

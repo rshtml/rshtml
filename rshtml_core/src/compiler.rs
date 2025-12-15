@@ -66,7 +66,6 @@ impl Compiler {
                 TemplateCompiler::compile(self, file, name, fn_names, nodes, position)
             }
             Node::Text(text) => TextCompiler::compile(self, text),
-            Node::Comment(_) => Ok(quote! {}),
             Node::PropsDirective(props, position) => {
                 PropsDirectiveCompiler::compile(self, props, position)
             }

@@ -1,5 +1,4 @@
 mod block;
-mod comment_block;
 mod component;
 mod fn_directive;
 mod inner_text;
@@ -21,7 +20,6 @@ use crate::config::Config;
 use crate::error::{E, rename_rules};
 use crate::node::*;
 use crate::parser::block::BlockParser;
-use crate::parser::comment_block::CommentBlockParser;
 use crate::parser::component::ComponentParser;
 use crate::parser::fn_directive::FnDirectiveParser;
 use crate::parser::inner_text::InnerTextParser;
@@ -70,11 +68,7 @@ impl RsHtmlParser {
                     let inner_nodes = self.build_nodes_from_pairs(pair.into_inner())?;
                     nodes.extend(inner_nodes);
                 }
-                Rule::props_directive
-                | Rule::comment_block
-                | Rule::block
-                | Rule::text
-                | Rule::inner_text => {
+                Rule::props_directive | Rule::block | Rule::text | Rule::inner_text => {
                     nodes.push(self.build_ast_node(pair)?);
                 }
                 // skip other rules (EOI, WHITESPACE, etc.)
@@ -89,7 +83,6 @@ impl RsHtmlParser {
             Rule::template => TemplateParser::parse(self, pair),
             Rule::text => TextParser::parse(self, pair),
             Rule::inner_text => InnerTextParser::parse(self, pair),
-            Rule::comment_block => CommentBlockParser::parse(self, pair),
             Rule::props_directive => PropsDirectiveParser::parse(self, pair),
             Rule::block => BlockParser::parse(self, pair),
             Rule::rust_block => RustBlockParser::parse(self, pair),

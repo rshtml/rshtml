@@ -22,7 +22,6 @@ pub struct ComponentParameter {
 pub enum Node {
     Template(String, String, Vec<String>, Vec<Node>, Position), // main template, contains child nodes (path, name, fn_names, nodes, position)
     Text(String),                                               // plain text content (@@ -> @)
-    Comment(String),                                            // comment content
     PropsDirective(Vec<(String, String, Position)>, Position),
     RustBlock(String, Position),  // @{ ... } block content (with trim)
     Expr(String, bool, Position), // @expr or @(expr) ... (simple expression) or (expression parentheses)
