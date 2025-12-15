@@ -30,13 +30,21 @@ impl<'a> ExprCompiler<'a> {
         let expr_ts = if is_fn {
             expr_ts
         } else {
-            compiler.escape_or_raw(expr_ts, is_escaped, "message")
+            Self::escape_or_raw(expr_ts, is_escaped, "message")
         };
         // TODO: A caution should be given because display implementation is not being used instead of message.
 
         let expr_ts = compiler.with_info(expr_ts, position, None);
 
         Ok(expr_ts)
+    }
+
+    fn escape_or_raw(expr_ts: TokenStream, is_escaped: bool, message: &str) -> TokenStream {
+        if is_escaped {
+            quote! { ::rshtml::F(&(#expr_ts)).render(&mut ::rshtml::EscapingWriter { inner: __f__ }, #message)?; }
+        } else {
+            quote! { ::rshtml::F(&(#expr_ts)).render(__f__, #message)?; }
+        }
     }
 }
 

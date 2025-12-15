@@ -115,14 +115,6 @@ impl Compiler {
         token_stream
     }
 
-    fn escape_or_raw(&self, expr_ts: TokenStream, is_escaped: bool, message: &str) -> TokenStream {
-        if is_escaped {
-            quote! { ::rshtml::F(&(#expr_ts)).render(&mut ::rshtml::EscapingWriter { inner: __f__ }, #message)?; }
-        } else {
-            quote! { ::rshtml::F(&(#expr_ts)).render(__f__, #message)?; }
-        }
-    }
-
     fn generate_fn_name(&self, name: &str) -> String {
         let mut hash: u64 = 5381;
         for c in name.bytes() {
