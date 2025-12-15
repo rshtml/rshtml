@@ -47,9 +47,9 @@ impl IParser for MatchExprParser {
                 Rule::break_directive => vec![Node::BreakDirective],
                 Rule::rust_expr_paren => vec![parser.build_ast_node(match_expr_arm_value)?],
                 Rule::rust_expr_simple => vec![parser.build_ast_node(match_expr_arm_value)?],
-                Rule::match_inner_text => vec![Node::InnerText(
-                    match_expr_arm_value.as_str().replace("@@", "@"),
-                )],
+                Rule::match_inner_text => {
+                    vec![Node::Text(match_expr_arm_value.as_str().replace("@@", "@"))]
+                }
                 _ => {
                     return Err(
                         E::mes("Unexpected match expression arm value ").span(match_expr_arm_span)

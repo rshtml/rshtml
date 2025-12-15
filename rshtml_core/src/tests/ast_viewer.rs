@@ -16,9 +16,6 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::Text(text) => {
             println!("- Text: {text:?}");
         }
-        Node::InnerText(text) => {
-            println!("- InnerText: {text:?}");
-        }
         Node::Comment(comment) => {
             println!("- Comment: {comment:?}");
         }

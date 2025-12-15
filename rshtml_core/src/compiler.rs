@@ -1,7 +1,6 @@
 mod component;
 mod expr;
 mod fn_directive;
-mod inner_text;
 mod match_expr;
 mod props_directive;
 mod raw;
@@ -15,7 +14,6 @@ use crate::Node;
 use crate::compiler::component::ComponentCompiler;
 use crate::compiler::expr::ExprCompiler;
 use crate::compiler::fn_directive::FnDirectiveCompiler;
-use crate::compiler::inner_text::InnerTextCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
 use crate::compiler::props_directive::PropsDirectiveCompiler;
 use crate::compiler::raw::RawCompiler;
@@ -68,7 +66,6 @@ impl Compiler {
                 TemplateCompiler::compile(self, file, name, fn_names, nodes, position)
             }
             Node::Text(text) => TextCompiler::compile(self, text),
-            Node::InnerText(inner_text) => InnerTextCompiler::compile(self, inner_text),
             Node::Comment(_) => Ok(quote! {}),
             Node::PropsDirective(props, position) => {
                 PropsDirectiveCompiler::compile(self, props, position)
