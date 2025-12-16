@@ -3,23 +3,23 @@ use anyhow::Result;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-pub struct PropsDirectiveCompiler;
+pub struct TemplateParamsCompiler;
 
-impl PropsDirectiveCompiler {
+impl TemplateParamsCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        props: Vec<(String, String, Position)>,
+        params: Vec<(String, String, Position)>,
         _position: Position,
     ) -> Result<TokenStream> {
         compiler
             .components
             .entry(compiler.component_name.to_owned())
             .and_modify(|component_data| {
-                component_data.props.extend(
-                    props.iter().map(|(prop_name, prop_type, _)| {
-                        (prop_name.to_owned(), prop_type.to_owned())
-                    }),
-                )
+                component_data
+                    .params
+                    .extend(params.iter().map(|(param_name, param_type, _)| {
+                        (param_name.to_owned(), param_type.to_owned())
+                    }))
             });
 
         Ok(quote! {})

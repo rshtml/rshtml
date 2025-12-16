@@ -16,8 +16,8 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::Text(text) => {
             println!("- Text: {text:?}");
         }
-        Node::PropsDirective(props, _) => {
-            println!("- Props:");
+        Node::TemplateParams(props, _) => {
+            println!("- Template Params:");
             for prop in props {
                 print_indent(indent + 1);
                 println!("- Name: {:?}", prop.0);

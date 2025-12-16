@@ -75,7 +75,7 @@ impl ComponentCompiler {
 
         token_stream.extend(body_ts);
 
-        let args = component_data.prop_names_to_ts();
+        let args = component_data.param_names_to_ts();
         let fn_name = component_data.fn_name;
         let component_ts = quote! {self.#fn_name(__f__, child_content, #args)?;};
 

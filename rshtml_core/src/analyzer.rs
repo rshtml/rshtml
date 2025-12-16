@@ -50,7 +50,7 @@ impl Analyzer {
                 TemplateAnalyzer::analyze(self, file, name, fn_names, nodes, position)
             }
             Node::Text(_) => (),
-            Node::PropsDirective(_, _) => (),
+            Node::TemplateParams(_, _) => (),
             Node::RustBlock(_, _) => (),
             Node::Expr(expr, is_escaped, position) => {
                 ExprAnalyzer::analyze(self, expr, is_escaped, position)

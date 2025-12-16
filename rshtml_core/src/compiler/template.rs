@@ -59,7 +59,7 @@ impl TemplateCompiler {
 
                 let (fn_signs, fn_bodies): (Vec<&TokenStream>, Vec<&TokenStream>) =
                     component_data.fns.iter().map(|(k, v)| (k, v)).unzip();
-                let args = component_data.props_to_ts()?;
+                let args = component_data.params_to_ts()?;
 
                 let component_fns = if component_data.fns.is_empty() {
                     quote! {}

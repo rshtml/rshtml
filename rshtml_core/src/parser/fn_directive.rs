@@ -1,7 +1,7 @@
 use crate::{
     error::E,
     node::Node,
-    parser::{IParser, RsHtmlParser, Rule, props_directive::PropsDirectiveParser},
+    parser::{IParser, RsHtmlParser, Rule, template_params::TemplateParamsParser},
     position::Position,
 };
 use pest::{error::Error, iterators::Pair};
@@ -28,11 +28,11 @@ impl IParser for FnDirectiveParser {
 
         let params = inner_pairs
             .find(|p| p.as_rule() == Rule::fn_params)
-            .map(|p| PropsDirectiveParser::parse(parser, p))
+            .map(|p| TemplateParamsParser::parse(parser, p))
             .transpose()?
             .map(|node| match node {
-                Node::PropsDirective(props, _) => Ok(props),
-                _ => Err(E::mes("Error parsing fn params".to_string()).span(pair_span)),
+                Node::TemplateParams(params, _) => Ok(params),
+                _ => Err(E::mes("Error parsing function parameters".to_string()).span(pair_span)),
             })
             .transpose()?
             .unwrap_or_default();

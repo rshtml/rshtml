@@ -2,11 +2,11 @@ mod component;
 mod expr;
 mod fn_directive;
 mod match_expr;
-mod props_directive;
 mod raw;
 mod rust_block;
 mod rust_expr;
 mod template;
+mod template_params;
 mod text;
 mod use_directive;
 
@@ -15,11 +15,11 @@ use crate::compiler::component::ComponentCompiler;
 use crate::compiler::expr::ExprCompiler;
 use crate::compiler::fn_directive::FnDirectiveCompiler;
 use crate::compiler::match_expr::MatchExprCompiler;
-use crate::compiler::props_directive::PropsDirectiveCompiler;
 use crate::compiler::raw::RawCompiler;
 use crate::compiler::rust_block::RustBlockCompiler;
 use crate::compiler::rust_expr::RustExprCompiler;
 use crate::compiler::template::TemplateCompiler;
+use crate::compiler::template_params::TemplateParamsCompiler;
 use crate::compiler::text::TextCompiler;
 use crate::compiler::use_directive::UseDirectiveCompiler;
 use crate::diagnostic::Diagnostic;
@@ -69,8 +69,8 @@ impl Compiler {
                 TemplateCompiler::compile(self, file, name, fn_names, nodes, position)
             }
             Node::Text(text) => TextCompiler::compile(self, text),
-            Node::PropsDirective(props, position) => {
-                PropsDirectiveCompiler::compile(self, props, position)
+            Node::TemplateParams(params, position) => {
+                TemplateParamsCompiler::compile(self, params, position)
             }
             Node::RustBlock(content, position) => {
                 RustBlockCompiler::compile(self, content, position)
@@ -165,7 +165,7 @@ impl Compiler {
 struct Component {
     fn_name: Ident,
     token_stream: TokenStream,
-    props: Vec<(String, String)>,
+    params: Vec<(String, String)>,
     fns: Vec<(TokenStream, TokenStream)>,
     fn_names: Vec<String>,
 }
@@ -175,31 +175,31 @@ impl Component {
         Self {
             fn_name,
             token_stream: TokenStream::new(),
-            props: Vec::new(),
+            params: Vec::new(),
             fns: Vec::new(),
             fn_names,
         }
     }
 
-    fn props_to_ts(&self) -> Result<TokenStream> {
+    fn params_to_ts(&self) -> Result<TokenStream> {
         let mut args = Vec::new();
 
-        for (prop_name, prop_type) in &self.props {
-            let prop_name = Ident::new(prop_name, Span::call_site());
-            let prop_type = parse_str::<Type>(prop_type)
-                .map_err(|e| anyhow!("Invalid prop type: {prop_type}, {e}"))?;
+        for (param_name, param_type) in &self.params {
+            let param_name = Ident::new(param_name, Span::call_site());
+            let param_type = parse_str::<Type>(param_type)
+                .map_err(|e| anyhow!("Invalid param type: {param_type}, {e}"))?;
 
-            args.push(quote! { #prop_name: #prop_type});
+            args.push(quote! { #param_name: #param_type});
         }
 
         Ok(quote! {#(#args),*})
     }
 
-    fn prop_names_to_ts(&self) -> TokenStream {
+    fn param_names_to_ts(&self) -> TokenStream {
         let args = self
-            .props
+            .params
             .iter()
-            .map(|prop| Ident::new(&prop.0, Span::call_site()));
+            .map(|param| Ident::new(&param.0, Span::call_site()));
         quote! {#(#args),*}
     }
 }

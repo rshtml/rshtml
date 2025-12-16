@@ -3,13 +3,13 @@ mod component;
 mod fn_directive;
 mod inner_text;
 mod match_expr;
-mod props_directive;
 mod raw_block;
 mod rust_block;
 mod rust_expr;
 mod rust_expr_paren;
 mod rust_expr_simple;
 mod template;
+mod template_params;
 mod text;
 mod use_directive;
 
@@ -24,13 +24,13 @@ use crate::parser::component::ComponentParser;
 use crate::parser::fn_directive::FnDirectiveParser;
 use crate::parser::inner_text::InnerTextParser;
 use crate::parser::match_expr::MatchExprParser;
-use crate::parser::props_directive::PropsDirectiveParser;
 use crate::parser::raw_block::RawBlockParser;
 use crate::parser::rust_block::RustBlockParser;
 use crate::parser::rust_expr::RustExprParser;
 use crate::parser::rust_expr_paren::RustExprParenParser;
 use crate::parser::rust_expr_simple::RustExprSimpleParser;
 use crate::parser::template::TemplateParser;
+use crate::parser::template_params::TemplateParamsParser;
 use crate::parser::text::TextParser;
 use crate::parser::use_directive::UseDirectiveParser;
 use pest::error::Error;
@@ -68,7 +68,7 @@ impl RsHtmlParser {
                     let inner_nodes = self.build_nodes_from_pairs(pair.into_inner())?;
                     nodes.extend(inner_nodes);
                 }
-                Rule::props_directive | Rule::block | Rule::text | Rule::inner_text => {
+                Rule::template_params | Rule::block | Rule::text | Rule::inner_text => {
                     nodes.push(self.build_ast_node(pair)?);
                 }
                 // skip other rules (EOI, WHITESPACE, etc.)
@@ -83,7 +83,7 @@ impl RsHtmlParser {
             Rule::template => TemplateParser::parse(self, pair),
             Rule::text => TextParser::parse(self, pair),
             Rule::inner_text => InnerTextParser::parse(self, pair),
-            Rule::props_directive => PropsDirectiveParser::parse(self, pair),
+            Rule::template_params => TemplateParamsParser::parse(self, pair),
             Rule::block => BlockParser::parse(self, pair),
             Rule::rust_block => RustBlockParser::parse(self, pair),
             Rule::rust_expr_simple => RustExprSimpleParser::parse(self, pair),
