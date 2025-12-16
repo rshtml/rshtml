@@ -1,10 +1,4 @@
-﻿<div>
-  @for user in &self.users {
-    <p>@user.name</p>
-  }
-</div>
-
-@use "Card.rs.html" as Card
+﻿@use "Card.rs.html" as Card
 
 @* merhaba comment *@
 
@@ -32,7 +26,6 @@
   @json_let("users_let", &self.users);
 </script>
 
-@self.title
 @(3+5)
 @("Hello, world! <script>alert('hello')</script>")
 
@@ -66,7 +59,6 @@
 @match self.card_count {
   0 => <div>i</div>,
   1 => {
-    <div>hell @self.card_count looo</div>
     <p>hello world</p>
 
     @if self.card_count > 0 {

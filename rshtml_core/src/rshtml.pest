@@ -115,7 +115,7 @@ nested_expression = _{
 
 // region --- Rust Code Blocks (@{ ... }) ---
 
-rust_block = {
+rust_block = ${
     WHITESPACE* ~ "{" ~ rust_block_content ~ "}"
 }
 

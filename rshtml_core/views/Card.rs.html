@@ -1,4 +1,4 @@
-@props(title: std::HashMap<String, Component>, footer: String,
+@(title: std::HashMap<String, Component>, footer: String,
 heyy: (MyStruct, bool), x: &[i32; 5])
 
 <div class="card" style="width: 18rem;">
@@ -11,7 +11,6 @@ heyy: (MyStruct, bool), x: &[i32; 5])
   <div class="card-footer">
     @footer
   </div>
-  <p>@self.data</p>
 </div>
 
 @use "SideBar.rs.html" as SideBar

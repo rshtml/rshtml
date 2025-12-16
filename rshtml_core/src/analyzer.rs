@@ -2,14 +2,17 @@ mod child_content;
 mod component;
 mod expr;
 mod match_expr;
+mod rust_block;
 mod rust_expr;
 mod template;
+mod template_params;
 mod use_directive;
 
 use crate::{
     analyzer::{
         child_content::ChildContentAnalyzer, component::ComponentAnalyzer, expr::ExprAnalyzer,
-        match_expr::MatchExprAnalyzer, rust_expr::RustExprAnalyzer, template::TemplateAnalyzer,
+        match_expr::MatchExprAnalyzer, rust_block::RustBlockAnalyzer, rust_expr::RustExprAnalyzer,
+        template::TemplateAnalyzer, template_params::TemplateParamsAnalyzer,
         use_directive::UseDirectiveAnalyzer,
     },
     diagnostic::{Diagnostic, Level},
@@ -50,8 +53,12 @@ impl Analyzer {
                 TemplateAnalyzer::analyze(self, file, name, fn_names, nodes, position)
             }
             Node::Text(_) => (),
-            Node::TemplateParams(_, _) => (),
-            Node::RustBlock(_, _) => (),
+            Node::TemplateParams(params, position) => {
+                TemplateParamsAnalyzer::analyze(self, params, position)
+            }
+            Node::RustBlock(content, position) => {
+                RustBlockAnalyzer::analyze(self, content, position)
+            }
             Node::Expr(expr, is_escaped, position) => {
                 ExprAnalyzer::analyze(self, expr, is_escaped, position)
             }

@@ -4,7 +4,7 @@ mod viewer;
 use crate::config::Config;
 use crate::node::Node;
 use crate::parser::{RsHtmlParser, Rule};
-use crate::process_template;
+use crate::{parse_and_compile, process_template};
 use pest::Parser;
 use std::fs;
 use syn::__private::Span;
@@ -51,6 +51,20 @@ pub fn test_process_simple() {
         Vec::new(),
         true,
     );
+}
+
+#[test]
+pub fn test_parse_and_compile() {
+    let ident = syn::Ident::new("HomePage", Span::call_site());
+    parse_and_compile(
+        "home.rs.html",
+        Config::load_from_toml_or_default(),
+        &ident,
+        &Generics::default(),
+        Vec::new(),
+        false,
+    )
+    .unwrap();
 }
 
 #[test]

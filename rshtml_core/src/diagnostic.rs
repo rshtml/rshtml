@@ -19,19 +19,15 @@ impl Diagnostic {
         info: &str,
         name_len: usize,
     ) -> String {
-        let lines = if lines.is_empty() {
-            &[(position.0).0]
-        } else {
-            lines
-        };
-
-        let (source_snippet, left_pad) = if lines.is_empty() {
+        let (lines, source_snippet, left_pad) = if lines.is_empty() {
             (
+                &[(position.0).0] as &[usize],
                 self.source_first_line(file, position).unwrap_or_default(),
                 ((position.0).0).to_string().len(),
             )
         } else {
             (
+                lines,
                 self.extract_source_snippet(file, position)
                     .unwrap_or_default(),
                 ((position.1).0).to_string().len(),
@@ -62,9 +58,9 @@ impl Diagnostic {
         }
 
         let title = if !title.is_empty() {
-            format!("{title}\n")
+            &format!("{title}\n")
         } else {
-            "".to_string()
+            ""
         };
 
         let lp = " ".repeat(left_pad);
@@ -114,7 +110,7 @@ impl Diagnostic {
             .lines()
             .enumerate()
             .skip((position.0).0.saturating_sub(1))
-            .take((position.1).0 - (position.0).0 + 1)
+            .take(((position.1).0).saturating_sub((position.0).0) + 1)
             .map(|(i, line)| {
                 let skip_count = (i == (position.0).0 - 1) as usize * ((position.0).1 - 1);
                 let take_count = ((i == (position.1).0 - 1) as usize
