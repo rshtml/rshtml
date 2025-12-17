@@ -64,9 +64,7 @@ impl Diagnostic {
         };
 
         let lp = " ".repeat(left_pad);
-        let warn = format!("{title}{lp} --> {file_info}\n{lp} |\n{source}{info}{lp} |",);
-
-        warn
+        format!("{title}{lp} --> {file_info}\n{lp} |\n{source}{info}{lp} |",)
     }
 
     pub fn warning(
@@ -103,37 +101,18 @@ impl Diagnostic {
         format!("{magenta}caution:{reset} {cau}")
     }
 
-    fn extract_source_snippet(&self, file: &str, position: &Position) -> Option<String> {
-        let snippet = self
-            .sources
-            .get(file)?
-            .lines()
-            .enumerate()
-            .skip((position.0).0.saturating_sub(1))
-            .take(((position.1).0).saturating_sub((position.0).0) + 1)
-            .map(|(i, line)| {
-                let skip_count = (i == (position.0).0 - 1) as usize * ((position.0).1 - 1);
-                let take_count = ((i == (position.1).0 - 1) as usize
-                    * (((position.1).1 - 1).saturating_sub(skip_count)))
-                    + ((1 - (i == (position.1).0 - 1) as usize) * usize::MAX);
-
-                line.chars()
-                    .skip(skip_count)
-                    .take(take_count)
-                    .collect::<String>()
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        Some(snippet)
+    fn extract_source_snippet(&self, file: &str, position: &Position) -> Option<&str> {
+        let source = self.sources.get(file)?;
+        let (start, end) = position.byte_positions();
+        Some(&source[start..end])
     }
 
-    fn source_first_line(&self, file: &str, position: &Position) -> Option<String> {
+    fn source_first_line(&self, file: &str, position: &Position) -> Option<&str> {
         self.sources
             .get(file)?
             .lines()
             .nth((position.0).0.saturating_sub(1))
-            .map(|s| s.to_string())
+            .map(|s| s)
     }
 
     fn files_to_info(&self, file: &str, position: &Position) -> String {
