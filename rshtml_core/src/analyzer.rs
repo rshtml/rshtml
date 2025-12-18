@@ -1,6 +1,7 @@
 mod child_content;
 mod component;
 mod expr;
+mod fn_directive;
 mod match_expr;
 mod rust_block;
 mod rust_expr;
@@ -11,9 +12,9 @@ mod use_directive;
 use crate::{
     analyzer::{
         child_content::ChildContentAnalyzer, component::ComponentAnalyzer, expr::ExprAnalyzer,
-        match_expr::MatchExprAnalyzer, rust_block::RustBlockAnalyzer, rust_expr::RustExprAnalyzer,
-        template::TemplateAnalyzer, template_params::TemplateParamsAnalyzer,
-        use_directive::UseDirectiveAnalyzer,
+        fn_directive::FnDirectiveAnalyzer, match_expr::MatchExprAnalyzer,
+        rust_block::RustBlockAnalyzer, rust_expr::RustExprAnalyzer, template::TemplateAnalyzer,
+        template_params::TemplateParamsAnalyzer, use_directive::UseDirectiveAnalyzer,
     },
     diagnostic::{Diagnostic, Level},
     node::Node,
@@ -70,7 +71,9 @@ impl Analyzer {
                 ComponentAnalyzer::analyze(self, name, parameters, body, position)
             }
             Node::ChildContent => ChildContentAnalyzer::analyze(self),
-            Node::FnDirective(_, _, _, _) => (),
+            Node::FnDirective(name, params, body, position) => {
+                FnDirectiveAnalyzer::analyze(self, name, params, body, position)
+            }
             Node::Raw(_) => (),
             Node::UseDirective(name, path, component, position) => {
                 UseDirectiveAnalyzer::analyze(self, name, path, component, position)

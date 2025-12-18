@@ -43,6 +43,7 @@ pub fn rename_rules(err: Error<Rule>) -> Box<Error<Rule>> {
         Rule::component_tag_identifier => "component tag name".to_string(),
         Rule::component_tag_name => "component tag name".to_string(),
         Rule::fn_directive => "function directive".to_string(),
+        Rule::fn_params => "function parameters".to_string(),
         Rule::fn_head => "function head".to_string(),
         Rule::raw_block => "raw block".to_string(),
         Rule::raw_content => "raw content".to_string(),
