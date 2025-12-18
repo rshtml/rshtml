@@ -11,7 +11,7 @@ impl ComponentAnalyzer {
     pub fn analyze(
         analyzer: &mut Analyzer,
         name: &String,
-        parameters: &Vec<ComponentParameter>,
+        parameters: &[ComponentParameter],
         body: &[Node],
         position: &Position,
     ) {
@@ -34,7 +34,7 @@ impl ComponentAnalyzer {
                             acc.push_str(", ");
                         }
                         acc.push('`');
-                        acc.push_str(&p);
+                        acc.push_str(p);
                         acc.push('`');
                         acc
                     });

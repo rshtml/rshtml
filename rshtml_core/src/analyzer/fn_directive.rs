@@ -17,7 +17,7 @@ impl FnDirectiveAnalyzer {
                 position,
                 "attempt to use invalid identifier",
                 &[],
-                &format!("invalid function name `{name}`, {}", e.to_string()),
+                &format!("invalid function name `{name}`, {}", e),
                 name.len(),
                 Level::Caution,
             );

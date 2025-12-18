@@ -1,6 +1,5 @@
-use syn::{ExprMatch, parse_str};
-
 use crate::{analyzer::Analyzer, diagnostic::Level, node::Node, position::Position};
+use syn::{ExprMatch, parse_str};
 
 pub struct MatchExprAnalyzer;
 
@@ -8,7 +7,7 @@ impl MatchExprAnalyzer {
     pub fn analyze(
         analyzer: &mut Analyzer,
         head: &String,
-        arms: &Vec<(String, Vec<Node>)>,
+        arms: &Vec<(String, Position, Vec<Node>)>,
         position: &Position,
     ) {
         let match_expr = head.to_owned() + "{}";
@@ -25,24 +24,31 @@ impl MatchExprAnalyzer {
 
         let mut match_expr = head.to_owned() + "{";
 
-        for (arm_name, arm_nodes) in arms {
+        let mut lines = Vec::new();
+        let mut err = String::new();
+
+        for (arm_name, arm_name_position, arm_nodes) in arms {
             match_expr.push_str(&(arm_name.to_owned() + " => {},"));
+
+            if let Err(e) = parse_str::<ExprMatch>(&[&match_expr, "}"].concat()) {
+                lines.push(arm_name_position.0.0);
+                if err.is_empty() {
+                    err = e.to_string();
+                }
+            }
 
             for node in arm_nodes {
                 analyzer.analyze(node)
             }
         }
-        // TODO: take match arm name position
 
-        match_expr += "}";
-
-        if let Err(e) = parse_str::<ExprMatch>(&match_expr) {
+        if !lines.is_empty() {
             analyzer.diagnostic(
                 position,
                 "attempt to use invalid match expression",
-                &[],
-                &e.to_string(),
-                head.len(),
+                &lines,
+                &err,
+                0,
                 Level::Caution,
             );
         }

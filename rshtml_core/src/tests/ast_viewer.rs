@@ -33,7 +33,7 @@ pub fn view_node(node: &Node, indent: usize) {
         }
         Node::RustExpr(clauses, _) => {
             println!("- RustExpr:");
-            for (condition, nodes) in clauses {
+            for (condition, _, nodes) in clauses {
                 print_indent(indent + 1);
                 println!("- Clause: {condition:?}");
                 for inner_node in nodes {
@@ -47,7 +47,7 @@ pub fn view_node(node: &Node, indent: usize) {
             println!("- Clause: {head:?}");
             print_indent(indent + 1);
             println!("- Arms:");
-            for (head, values) in arms {
+            for (head, _, values) in arms {
                 print_indent(indent + 2);
                 println!("- Arm: {head:?}");
                 for inner_node in values {

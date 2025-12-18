@@ -112,7 +112,6 @@ impl Diagnostic {
             .get(file)?
             .lines()
             .nth((position.0).0.saturating_sub(1))
-            .map(|s| s)
     }
 
     fn files_to_info(&self, file: &str, position: &Position) -> String {

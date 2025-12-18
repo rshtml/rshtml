@@ -1,9 +1,4 @@
-use crate::{
-    analyzer::{Analyzer, Component},
-    diagnostic::Level,
-    node::Node,
-    position::Position,
-};
+use crate::{analyzer::Analyzer, diagnostic::Level, node::Node, position::Position};
 use std::path::PathBuf;
 
 pub struct UseDirectiveAnalyzer;
@@ -31,10 +26,7 @@ impl UseDirectiveAnalyzer {
             .use_directives
             .push((name.to_owned(), path.to_owned(), position.to_owned()));
 
-        analyzer
-            .components
-            .entry(name.to_owned())
-            .or_insert(Component::default());
+        analyzer.components.entry(name.to_owned()).or_default();
 
         let previous_is_component = analyzer.is_component.clone();
         analyzer.is_component = Some(name.to_owned());

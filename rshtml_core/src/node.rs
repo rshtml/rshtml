@@ -25,7 +25,7 @@ pub enum Node {
     TemplateParams(Vec<(String, String, Position)>, Position),
     RustBlock(String, Position),  // @{ ... } block content (with trim)
     Expr(String, bool, Position), // @expr or @(expr) ... (simple expression) or (expression parentheses)
-    MatchExpr(String, Vec<(String, Vec<Node>)>, Position), // @match expr { ... => ... }
+    MatchExpr(String, Vec<(String, Position, Vec<Node>)>, Position), // @match expr { ... => ... }
     RustExpr(Vec<(String, Position, Vec<Node>)>, Position), // @if ...  { ... } else { ... } / @for ... { ... }
     Component(String, Vec<ComponentParameter>, Vec<Node>, Position), // <ComponentName param1 = value1, param2 = value2> tags
     ChildContent, // @child_content (component child content)
