@@ -35,7 +35,6 @@ impl MatchExprAnalyzer {
         // TODO: take match arm name position
 
         match_expr += "}";
-        dbg!("{}", match_expr.to_string());
 
         if let Err(e) = parse_str::<ExprMatch>(&match_expr) {
             analyzer.diagnostic(

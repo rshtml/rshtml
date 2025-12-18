@@ -25,7 +25,7 @@ use syn::{Member, parse_str};
 pub struct Analyzer {
     files: Vec<(String, Position)>,
     use_directives: Vec<(String, PathBuf, Position)>,
-    components: HashMap<String, (bool, bool)>, // has_child_content, is_used
+    components: HashMap<String, Component>,
     layout: Option<Node>,
     no_warn: bool,
     is_component: Option<String>,
@@ -143,4 +143,11 @@ impl Analyzer {
             None
         }
     }
+}
+
+#[derive(Default)]
+struct Component {
+    has_child_content: bool,
+    is_used: bool,
+    parameters: Vec<String>,
 }
