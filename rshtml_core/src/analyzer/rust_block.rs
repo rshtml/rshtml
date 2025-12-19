@@ -1,44 +1,33 @@
-use syn::{Block, parse::Parser};
-
 use crate::{analyzer::Analyzer, diagnostic::Level, position::Position};
+use syn::{Block, parse::Parser};
 
 pub struct RustBlockAnalyzer;
 
 impl RustBlockAnalyzer {
     pub fn analyze(analyzer: &mut Analyzer, content: &str, position: &Position) {
-        // TODO: analyze this it span gives 0
         if let Err(e) = Block::parse_within.parse_str(content) {
-            let span = e.span();
-            let start = span.start();
-            let end = span.end();
+            let mut pos = position.clone();
+            if let Some((file, _)) = analyzer.files.last()
+                && let Some(source) = analyzer.diagnostic.sources.get(file)
+            {
+                let current_start_byte = pos.2.0;
+                let prefix = &source[..current_start_byte];
 
-            let range = span.byte_range();
+                let line_start_idx = prefix.rfind('\n').map(|i| i + 1).unwrap_or(0);
 
-            let byte_start = position.byte_positions().0;
-            let byte_positions = (byte_start + range.start, byte_start + range.end);
-
-            let line_start = (start.line + position.0.0).saturating_sub(1);
-            let line_end = (end.line + position.0.0).saturating_sub(1);
-
-            let col_start = if start.line == 1 {
-                position.0.1 + start.column
-            } else {
-                start.column + 1
-            };
-            let col_end = if end.line == 1 {
-                position.0.1 + end.column
-            } else {
-                end.column + 1
-            };
-
-            let pos = Position((line_start, col_start), (line_end, col_end), byte_positions);
+                if let Some(at_index_in_slice) =
+                    source[line_start_idx..current_start_byte].rfind('@')
+                {
+                    pos.2.0 = line_start_idx + at_index_in_slice;
+                }
+            }
 
             analyzer.diagnostic(
                 &pos,
                 "invalid rust code block",
-                &[],
+                &[position.0.0, position.1.0],
                 &e.to_string(),
-                1,
+                0,
                 Level::Caution,
             );
         }

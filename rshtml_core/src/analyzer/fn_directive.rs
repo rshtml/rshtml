@@ -1,6 +1,5 @@
-use syn::{Ident, Type, parse_str};
-
 use crate::{analyzer::Analyzer, diagnostic::Level, node::Node, position::Position};
+use syn::{Ident, Type, parse_str};
 
 pub struct FnDirectiveAnalyzer;
 

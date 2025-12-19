@@ -1,7 +1,6 @@
-﻿use serde::Deserialize;
-use std::path::{Path, PathBuf};
+﻿use std::path::{Path, PathBuf};
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Config {
     pub base_path: PathBuf,
     pub extract_file_on_debug: bool,
@@ -31,44 +30,29 @@ impl Config {
     }
 
     pub fn load_from_toml_or_default() -> Self {
-        #[derive(Deserialize, Debug, Clone)]
-        pub struct Views {
-            pub path: Option<String>,
-            pub extract_file_on_debug: Option<bool>,
-        }
-
-        #[derive(Deserialize, Debug, Clone)]
-        pub struct MetadataConfig {
-            pub views: Option<Views>,
-        }
-
-        #[derive(Deserialize, Debug)]
-        struct Metadata {
-            rshtml: Option<MetadataConfig>,
-        }
-
-        #[derive(Deserialize, Debug)]
-        struct Package {
-            metadata: Option<Metadata>,
-        }
-
-        #[derive(Deserialize, Debug)]
-        struct Manifest {
-            package: Option<Package>,
-        }
-
         let mut config = Self::default();
 
         if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
             let cargo_toml_path = Path::new(&manifest_dir).join("Cargo.toml");
             if let Ok(content) = std::fs::read_to_string(cargo_toml_path)
-                && let Ok(manifest) = toml::from_str::<Manifest>(&content)
-                && let Some(pkg) = manifest.package
-                && let Some(metadata) = pkg.metadata
-                && let Some(toml_config) = metadata.rshtml
-                && let Some(views) = toml_config.views
+                && let Ok(toml_value) = content.parse::<toml::Value>()
             {
-                config.set_views(views.path, views.extract_file_on_debug);
+                let views = toml_value
+                    .get("package")
+                    .and_then(|v| v.get("metadata"))
+                    .and_then(|v| v.get("rshtml"))
+                    .and_then(|v| v.get("views"));
+
+                if let Some(v) = views {
+                    let path = v
+                        .get("path")
+                        .and_then(|p| p.as_str())
+                        .map(|s| s.to_string());
+                    let extract_file_on_debug =
+                        v.get("extract_file_on_debug").and_then(|e| e.as_bool());
+
+                    config.set_views(path, extract_file_on_debug);
+                }
             }
         }
 

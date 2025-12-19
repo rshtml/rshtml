@@ -45,7 +45,6 @@ impl<'a> ExprCompiler<'a> {
             );
             Self::escape_or_raw(quote!(#expression), is_escaped, &message)
         };
-        // TODO: A caution should be given because display implementation is not being used instead of message.
 
         let expr_ts = compiler.with_info(expr_ts, position, None);
 

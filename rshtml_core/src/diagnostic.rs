@@ -2,7 +2,7 @@ use crate::position::Position;
 use std::collections::HashMap;
 
 pub struct Diagnostic {
-    sources: HashMap<String, String>,
+    pub sources: HashMap<String, String>,
 }
 
 impl Diagnostic {

@@ -296,7 +296,6 @@ dependencies = [
  "pest_derive",
  "proc-macro2",
  "quote",
- "serde",
  "syn",
  "toml",
 ]
