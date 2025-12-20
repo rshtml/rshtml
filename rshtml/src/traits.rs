@@ -8,5 +8,3 @@ pub trait RsHtml {
 pub trait Render {
     fn render(&self, f: &mut dyn fmt::Write, e: &'static str) -> fmt::Result;
 }
-
-pub trait Fx: Fn(&mut dyn fmt::Write) -> fmt::Result {}

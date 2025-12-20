@@ -11,15 +11,9 @@ pub struct TemplateParamsParser;
 
 impl IParser for TemplateParamsParser {
     fn parse(_: &mut RsHtmlParser, pair: Pair<Rule>) -> Result<Node, Box<Error<Rule>>> {
-        // let pair_span = pair.as_span();
         let position = Position::from(&pair);
 
-        let param_pairs = pair
-            .into_inner()
-            // .find(|p| p.as_rule() == Rule::params)
-            // .ok_or(E::pos(Rule::params).span(pair_span))
-            // .into_iter()
-            .filter(|p| p.as_rule() == Rule::param);
+        let param_pairs = pair.into_inner().filter(|p| p.as_rule() == Rule::param);
 
         let mut params = Vec::new();
         for param_pair in param_pairs {
@@ -34,10 +28,7 @@ impl IParser for TemplateParamsParser {
 
             let param_type = param_inner_pair
                 .find(|p| p.as_rule() == Rule::param_type)
-                .map(|p| match p.as_str() {
-                    "Block" => "impl ::std::fmt::Display".to_string(),
-                    other => other.to_string(),
-                })
+                .map(|p| p.as_str().to_string())
                 .unwrap_or("impl ::std::fmt::Display".into());
 
             params.push((

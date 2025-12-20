@@ -57,9 +57,9 @@ pub fn process_template(
 
     let rs = quote! {
         #[allow(unused_imports)]
-        use ::std::fmt::Write;
+        use ::std::fmt::{Write, Display};
         #[allow(unused_imports)]
-        use ::rshtml::traits::{Render, Fx};
+        use ::rshtml::traits::Render;
     };
 
     let generated_code = quote! {
