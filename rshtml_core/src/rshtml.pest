@@ -2,7 +2,7 @@
 
 BOM             = _{ "\u{FEFF}" }
 WHITESPACE      = _{ " " | "\t" | NEWLINE }
-COMMENT = _{ "@*" ~ (("*" ~ !("@")) | (!("*") ~ ANY))* ~ "*@"}
+COMMENT         = _{ "@*" ~ (("*" ~ !("@")) | (!("*") ~ ANY))* ~ "*@" }
 rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
 // endregion
@@ -28,13 +28,13 @@ inner_text = @{ ("@@" | (!("@" | "}" | ("<" ~ component_tag_identifier) | ("</" 
 
 // region @template_params
 
-template_params  =  { "@" ~ params ~ ";"? }
+template_params = { "@" ~ params ~ ";"? }
 
 // endregion
 
 // region parameters
 
-params  =  _{ ("(" ~ (param ~ ("," ~ param)* ~ ","?)? ~ ")") }
+params            = _{ ("(" ~ (param ~ ("," ~ param)* ~ ","?)? ~ ")") }
 param             =  { (param_name ~ (":" ~ param_type)?) }
 param_name        = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 param_type        = @{ (param_type_nested | !("(" | "[" | "{" | "<" | "," | ")") ~ ANY)+ }
@@ -267,7 +267,7 @@ attribute_value = _{
   | ("{" ~ inner_template ~ "}")
 }
 
-component_tag_identifier = _{ (ASCII_ALPHA_UPPER ~ ASCII_ALPHANUMERIC*) ~ ("." ~ (ASCII_ALPHA_UPPER ~ ASCII_ALPHANUMERIC*))* }
+component_tag_identifier = _{ ASCII_ALPHA_UPPER ~ ASCII_ALPHANUMERIC* }
 component_tag_name       = @{ component_tag_identifier }
 
 bool   = @{ "true" | "false" }
@@ -278,9 +278,7 @@ string = @{ _normal_string }
 
 // region @use directive @use "components/Comp.rshtml" as Component
 
-use_directive = ${
-    &"use" ~ "use" ~ WHITESPACE* ~ string_line ~ WHITESPACE* ~ ("as" ~ WHITESPACE+ ~ rust_identifier ~ (";" | &(WHITESPACE+ | EOI)))?
-}
+use_directive = { &"use" ~ "use" ~ string_line ~ ("as" ~ component_tag_identifier)? ~ ";"? }
 
 // endregion
 
@@ -288,7 +286,7 @@ use_directive = ${
 
 fn_directive =  { fn_head ~ fn_params ~ "{" ~ inner_template ~ "}" }
 fn_head      = ${ "fn" ~ WHITESPACE+ ~ rust_identifier }
-fn_params = { params }
+fn_params    =  { params }
 
 // endregion
 
