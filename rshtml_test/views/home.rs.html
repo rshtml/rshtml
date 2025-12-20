@@ -1,35 +1,26 @@
-﻿@extends('layout.rs.html')
-
-@section('header', self.get_header("hello"))
-
-@section('title','Home Page')
-
-@section footer {
-  <p>Footer content goes here.</p>
-  what is going on dude @self.hey
-  <p>Footer content goes here.</p>
-
-  <div>
-    @if self.my_var == "my var" {
-      <p>MyVar is true</p>
-    } else {
-      <p>MyVar is false</p>
-    }
-  </div>
-}
-
-<div>
+﻿<div>
   @for user in &self.users {
     <p>@user.name</p>
   }
 </div>
 
 @use "Card.rs.html" as Card
-@use "components/Bar.rs.html" as Bar
+@use "components/Bar.rs.html" asBarx
 
-<Bar/>
+< Barx />
 
-@* merhaba comment *@
+@* hello comment *@
+
+@fn my_fn(i: i32, x) {
+  <div>heyy</div>
+  @fn ayyyy(){}
+}
+
+@fn myy() {
+  <h1>hiii</h1>
+}
+
+@my_fn(5, 5)
 
 @{
 
@@ -38,8 +29,9 @@
   }
 
   let my_structs = vec![MyStruct{name: "Amy".to_string()}];
+  let greetings = vec!["hi", "hello", "hey"];
   
-  let x = 5;
+  let x = 7;
   let y = 10;
   println!("{}", x + y);
 
@@ -62,7 +54,7 @@
 </script>
 
 @self.title
-@(3+5)
+@( 3+5)
 @("Hello, world! <script>alert('hello')</script>")
 
 
@@ -83,9 +75,9 @@
   <p>myvar is false</p>
 }
 
-<Card title=@x footer=false my_prop={
+<Card title= @x footer =false my_prop={
   <p>this is my prop @self.title</p>
-}>
+} my_prop2 = {hey} greetings=@greetings>
   <p>hello</p>
   <p>world</p>
   @if true {
@@ -93,8 +85,6 @@
   }
 
 </Card>
-
-@include("header.rs.html")
 
 @match self.card_count {
   0 => <div>i</div>,

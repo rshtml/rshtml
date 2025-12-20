@@ -20,7 +20,7 @@ impl IParser for MatchExprParser {
 
         let match_expr_arms = pairs.filter(|pair| pair.as_rule() == Rule::match_expr_arm);
 
-        let mut nodes: Vec<(String, Vec<Node>)> = Vec::new();
+        let mut nodes: Vec<(String, Position, Vec<Node>)> = Vec::new();
         for match_expr_arm in match_expr_arms {
             let match_expr_arm_span = match_expr_arm.as_span();
             let mut match_expr_arm_iter = match_expr_arm.into_inner();
@@ -28,6 +28,7 @@ impl IParser for MatchExprParser {
             let match_expr_arm_head = match_expr_arm_iter.next().ok_or(
                 E::mes("Match expression arm head cannot find.").span(match_expr_arm_span),
             )?;
+            let match_expr_arm_head_position = Position::from(&match_expr_arm_head);
 
             if match_expr_arm_head.as_rule() != Rule::match_expr_arm_head {
                 return Err(E::mes("Invalid match expression arm head.").span(match_expr_arm_span));
@@ -47,9 +48,9 @@ impl IParser for MatchExprParser {
                 Rule::break_directive => vec![Node::BreakDirective],
                 Rule::rust_expr_paren => vec![parser.build_ast_node(match_expr_arm_value)?],
                 Rule::rust_expr_simple => vec![parser.build_ast_node(match_expr_arm_value)?],
-                Rule::match_inner_text => vec![Node::InnerText(
-                    match_expr_arm_value.as_str().replace("@@", "@"),
-                )],
+                Rule::match_inner_text => {
+                    vec![Node::Text(match_expr_arm_value.as_str().replace("@@", "@"))]
+                }
                 _ => {
                     return Err(
                         E::mes("Unexpected match expression arm value ").span(match_expr_arm_span)
@@ -57,7 +58,11 @@ impl IParser for MatchExprParser {
                 }
             };
 
-            nodes.push((match_expr_arm_head.as_str().to_string(), node_arm_value));
+            nodes.push((
+                match_expr_arm_head.as_str().to_string(),
+                match_expr_arm_head_position,
+                node_arm_value,
+            ));
         }
 
         Ok(Node::MatchExpr(

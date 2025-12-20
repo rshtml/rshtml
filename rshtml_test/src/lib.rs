@@ -5,7 +5,7 @@ use serde::Serialize;
 use std::fmt::Write;
 
 #[derive(RsHtml)]
-// #[rshtml(path = "home.rs.html", no_warn)]
+// #[rshtml(path = "bar.rs.html", no_warn)]
 pub struct HomePage {
     pub title: String,
     pub content: String,
@@ -64,7 +64,7 @@ mod tests {
             },
         ];
 
-        let mut homepage = HomePage {
+        let homepage = HomePage {
             title: "Hello".to_string(),
             content: "World".to_string(),
             card_count: 1,

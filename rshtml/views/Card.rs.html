@@ -1,3 +1,5 @@
+@(title: &str, footer: i32)
+
 <div class="card" style="width: 18rem;">
   <div class="card-header">
     @title
@@ -13,4 +15,4 @@
 
 @use "SideBar.rs.html" as SideBar
 
-<SideBar content= "data">  this is child content </SideBar>
+<SideBar content= {data}>  this is child content </SideBar>

@@ -18,7 +18,7 @@ impl ComponentCompiler {
         body: Vec<Node>,
         position: Position,
     ) -> Result<TokenStream> {
-        let (component_node, component_ts) = compiler
+        let component_data = compiler
             .components
             .get(&name)
             .cloned()
@@ -34,6 +34,8 @@ impl ComponentCompiler {
                 ComponentParameterValue::Bool(value) => quote! {let #name_ts = #value;},
                 ComponentParameterValue::Number(value) => {
                     compiler.text_size.add_assign(value.len());
+                    let value =
+                        TokenStream::from_str(&value).map_err(|e| anyhow!(e.to_string()))?;
                     quote! {let #name_ts = #value;}
                 }
                 ComponentParameterValue::String(value) => {
@@ -51,37 +53,33 @@ impl ComponentCompiler {
                     quote! {let #name_ts = #expr_ts;}
                 }
                 ComponentParameterValue::Block(value) => {
-                    let block_ts =
-                        compiler.compile(Node::Template(String::new(), value, position.clone()))?;
-                    quote! {
-                        let mut #name_ts = String::new();
-                        (|__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#block_ts Ok(())})(&mut #name_ts)?;
+                    let mut block_ts = TokenStream::new();
+                    for v in value {
+                        let ts = compiler.compile(v)?;
+                        block_ts.extend(ts);
                     }
+                    quote! {let #name_ts = ::rshtml::F(|__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#block_ts Ok(())});}
                 }
             };
 
             token_stream.extend(parameter_ts);
         }
 
-        let body_ts = compiler.compile(Node::Template(String::new(), body, position.clone()))?;
+        let mut body_ts = TokenStream::new();
+        for b in body {
+            let ts = compiler.compile(b)?;
+            body_ts.extend(ts);
+        }
+
         let body_ts = quote! {let child_content = |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body_ts  Ok(())};};
 
         token_stream.extend(body_ts);
 
-        if cfg!(debug_assertions) {
-            let component_node = match component_node {
-                Node::Template(file, node, _) => Node::Template(file, node, position.clone()),
-                _ => {
-                    return Err(anyhow!(
-                        "The component must return a template as the top node."
-                    ));
-                }
-            };
-            let ts = compiler.compile(component_node)?;
-            token_stream.extend(ts);
-        } else {
-            token_stream.extend(component_ts);
-        }
+        let args = component_data.param_names_to_ts();
+        let fn_name = component_data.fn_name;
+        let component_ts = quote! {self.#fn_name(__f__, child_content, #args)?;};
+
+        token_stream.extend(component_ts);
 
         let token_stream = compiler.with_info(
             token_stream,

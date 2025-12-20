@@ -137,3 +137,6 @@ pub use rshtml_macro::RsHtml;
 /// without needing a full manual recompile of the dependent crate.
 mod track_views_folder;
 pub use track_views_folder::track_views_folder;
+
+mod f;
+pub use f::F;

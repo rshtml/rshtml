@@ -3,6 +3,7 @@
 mod analyzer;
 mod compiler;
 pub mod config;
+mod diagnostic;
 mod error;
 mod node;
 mod parser;
@@ -12,14 +13,12 @@ mod temporary_file;
 #[cfg(test)]
 mod tests;
 
-use crate::config::Config;
 use crate::parser::RsHtmlParser;
-use crate::position::Position;
+use crate::{config::Config, diagnostic::Diagnostic};
 use anyhow::Result;
 use node::Node;
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, quote_spanned};
-use std::clone::Clone;
 use syn::Generics;
 
 pub fn process_template(
@@ -30,12 +29,13 @@ pub fn process_template(
     no_warn: bool,
 ) -> TokenStream {
     let config = Config::load_from_toml_or_default();
-    let layout = config.layout.clone();
     let extract_file_on_debug = config.extract_file_on_debug;
 
-    let (compiled_ast_tokens, sections, text_size) = match parse_and_compile(
+    let (compiled_ast_tokens, text_size, components) = match parse_and_compile(
         &template_name,
         config,
+        struct_name,
+        struct_generics,
         struct_fields,
         no_warn,
     ) {
@@ -53,30 +53,34 @@ pub fn process_template(
 
     let (impl_generics, type_generics, where_clause) = struct_generics.split_for_impl();
 
-    //dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
+    // dbg!("DEBUG: Generated write_calls TokenStream:\n{}", compiled_ast_tokens.to_string());
 
     let rs = quote! {
-        #[allow(non_upper_case_globals)]
-        const layout: &str = #layout;
-        fn has_section(section: &str) -> bool {#sections.contains(&section)}
         #[allow(unused_imports)]
-        use ::std::fmt::Write;
+        use ::std::fmt::{Write, Display};
+        #[allow(unused_imports)]
+        use ::rshtml::traits::Render;
     };
 
     let generated_code = quote! {
+        #[allow(clippy::too_many_arguments)]
         const _ : () = {
 
             #rs
 
-            impl #impl_generics rshtml::traits::RsHtml for #struct_name #type_generics #where_clause {
-                fn fmt(&mut self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
+            impl #impl_generics #struct_name #type_generics #where_clause {
+                #components
+            }
+
+            impl #impl_generics ::rshtml::traits::RsHtml for #struct_name #type_generics #where_clause {
+                fn fmt(&self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
 
                     #compiled_ast_tokens
 
                     Ok(())
                 }
 
-                fn render(&mut self) -> Result<String, ::std::fmt::Error> {
+                fn render(&self) -> Result<String, ::std::fmt::Error> {
                     let mut buf = String::with_capacity(#text_size);
                     self.fmt(&mut buf)?;
                     Ok(buf)
@@ -100,32 +104,28 @@ pub fn process_template(
 fn parse_and_compile(
     template_path: &str,
     config: Config,
+    struct_name: &Ident,
+    struct_generics: &Generics,
     struct_fields: Vec<String>,
     no_warn: bool,
-) -> Result<(TokenStream, TokenStream, usize)> {
+) -> Result<(TokenStream, usize, TokenStream)> {
     let mut rshtml_parser = RsHtmlParser::new();
     let node = rshtml_parser.run(template_path, config)?;
 
-    analyzer::Analyzer::run(
+    let analyzer = analyzer::Analyzer::run(
         template_path.to_owned(),
         &node,
-        rshtml_parser.sources,
+        Diagnostic::new(rshtml_parser.sources),
         struct_fields,
         no_warn,
     );
 
-    let mut compiler = compiler::Compiler::new();
-    let ts = compiler.compile(node)?;
+    let mut compiler = compiler::Compiler::new(
+        struct_name.to_owned(),
+        struct_generics.to_owned(),
+        analyzer.diagnostic,
+    );
+    let ts = compiler.run(node)?;
 
-    if let Some(layout) = compiler.layout.clone() {
-        compiler.section_body = Some(ts);
-        compiler
-            .files
-            .push((template_path.to_string(), Position::default()));
-        let layout_ts = compiler.compile(layout)?;
-
-        return Ok((layout_ts, compiler.section_names(), compiler.text_size));
-    }
-
-    Ok((ts, compiler.section_names(), compiler.text_size))
+    Ok((ts, compiler.text_size, compiler.component_fns()))
 }

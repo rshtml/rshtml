@@ -1,32 +1,20 @@
-﻿use serde::Deserialize;
-use std::path::{Path, PathBuf};
+﻿use std::path::{Path, PathBuf};
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Config {
     pub base_path: PathBuf,
-    pub layout: String,
     pub extract_file_on_debug: bool,
 }
 
 impl Config {
-    pub fn new<P: AsRef<Path>>(
-        base_path: PathBuf,
-        layout: String,
-        extract_file_on_debug: bool,
-    ) -> Self {
+    pub fn new<P: AsRef<Path>>(base_path: PathBuf, extract_file_on_debug: bool) -> Self {
         Config {
             base_path,
-            layout,
             extract_file_on_debug,
         }
     }
 
-    pub fn set_views(
-        &mut self,
-        path: Option<String>,
-        layout: Option<String>,
-        extract_file_on_debug: Option<bool>,
-    ) {
+    pub fn set_views(&mut self, path: Option<String>, extract_file_on_debug: Option<bool>) {
         if let Some(p) = path {
             let manifest_dir =
                 std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
@@ -36,55 +24,35 @@ impl Config {
             self.base_path = base_path;
         }
 
-        if let Some(l) = layout {
-            self.layout = l;
-        }
-
         if let Some(ef) = extract_file_on_debug {
             self.extract_file_on_debug = ef;
         }
     }
 
     pub fn load_from_toml_or_default() -> Self {
-        #[derive(Deserialize, Debug, Clone)]
-        pub struct Views {
-            pub path: Option<String>,
-            pub layout: Option<String>,
-            pub extract_file_on_debug: Option<bool>,
-        }
-
-        #[derive(Deserialize, Debug, Clone)]
-        pub struct MetadataConfig {
-            pub views: Option<Views>,
-        }
-
-        #[derive(Deserialize, Debug)]
-        struct Metadata {
-            rshtml: Option<MetadataConfig>,
-        }
-
-        #[derive(Deserialize, Debug)]
-        struct Package {
-            metadata: Option<Metadata>,
-        }
-
-        #[derive(Deserialize, Debug)]
-        struct Manifest {
-            package: Option<Package>,
-        }
-
         let mut config = Self::default();
 
         if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
             let cargo_toml_path = Path::new(&manifest_dir).join("Cargo.toml");
             if let Ok(content) = std::fs::read_to_string(cargo_toml_path)
-                && let Ok(manifest) = toml::from_str::<Manifest>(&content)
-                && let Some(pkg) = manifest.package
-                && let Some(metadata) = pkg.metadata
-                && let Some(toml_config) = metadata.rshtml
-                && let Some(views) = toml_config.views
+                && let Ok(toml_value) = content.parse::<toml::Value>()
             {
-                config.set_views(views.path, views.layout, views.extract_file_on_debug);
+                let views = toml_value
+                    .get("package")
+                    .and_then(|v| v.get("metadata"))
+                    .and_then(|v| v.get("rshtml"))
+                    .and_then(|v| v.get("views"));
+
+                if let Some(v) = views {
+                    let path = v
+                        .get("path")
+                        .and_then(|p| p.as_str())
+                        .map(|s| s.to_string());
+                    let extract_file_on_debug =
+                        v.get("extract_file_on_debug").and_then(|e| e.as_bool());
+
+                    config.set_views(path, extract_file_on_debug);
+                }
             }
         }
 
@@ -101,7 +69,6 @@ impl Default for Config {
 
         Config {
             base_path: views_base_path.clone(),
-            layout: String::from("layout.rs.html"),
             extract_file_on_debug: false,
         }
     }

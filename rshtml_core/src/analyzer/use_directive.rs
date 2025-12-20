@@ -1,4 +1,4 @@
-use crate::{analyzer::Analyzer, node::Node, position::Position};
+use crate::{analyzer::Analyzer, diagnostic::Level, node::Node, position::Position};
 use std::path::PathBuf;
 
 pub struct UseDirectiveAnalyzer;
@@ -12,12 +12,13 @@ impl UseDirectiveAnalyzer {
         position: &Position,
     ) {
         if !analyzer.no_warn && analyzer.use_directives.iter().any(|(n, _, _)| n == name) {
-            analyzer.warning(
+            analyzer.diagnostic(
                 position,
                 &format!("attempt to reuse use directive `{name}`"),
                 &[],
                 &format!("use directive `{name}` is redefined"),
                 "use".len(),
+                Level::Warning,
             );
         }
 
@@ -25,10 +26,7 @@ impl UseDirectiveAnalyzer {
             .use_directives
             .push((name.to_owned(), path.to_owned(), position.to_owned()));
 
-        analyzer
-            .components
-            .entry(name.to_owned())
-            .or_insert((false, false));
+        analyzer.components.entry(name.to_owned()).or_default();
 
         let previous_is_component = analyzer.is_component.clone();
         analyzer.is_component = Some(name.to_owned());
@@ -46,14 +44,15 @@ impl UseDirectiveAnalyzer {
         analyzer
             .use_directives
             .iter()
-            .filter(|(name, _, _)| !analyzer.components.get(name).is_some_and(|(_, used)| *used))
+            .filter(|(name, _, _)| !analyzer.components.get(name).is_some_and(|c| c.is_used))
             .for_each(|(name, _, position)| {
-                analyzer.warning(
+                analyzer.diagnostic(
                     position,
                     &format!("unused use directive `{name}`"),
                     &[],
                     &format!("the use directive `{name}` defined but not used"),
                     "use".len(),
+                    Level::Warning,
                 );
             });
     }

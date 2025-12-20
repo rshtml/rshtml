@@ -8,9 +8,8 @@ description.workspace = true
 [dependencies]
 pest = "2.8.0"
 pest_derive = "2.8.0"
-serde = { version = "1.0.219", features = ["derive"] }
 quote = "1.0.40"
-proc-macro2 = "1.0.95"
+proc-macro2 = { version = "1.0.95", features = ["span-locations"]}
 anyhow = "1.0.98"
 toml = "0.8.22"
-syn = { version = "2.0.101", features = ["full"] }
+syn = { version = "2.0.101", features = ["full", "visit-mut"] }

@@ -12,12 +12,12 @@ impl MatchExprCompiler {
     pub fn compile(
         compiler: &mut Compiler,
         head: String,
-        arms: Vec<(String, Vec<Node>)>,
+        arms: Vec<(String, Position, Vec<Node>)>,
         position: Position,
     ) -> Result<TokenStream> {
         let mut arms_ts = TokenStream::new();
 
-        for (arm_name, arm_nodes) in arms {
+        for (arm_name, _, arm_nodes) in arms {
             let mut token_stream = TokenStream::new();
             for node in arm_nodes {
                 let ts = compiler.compile(node)?;

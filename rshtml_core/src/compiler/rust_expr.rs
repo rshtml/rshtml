@@ -11,12 +11,12 @@ pub struct RustExprCompiler;
 impl RustExprCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        exprs: Vec<(String, Vec<Node>)>,
+        exprs: Vec<(String, Position, Vec<Node>)>,
         position: Position,
     ) -> Result<TokenStream> {
         let mut ts = TokenStream::new();
 
-        for (expr, inner_nodes) in exprs {
+        for (expr, _, inner_nodes) in exprs {
             let mut inner_ts = TokenStream::new();
             for inner_node in inner_nodes {
                 let its = compiler.compile(inner_node)?;

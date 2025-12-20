@@ -1,4 +1,4 @@
-﻿use crate::node::{ComponentParameterValue, Node, SectionDirectiveContent};
+﻿use crate::node::{ComponentParameterValue, Node};
 
 fn print_indent(indent: usize) {
     print!("{}", "  ".repeat(indent));
@@ -7,8 +7,8 @@ fn print_indent(indent: usize) {
 pub fn view_node(node: &Node, indent: usize) {
     print_indent(indent);
     match node {
-        Node::Template(_, nodes, _) => {
-            println!("- Template:");
+        Node::Template(_, name, _, nodes, _) => {
+            println!("- Template ({name}):");
             for inner_node in nodes {
                 view_node(inner_node, indent + 1);
             }
@@ -16,34 +16,24 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::Text(text) => {
             println!("- Text: {text:?}");
         }
-        Node::InnerText(text) => {
-            println!("- InnerText: {text:?}");
-        }
-        Node::Comment(comment) => {
-            println!("- Comment: {comment:?}");
-        }
-        Node::IncludeDirective(path, template) => {
-            println!("- IncludeDirective: {path:?}");
-            view_node(template, indent + 1);
-        }
-        Node::ExtendsDirective(path, _) => {
-            println!("- ExtendsDirective: {path:?}");
-        }
-        Node::RenderDirective(path) => {
-            println!("- RenderDirective: {path:?}");
+        Node::TemplateParams(props, _) => {
+            println!("- Template Params:");
+            for prop in props {
+                print_indent(indent + 1);
+                println!("- Name: {:?}", prop.0);
+                print_indent(indent + 1);
+                println!("- Type: {:?}", prop.1);
+            }
         }
         Node::RustBlock(content, _) => {
             println!("- RustBlock: {content:?}");
         }
-        Node::RustExprSimple(expr, _, _) => {
-            println!("- RustExprSimple: {expr:?}");
-        }
-        Node::RustExprParen(expr, _, _) => {
-            println!("- RustExprParen: {expr:?}");
+        Node::Expr(expr, _, _) => {
+            println!("- Expr: {expr:?}");
         }
         Node::RustExpr(clauses, _) => {
             println!("- RustExpr:");
-            for (condition, nodes) in clauses {
+            for (condition, _, nodes) in clauses {
                 print_indent(indent + 1);
                 println!("- Clause: {condition:?}");
                 for inner_node in nodes {
@@ -57,36 +47,13 @@ pub fn view_node(node: &Node, indent: usize) {
             println!("- Clause: {head:?}");
             print_indent(indent + 1);
             println!("- Arms:");
-            for (head, values) in arms {
+            for (head, _, values) in arms {
                 print_indent(indent + 2);
                 println!("- Arm: {head:?}");
                 for inner_node in values {
                     view_node(inner_node, indent + 3);
                 }
             }
-        }
-        Node::SectionDirective(name, body, _) => {
-            println!("- SectionDirective:");
-            print_indent(indent + 1);
-            println!("- StringLine: {name:?}");
-            print_indent(indent + 1);
-            match body {
-                SectionDirectiveContent::Text(s) => println!("- StringLine: {s:?}"),
-                SectionDirectiveContent::RustExprSimple(s, _) => {
-                    println!("- RustExprSimple: {s:?}")
-                }
-            }
-        }
-        Node::SectionBlock(section_head, body, _) => {
-            println!("- SectionBlock:");
-            print_indent(indent + 1);
-            println!("- StringLine: {section_head:?}");
-            for inner_node in body {
-                view_node(inner_node, indent + 1);
-            }
-        }
-        Node::RenderBody => {
-            println!("- RenderBody");
         }
         Node::Component(name, parameters, body, _) => {
             println!("- Component:");
@@ -122,6 +89,24 @@ pub fn view_node(node: &Node, indent: usize) {
         }
         Node::ChildContent => {
             println!("- ChildContent");
+        }
+        Node::FnDirective(name, params, body, _) => {
+            println!("- FnDirective");
+            print_indent(indent + 1);
+            println!("- Name: {name}");
+            print_indent(indent + 1);
+            println!("- Parameters");
+            for (pname, ptype, _) in params {
+                print_indent(indent + 2);
+                println!("- Name: {pname}");
+                print_indent(indent + 2);
+                println!("- Type: {ptype}");
+            }
+            print_indent(indent + 2);
+            println!("- Body:");
+            for inner_node in body {
+                view_node(inner_node, indent + 3);
+            }
         }
         Node::Raw(s) => println!("- Raw: {s:?}"),
         Node::UseDirective(component_name, import_path, component, _) => {

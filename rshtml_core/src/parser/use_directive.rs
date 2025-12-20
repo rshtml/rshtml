@@ -24,20 +24,9 @@ impl IParser for UseDirectiveParser {
         }
         let import_path = Path::new(&import_path_str);
 
-        let component_name = match inner_pairs.find(|p| p.as_rule() == Rule::rust_identifier) {
-            Some(component_name_pair) => component_name_pair.as_str().to_string(),
-            None => import_path
-                .file_stem()
-                .and_then(|stem1| Path::new(stem1).file_stem())
-                .and_then(|stem2| stem2.to_str())
-                .map(|s| s.to_string())
-                .ok_or(
-                    E::mes(format!(
-                        "Failed to derive component name from import path: '{import_path:#?}'"
-                    ))
-                    .span(pair_span),
-                )?,
-        };
+        let component_name = inner_pairs
+            .find(|p| p.as_rule() == Rule::component_tag_identifier)
+            .map(|p| p.as_str().to_string());
 
         let component_node = match parser.parse_template(&import_path_str) {
             Ok(node) => node,
@@ -49,8 +38,21 @@ impl IParser for UseDirectiveParser {
             }
         };
 
-        let component_node = match component_node {
-            Node::Template(file, nodes, _) => Node::Template(file, nodes, position.to_owned()),
+        let (component_node, component_name) = match component_node {
+            Node::Template(file, name, fn_names, nodes, _) => {
+                let component_name = component_name.unwrap_or(name);
+
+                (
+                    Node::Template(
+                        file,
+                        component_name.to_owned(),
+                        fn_names,
+                        nodes,
+                        position.to_owned(),
+                    ),
+                    component_name,
+                )
+            }
             _ => {
                 return Err(
                     E::mes("The component file must contain Template as the top node.")
@@ -60,7 +62,7 @@ impl IParser for UseDirectiveParser {
         };
 
         Ok(Node::UseDirective(
-            component_name.clone(),
+            component_name,
             import_path.to_path_buf(),
             Box::new(component_node),
             position,

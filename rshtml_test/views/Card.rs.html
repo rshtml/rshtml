@@ -1,4 +1,6 @@
-﻿<div class="card" style="width: 18rem;">
+﻿@(title: i32, footer, my_prop: impl Display, my_prop2, greetings: Vec<&str>)
+
+<div class="card" style="width: 18rem;">
     <div class="card-header">
         @title {{-- Title slot --}}
     </div>
@@ -8,6 +10,12 @@
     <div class="card-footer">
         @footer {{-- Footer slot --}}
     </div>
-    @include("header.rs.html")
 </div>
+
 @my_prop
+
+@my_prop2
+
+@for g in greetings {
+    g: @g
+}

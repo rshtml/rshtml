@@ -3,7 +3,6 @@ use crate::compiler::Compiler;
 use crate::position::Position;
 use anyhow::Result;
 use proc_macro2::TokenStream;
-use quote::quote;
 use std::path::PathBuf;
 
 pub struct UseDirectiveCompiler;
@@ -12,15 +11,14 @@ impl UseDirectiveCompiler {
     pub fn compile(
         compiler: &mut Compiler,
         name: String,
-        _path: PathBuf,
+        path: PathBuf,
         component: Node,
-        _position: Position,
+        position: Position,
     ) -> Result<TokenStream> {
-        if !compiler.components.contains_key(&name) {
-            let component_ts = compiler.compile(component.to_owned())?;
-            compiler.components.insert(name, (component, component_ts));
-        }
+        compiler
+            .use_directives
+            .push((path, name.to_owned(), position));
 
-        Ok(quote! {})
+        compiler.compile(component)
     }
 }
