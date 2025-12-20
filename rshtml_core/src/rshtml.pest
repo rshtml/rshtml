@@ -10,7 +10,7 @@ component_tag_identifier = @{ ASCII_ALPHA_UPPER ~ ASCII_ALPHANUMERIC* }
 
 // region --- Core Template Rules ---
 
-template         =  { SOI ~ BOM? ~ template_params? ~ template_content ~ EOI }
+template         =  { SOI ~ BOM? ~ (&("@" ~ "(") ~ template_params | !( "@" ~ "(" )) ~ template_content ~ EOI }
 template_content = ${ (COMMENT | block | text)* }
 inner_template   = ${ (COMMENT | block | inner_text)* }
 tag_template     = ${ (COMMENT | block | text)* }
