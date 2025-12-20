@@ -5,9 +5,9 @@
 </div>
 
 @use "Card.rs.html" as Card
-@use "components/Bar.rs.html" as Bar
+@use "components/Bar.rs.html" asBarx
 
-<Bar/>
+< Barx />
 
 @* hello comment *@
 
@@ -54,7 +54,7 @@
 </script>
 
 @self.title
-@(3+5)
+@( 3+5)
 @("Hello, world! <script>alert('hello')</script>")
 
 
@@ -75,7 +75,7 @@
   <p>myvar is false</p>
 }
 
-<Card title=@x footer=false my_prop={
+<Card title= @x footer =false my_prop={
   <p>this is my prop @self.title</p>
 } my_prop2 = {hey} greetings=@greetings>
   <p>hello</p>

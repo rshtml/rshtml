@@ -15,8 +15,8 @@ impl IParser for ComponentParser {
 
         let mut inner_pairs = pair.into_inner();
         let component_name_pair = inner_pairs
-            .find(|p| p.as_rule() == Rule::component_tag_name)
-            .ok_or(E::pos(Rule::component_tag_name).span(pair_span))?;
+            .find(|p| p.as_rule() == Rule::component_tag_identifier)
+            .ok_or(E::pos(Rule::component_tag_identifier).span(pair_span))?;
 
         let component_name = component_name_pair.as_str().to_string();
 

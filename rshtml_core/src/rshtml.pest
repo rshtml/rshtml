@@ -1,15 +1,16 @@
 // region --- Utility & Lexical Rules ---
 
-BOM             = _{ "\u{FEFF}" }
-WHITESPACE      = _{ " " | "\t" | NEWLINE }
-COMMENT         = _{ "@*" ~ (("*" ~ !("@")) | (!("*") ~ ANY))* ~ "*@" }
-rust_identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+BOM                      = _{ "\u{FEFF}" }
+WHITESPACE               = _{ " " | "\t" | NEWLINE }
+COMMENT                  = _{ "@*" ~ (("*" ~ !("@")) | (!("*") ~ ANY))* ~ "*@" }
+rust_identifier          = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+component_tag_identifier = @{ ASCII_ALPHA_UPPER ~ ASCII_ALPHANUMERIC* }
 
 // endregion
 
 // region --- Core Template Rules ---
 
-template         =  { SOI ~ BOM? ~ template_params? ~ WHITESPACE* ~ template_content ~ EOI }
+template         =  { SOI ~ BOM? ~ template_params? ~ template_content ~ EOI }
 template_content = ${ (COMMENT | block | text)* }
 inner_template   = ${ (COMMENT | block | inner_text)* }
 tag_template     = ${ (COMMENT | block | text)* }
@@ -18,11 +19,8 @@ tag_template     = ${ (COMMENT | block | text)* }
 
 // region --- Text and Comment Rules ---
 
-text       = @{ ("@@" | (!("@" | ("<" ~ component_tag_identifier) | ("</" ~ component_tag_identifier)) ~ ANY))+ }
-inner_text = @{ ("@@" | (!("@" | "}" | ("<" ~ component_tag_identifier) | ("</" ~ component_tag_identifier)) ~ ANY))+ }
-
-// comment_block   =  { "@*" ~ comment_content ~ "*@" }
-// comment_content = @{ (("*" ~ !("@")) | (!("*") ~ ANY))* }
+text       = @{ ("@@" | (!("@" | ("<" ~ WHITESPACE* ~ component_tag_identifier) | ("</" ~ WHITESPACE* ~ component_tag_identifier)) ~ ANY))+ }
+inner_text = @{ ("@@" | (!("@" | "}" | ("<" ~ WHITESPACE* ~ component_tag_identifier) | ("</" ~ WHITESPACE* ~ component_tag_identifier)) ~ ANY))+ }
 
 // endregion
 
@@ -59,7 +57,7 @@ block = !{
 // region --- Rust Expression Blocks (@if, @for, @while etc.) ---
 
 rust_expr = {
-    (rust_expr_head ~ WHITESPACE* ~ "{" ~ inner_template ~ "}")+
+    (rust_expr_head ~ "{" ~ inner_template ~ "}")+
 }
 
 rust_expr_head = @{
@@ -115,8 +113,8 @@ nested_expression = _{
 
 // region --- Rust Code Blocks (@{ ... }) ---
 
-rust_block = ${
-    WHITESPACE* ~ "{" ~ rust_block_content ~ "}"
+rust_block = {
+    "{" ~ rust_block_content ~ "}"
 }
 
 rust_block_content = {
@@ -151,7 +149,7 @@ _block_comment = _{ "/*" ~ (_block_comment | !"*/" ~ ANY)* ~ "*/" }
 // region --- Rust match expression @match ... { ... => ... } ---
 
 match_expr = {
-    match_expr_head ~ WHITESPACE* ~ "{" ~ WHITESPACE* ~ match_expr_arm* ~ WHITESPACE* ~ "}"
+    match_expr_head ~ "{" ~ match_expr_arm* ~ "}"
 }
 
 match_expr_head = @{
@@ -159,7 +157,7 @@ match_expr_head = @{
 }
 
 match_expr_arm = {
-    match_expr_arm_head ~ WHITESPACE* ~ "=>" ~ WHITESPACE* ~ (("{" ~ inner_template ~ "}") | continue_directive | break_directive | rust_expr_paren | rust_expr_simple | match_inner_text) ~ WHITESPACE* ~ ","?
+    match_expr_arm_head ~ "=>" ~ (("{" ~ inner_template ~ "}") | continue_directive | break_directive | rust_expr_paren | rust_expr_simple | match_inner_text) ~ ","?
 }
 
 match_expr_arm_head = @{ (!("@" | "=>") ~ ANY)+ }
@@ -182,7 +180,7 @@ break_directive = @{
 
 // region --- raw block @raw { ... } ---
 
-raw_block = { "raw" ~ WHITESPACE* ~ "{" ~ raw_content ~ "}" }
+raw_block = { "raw" ~ "{" ~ raw_content ~ "}" }
 
 raw_content = @{ (raw_nested_block | !("{" | "}") ~ ANY)* }
 
@@ -197,50 +195,6 @@ string_line = @{
   | "'" ~ (escaped_char | !("'" | "\\") ~ ANY)* ~ "'"
 }
 
-// region @include directive @include('other_view.html')
-
-// include_directive = {
-// &"include" ~ "include" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ WHITESPACE* ~ ")"
-// }
-
-// endregion
-
-// region @extends directive @extends('layout.rs.html')
-
-// extends_directive = {
-// "@" ~ "extends" ~ WHITESPACE* ~ ("(" ~ WHITESPACE* ~ string_line? ~ WHITESPACE* ~ ")")?
-// }
-
-// endregion
-
-// region @section directive and block @section('section_name'), @section content { ... }
-
-// section_block =  { &(section_head ~ WHITESPACE* ~ "{") ~ section_head ~ WHITESPACE* ~ "{" ~ inner_template ~ "}" }
-// section_head  = ${ "section" ~ WHITESPACE+ ~ rust_identifier }
-
-// one line section
-// section_directive = {
-// &("section" ~ WHITESPACE* ~ "(") ~ "section" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ "," ~ (string_line | (rust_expr_simple)) ~ WHITESPACE* ~ ")"
-// }
-
-// endregion
-
-// region @render directive @render('section_name')
-
-// render_directive = {
-// &"render" ~ "render" ~ WHITESPACE* ~ "(" ~ WHITESPACE* ~ string_line ~ WHITESPACE* ~ ")"
-// }
-
-// endregion
-
-// region @render_body directive @render_body
-
-// render_body_directive = @{
-// &"render_body" ~ "render_body" ~ ("(" ~ ")" | &(!rust_identifier))
-// }
-
-// endregion
-
 // region @child_content directive @child_content
 
 child_content_directive = @{
@@ -251,12 +205,11 @@ child_content_directive = @{
 
 // region Component tag <ComponentName param1="value", param2=@value2> ... <ComponentName/>
 
-component = ${
-    &("<" ~ component_tag_identifier) ~ "<" ~ component_tag_name ~ attributes ~ WHITESPACE* ~ ("/>" | (">" ~ tag_template ~ "</" ~ component_tag_identifier ~ ">"))
+component = {
+    &("<" ~ component_tag_identifier) ~ "<" ~ component_tag_identifier ~ (attribute)* ~ ("/>" | (">" ~ tag_template ~ "</" ~ component_tag_identifier ~ ">"))
 }
 
-attributes      = _{ (WHITESPACE+ ~ attribute)* }
-attribute       =  { attribute_name ~ (WHITESPACE* ~ "=" ~ WHITESPACE* ~ attribute_value)? }
+attribute       =  { attribute_name ~ ("=" ~ attribute_value)? }
 attribute_name  = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 attribute_value = _{
     bool
@@ -266,9 +219,6 @@ attribute_value = _{
   | ("@" ~ rust_expr_simple)
   | ("{" ~ inner_template ~ "}")
 }
-
-component_tag_identifier = _{ ASCII_ALPHA_UPPER ~ ASCII_ALPHANUMERIC* }
-component_tag_name       = @{ component_tag_identifier }
 
 bool   = @{ "true" | "false" }
 number = @{ ("-")? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }

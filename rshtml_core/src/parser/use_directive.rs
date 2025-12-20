@@ -25,7 +25,7 @@ impl IParser for UseDirectiveParser {
         let import_path = Path::new(&import_path_str);
 
         let component_name = inner_pairs
-            .find(|p| p.as_rule() == Rule::rust_identifier)
+            .find(|p| p.as_rule() == Rule::component_tag_identifier)
             .map(|p| p.as_str().to_string());
 
         let component_node = match parser.parse_template(&import_path_str) {
