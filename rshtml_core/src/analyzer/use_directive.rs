@@ -1,4 +1,9 @@
-use crate::{analyzer::Analyzer, diagnostic::Level, node::Node, position::Position};
+use crate::{
+    analyzer::{Analyzer, Component, UseDirective},
+    diagnostic::Level,
+    node::Node,
+    position::Position,
+};
 use std::path::PathBuf;
 
 pub struct UseDirectiveAnalyzer;
@@ -11,7 +16,13 @@ impl UseDirectiveAnalyzer {
         component: &Node,
         position: &Position,
     ) {
-        if !analyzer.no_warn && analyzer.use_directives.iter().any(|(n, _, _)| n == name) {
+        if !analyzer.no_warn
+            && analyzer
+                .component
+                .use_directives
+                .iter()
+                .any(|use_directive| &use_directive.name == name)
+        {
             analyzer.diagnostic(
                 position,
                 &format!("attempt to reuse use directive `{name}`"),
@@ -22,18 +33,19 @@ impl UseDirectiveAnalyzer {
             );
         }
 
-        analyzer
-            .use_directives
-            .push((name.to_owned(), path.to_owned(), position.to_owned()));
+        analyzer.component.use_directives.push(UseDirective {
+            name: name.to_owned(),
+            path: path.to_owned(),
+            position: position.to_owned(),
+            is_used: false,
+        });
 
-        analyzer.components.entry(name.to_owned()).or_default();
-
-        let previous_is_component = analyzer.is_component.clone();
-        analyzer.is_component = Some(name.to_owned());
+        let previous_component = analyzer.component.clone();
+        analyzer.component = Component::new(path.to_owned());
 
         analyzer.analyze(component);
 
-        analyzer.is_component = previous_is_component;
+        analyzer.component = previous_component;
     }
 
     pub fn analyze_uses(analyzer: &Analyzer) {
@@ -42,15 +54,19 @@ impl UseDirectiveAnalyzer {
         }
 
         analyzer
+            .component
             .use_directives
             .iter()
-            .filter(|(name, _, _)| !analyzer.components.get(name).is_some_and(|c| c.is_used))
-            .for_each(|(name, _, position)| {
+            .filter(|use_directive| !use_directive.is_used)
+            .for_each(|use_directive| {
                 analyzer.diagnostic(
-                    position,
-                    &format!("unused use directive `{name}`"),
+                    &use_directive.position,
+                    &format!("unused use directive `{}`", use_directive.name),
                     &[],
-                    &format!("the use directive `{name}` defined but not used"),
+                    &format!(
+                        "the use directive `{}` defined but not used",
+                        use_directive.name
+                    ),
                     "use".len(),
                     Level::Warning,
                 );

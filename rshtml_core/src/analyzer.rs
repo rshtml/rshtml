@@ -25,11 +25,10 @@ use syn::{Member, parse_str};
 
 pub struct Analyzer {
     files: Vec<(String, Position)>,
-    use_directives: Vec<(String, PathBuf, Position)>,
-    components: HashMap<String, Component>,
+    components: HashMap<PathBuf, Component>,
+    component: Component,
     layout: Option<Node>,
     no_warn: bool,
-    is_component: Option<String>,
     struct_fields: Vec<String>,
     pub diagnostic: Diagnostic,
 }
@@ -38,12 +37,11 @@ impl Analyzer {
     fn new(diagnostic: Diagnostic, struct_fields: Vec<String>, no_warn: bool) -> Self {
         Self {
             files: Vec::new(),
-            use_directives: Vec::new(),
             components: HashMap::new(),
+            component: Component::default(),
             layout: None,
             diagnostic,
             no_warn,
-            is_component: None,
             struct_fields,
         }
     }
@@ -99,8 +97,6 @@ impl Analyzer {
             analyzer.analyze(&layout);
         }
 
-        UseDirectiveAnalyzer::analyze_uses(&analyzer);
-
         analyzer
     }
 
@@ -148,9 +144,27 @@ impl Analyzer {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 struct Component {
+    path: PathBuf,
     has_child_content: bool,
-    is_used: bool,
     parameters: Vec<String>,
+    use_directives: Vec<UseDirective>,
+}
+
+impl Component {
+    pub fn new(path: PathBuf) -> Self {
+        Self {
+            path,
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(Default, Clone)]
+struct UseDirective {
+    name: String,
+    path: PathBuf,
+    position: Position,
+    is_used: bool,
 }

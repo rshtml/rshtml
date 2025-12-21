@@ -1,4 +1,8 @@
-use crate::{analyzer::Analyzer, node::Node, position::Position};
+use crate::{
+    analyzer::{Analyzer, use_directive::UseDirectiveAnalyzer},
+    node::Node,
+    position::Position,
+};
 
 pub struct TemplateAnalyzer;
 
@@ -18,6 +22,12 @@ impl TemplateAnalyzer {
         for node in nodes {
             analyzer.analyze(node)
         }
+
+        analyzer
+            .components
+            .entry(analyzer.component.path.clone())
+            .or_insert(analyzer.component.clone());
+        UseDirectiveAnalyzer::analyze_uses(analyzer);
 
         if !file.is_empty() {
             analyzer.files.pop();

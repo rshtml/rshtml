@@ -9,16 +9,12 @@ impl TemplateParamsAnalyzer {
         params: &Vec<(String, String, Position)>,
         _position: &Position,
     ) {
-        if let Some(name) = &analyzer.is_component
-            && let Some(component) = analyzer.components.get_mut(name)
-        {
-            component.parameters.extend(
-                params
-                    .iter()
-                    .map(|p| p.0.to_owned())
-                    .collect::<Vec<String>>(),
-            );
-        }
+        analyzer.component.parameters.extend(
+            params
+                .iter()
+                .map(|p| p.0.to_owned())
+                .collect::<Vec<String>>(),
+        );
 
         for (param_name, param_type, param_position) in params {
             if parse_str::<Ident>(param_name).is_err() {
