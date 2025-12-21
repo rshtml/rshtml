@@ -102,8 +102,11 @@ impl RsHtmlParser {
 
     fn parse_template(&mut self, path: &Path) -> Result<Node, Box<Error<Rule>>> {
         let input = self.read_template(path).map_err(|err| {
-            E::mes(format!("Error reading template: {err:?}, path: {path:?}"))
-                .span(Span::new(path.to_string_lossy().to_string().as_str(), 0, 0).unwrap())
+            E::mes(format!(
+                "Error reading template: {err:?}, path: {}",
+                path.display()
+            ))
+            .span(Span::new(path.to_string_lossy().to_string().as_str(), 0, 0).unwrap())
         })?;
 
         let mut pairs = Self::parse(Rule::template, &input)?;
@@ -113,10 +116,11 @@ impl RsHtmlParser {
 
         if template_pair.as_rule() == Rule::template {
             if self.files.contains(&path.to_owned()) {
-                return Err(
-                    E::mes(format!("Error: Circular call detected for '{path:?}'"))
-                        .span(template_pair.as_span()),
-                );
+                return Err(E::mes(format!(
+                    "Error: Circular call detected for '{}'",
+                    path.display()
+                ))
+                .span(template_pair.as_span()));
             }
 
             self.sources

@@ -15,9 +15,9 @@ impl UseDirectiveCompiler {
         component: Node,
         position: Position,
     ) -> Result<TokenStream> {
-        compiler
-            .use_directives
-            .push((path, name.to_owned(), position));
+        if let Some(c) = compiler.components.get_mut(&compiler.component_path) {
+            c.use_directives.push((path, name.to_owned(), position));
+        }
 
         compiler.compile(component)
     }

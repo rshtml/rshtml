@@ -18,16 +18,20 @@ impl ComponentCompiler {
         body: Vec<Node>,
         position: Position,
     ) -> Result<TokenStream> {
-        let use_directive = compiler
-            .use_directives
-            .iter()
-            .find(|ud| ud.1 == name)
+        let use_directive_path = compiler
+            .components
+            .get(&compiler.component_path)
+            .and_then(|c| {
+                c.use_directives
+                    .iter()
+                    .find_map(|(p, n, _)| (*n == name).then(|| p.to_owned()))
+            })
             .ok_or(anyhow!("Component {} not found", name))?;
 
-        let component_data = compiler
+        let (fn_name, args) = compiler
             .components
-            .get(&use_directive.0)
-            .cloned()
+            .get(&use_directive_path)
+            .map(|c| (c.fn_name.to_owned(), c.param_names_to_ts()))
             .ok_or(anyhow!("Component {} not found", name))?;
 
         let mut token_stream = TokenStream::new();
@@ -81,8 +85,6 @@ impl ComponentCompiler {
 
         token_stream.extend(body_ts);
 
-        let args = component_data.param_names_to_ts();
-        let fn_name = component_data.fn_name;
         let component_ts = quote! {self.#fn_name(__f__, child_content, #args)?;};
 
         token_stream.extend(component_ts);

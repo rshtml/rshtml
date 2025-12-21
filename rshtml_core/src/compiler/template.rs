@@ -18,10 +18,8 @@ impl TemplateCompiler {
         name: String,
         fn_names: Vec<String>,
         nodes: Vec<Node>,
-        position: Position,
+        _position: Position,
     ) -> Result<TokenStream> {
-        compiler.files.push((path.clone(), position.clone()));
-
         let fn_name = Ident::new(&compiler.generate_fn_name(&name), Span::call_site());
 
         let fn_call_ts = if compiler.is_root {
@@ -84,8 +82,6 @@ impl TemplateCompiler {
 
             compiler.component_path = prev_component_path;
         }
-
-        compiler.files.pop();
 
         fn_call_ts
     }

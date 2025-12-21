@@ -39,7 +39,6 @@ use syn::parse_str;
 pub struct Compiler {
     struct_name: Ident,
     struct_generics: Generics,
-    use_directives: Vec<(PathBuf, String, Position)>,
     components: HashMap<PathBuf, Component>,
     pub text_size: usize,
     pub files: Vec<(PathBuf, Position)>,
@@ -53,7 +52,6 @@ impl Compiler {
         Compiler {
             struct_name,
             struct_generics,
-            use_directives: Vec::new(),
             components: HashMap::new(),
             text_size: 0,
             files: Vec::new(),
@@ -130,21 +128,7 @@ impl Compiler {
         infos: Option<(&str, &str, bool)>,
     ) -> TokenStream {
         if cfg!(debug_assertions) {
-            let positions = self
-                .files
-                .iter()
-                .skip(1)
-                .map(|(_, pos)| pos)
-                .chain(std::iter::once(&position));
-
-            let mappings: Vec<String> = self
-                .files
-                .iter()
-                .zip(positions)
-                .map(|((file, _), pos)| pos.as_info(file))
-                .collect();
-
-            let mapping = mappings.join(" > ");
+            let mapping = position.as_info(&self.component_path);
 
             if let Some((start, end, is_scoped)) = infos {
                 if is_scoped {
@@ -168,6 +152,7 @@ struct Component {
     params: Vec<(String, String)>,
     fns: Vec<(TokenStream, TokenStream)>,
     fn_names: Vec<String>,
+    use_directives: Vec<(PathBuf, String, Position)>,
 }
 
 impl Component {
@@ -178,6 +163,7 @@ impl Component {
             params: Vec::new(),
             fns: Vec::new(),
             fn_names,
+            use_directives: Vec::new(),
         }
     }
 
