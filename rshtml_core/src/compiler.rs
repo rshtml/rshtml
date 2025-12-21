@@ -30,7 +30,6 @@ use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashMap;
-use std::path::PathBuf;
 use syn::Generics;
 use syn::Ident;
 use syn::Type;
@@ -39,7 +38,6 @@ use syn::parse_str;
 pub struct Compiler {
     struct_name: Ident,
     struct_generics: Generics,
-    use_directives: Vec<(PathBuf, String, Position)>,
     components: HashMap<String, Component>,
     pub text_size: usize,
     pub files: Vec<(String, Position)>,
@@ -53,7 +51,6 @@ impl Compiler {
         Compiler {
             struct_name,
             struct_generics,
-            use_directives: Vec::new(),
             components: HashMap::new(),
             text_size: 0,
             files: Vec::new(),
