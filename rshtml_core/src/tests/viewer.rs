@@ -1,20 +1,3 @@
-// use pest::Parser;
-// use pest::iterators::Pairs;
-// use pest_derive::Parser;
-//
-// #[derive(Parser)]
-// #[grammar = "template.pest"]
-// pub struct TemplateParser;
-//
-// pub fn execute_template(input: &str) {
-//     match TemplateParser::parse(Rule::template, input) {
-//         Ok(pairs) => {
-//             execute_pairs(pairs, 0, true);
-//         }
-//         Err(e) => println!("Parse Error:\n{}", e),
-//     }
-// }
-
 use crate::parser::Rule;
 use pest::iterators::Pairs;
 

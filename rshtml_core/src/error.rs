@@ -82,15 +82,6 @@ impl E {
             },
         }
     }
-
-    // pub fn poss(positives: Vec<Rule>) -> E<Parsing> {
-    //     E::<Parsing> {
-    //         state: Parsing {
-    //             positives: positives,
-    //             negatives: vec![],
-    //         },
-    //     }
-    // }
 }
 
 impl E<Custom> {
@@ -123,24 +114,4 @@ impl E<Parsing> {
             span,
         ))
     }
-
-    // pub fn position(self, position: Position<'_>) -> Box<Error<Rule>> {
-    //     Box::new(Error::new_from_pos(
-    //         ErrorVariant::ParsingError {
-    //             positives: self.state.positives,
-    //             negatives: self.state.negatives,
-    //         },
-    //         position,
-    //     ))
-    // }
-
-    // pub fn negs(mut self, negatives: Vec<Rule>) -> E<Parsing> {
-    //     self.state.negatives = negatives;
-    //     self
-    // }
-
-    // pub fn neg(mut self, negative: Rule) -> E<Parsing> {
-    //     self.state.negatives.push(negative);
-    //     self
-    // }
 }
