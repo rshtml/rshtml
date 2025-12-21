@@ -18,9 +18,15 @@ impl ComponentCompiler {
         body: Vec<Node>,
         position: Position,
     ) -> Result<TokenStream> {
+        let use_directive = compiler
+            .use_directives
+            .iter()
+            .find(|ud| ud.1 == name)
+            .ok_or(anyhow!("Component {} not found", name))?;
+
         let component_data = compiler
             .components
-            .get(&name)
+            .get(&use_directive.0)
             .cloned()
             .ok_or(anyhow!("Component {} not found", name))?;
 

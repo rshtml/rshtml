@@ -20,8 +20,8 @@ pub struct ComponentParameter {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node {
-    Template(String, String, Vec<String>, Vec<Node>, Position), // main template, contains child nodes (path, name, fn_names, nodes, position)
-    Text(String),                                               // plain text content (@@ -> @)
+    Template(PathBuf, String, Vec<String>, Vec<Node>, Position), // main template, contains child nodes (path, name, fn_names, nodes, position)
+    Text(String),                                                // plain text content (@@ -> @)
     TemplateParams(Vec<(String, String, Position)>, Position),
     RustBlock(String, Position),  // @{ ... } block content (with trim)
     Expr(String, bool, Position), // @expr or @(expr) ... (simple expression) or (expression parentheses)

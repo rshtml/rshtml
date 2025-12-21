@@ -4,6 +4,7 @@ use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::position::Position;
 use pest::error::Error;
 use pest::iterators::Pair;
+use std::path::PathBuf;
 
 pub struct TemplateParser;
 
@@ -12,8 +13,13 @@ impl IParser for TemplateParser {
         let span = pair.as_span();
         let position = Position::from(&pair);
 
-        let file = parser.files.last().cloned().unwrap_or_default();
-        let component_name = parser.extract_component_name(&file).ok_or(
+        let file = parser
+            .files
+            .last()
+            .ok_or_else(|| E::mes("No file found for component!").span(span))?;
+
+        let component_path = PathBuf::from(file);
+        let component_name = parser.extract_component_name(file).ok_or(
             E::mes(format!(
                 "Failed to derive component name from import path: '{file:#?}'"
             ))
@@ -26,7 +32,7 @@ impl IParser for TemplateParser {
         parser.fn_names = Vec::new();
 
         Ok(Node::Template(
-            file,
+            component_path,
             component_name,
             fn_names,
             body,

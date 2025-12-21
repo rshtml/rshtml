@@ -2,6 +2,7 @@ use crate::{compiler::Compiler, position::Position};
 use anyhow::{Result, anyhow};
 use proc_macro2::TokenStream;
 use quote::quote;
+use std::path::Path;
 use syn::{Expr, parse_quote, parse_str, visit_mut::VisitMut};
 
 pub struct ExprCompiler<'a>(&'a Vec<String>, bool);
@@ -18,7 +19,7 @@ impl<'a> ExprCompiler<'a> {
 
         let component = compiler
             .components
-            .get(&compiler.component_name)
+            .get(&compiler.component_path)
             .ok_or(anyhow!("component not found"))?;
 
         let mut visitor = ExprCompiler(&component.fn_names, false);
@@ -32,8 +33,8 @@ impl<'a> ExprCompiler<'a> {
                 .files
                 .iter()
                 .last()
-                .map(|x| x.0.as_str())
-                .unwrap_or("<unknown>");
+                .map(|x| x.0.as_path())
+                .unwrap_or(Path::new("<unknown>"));
 
             let message = compiler.diagnostic.caution(
                 file,

@@ -7,8 +7,8 @@ impl RustBlockAnalyzer {
     pub fn analyze(analyzer: &mut Analyzer, content: &str, position: &Position) {
         if let Err(e) = Block::parse_within.parse_str(content) {
             let mut pos = position.clone();
-            if let Some((file, _)) = analyzer.files.last()
-                && let Some(source) = analyzer.diagnostic.sources.get(file)
+            if let Some((path, _)) = analyzer.files.last()
+                && let Some(source) = analyzer.diagnostic.sources.get(path)
             {
                 let current_start_byte = pos.2.0;
                 let prefix = &source[..current_start_byte];

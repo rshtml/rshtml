@@ -30,6 +30,7 @@ use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use syn::Generics;
 use syn::Ident;
 use syn::Type;
@@ -38,11 +39,12 @@ use syn::parse_str;
 pub struct Compiler {
     struct_name: Ident,
     struct_generics: Generics,
-    components: HashMap<String, Component>,
+    use_directives: Vec<(PathBuf, String, Position)>,
+    components: HashMap<PathBuf, Component>,
     pub text_size: usize,
-    pub files: Vec<(String, Position)>,
+    pub files: Vec<(PathBuf, Position)>,
     is_root: bool,
-    component_name: String,
+    component_path: PathBuf,
     diagnostic: Diagnostic,
 }
 
@@ -51,19 +53,20 @@ impl Compiler {
         Compiler {
             struct_name,
             struct_generics,
+            use_directives: Vec::new(),
             components: HashMap::new(),
             text_size: 0,
             files: Vec::new(),
             is_root: false,
-            component_name: String::new(),
+            component_path: PathBuf::new(),
             diagnostic,
         }
     }
 
     pub fn compile(&mut self, node: Node) -> Result<TokenStream> {
         match node {
-            Node::Template(file, name, fn_names, nodes, position) => {
-                TemplateCompiler::compile(self, file, name, fn_names, nodes, position)
+            Node::Template(path, name, fn_names, nodes, position) => {
+                TemplateCompiler::compile(self, path, name, fn_names, nodes, position)
             }
             Node::Text(text) => TextCompiler::compile(self, text),
             Node::TemplateParams(params, position) => {

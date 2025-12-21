@@ -28,7 +28,7 @@ impl IParser for UseDirectiveParser {
             .find(|p| p.as_rule() == Rule::component_tag_identifier)
             .map(|p| p.as_str().to_string());
 
-        let component_node = match parser.parse_template(&import_path_str) {
+        let component_node = match parser.parse_template(import_path) {
             Ok(node) => node,
             Err(err) => {
                 return Err(E::mes(format!(
@@ -39,12 +39,12 @@ impl IParser for UseDirectiveParser {
         };
 
         let (component_node, component_name) = match component_node {
-            Node::Template(file, name, fn_names, nodes, _) => {
+            Node::Template(path, name, fn_names, nodes, _) => {
                 let component_name = component_name.unwrap_or(name);
 
                 (
                     Node::Template(
-                        file,
+                        path,
                         component_name.to_owned(),
                         fn_names,
                         nodes,

@@ -10,11 +10,15 @@ pub struct UseDirectiveCompiler;
 impl UseDirectiveCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        _name: String,
-        _path: PathBuf,
+        name: String,
+        path: PathBuf,
         component: Node,
-        _position: Position,
+        position: Position,
     ) -> Result<TokenStream> {
+        compiler
+            .use_directives
+            .push((path, name.to_owned(), position));
+
         compiler.compile(component)
     }
 }

@@ -13,9 +13,6 @@ mod template_params;
 mod text;
 mod use_directive;
 
-use std::collections::HashMap;
-use std::path::PathBuf;
-
 use crate::config::Config;
 use crate::error::{E, rename_rules};
 use crate::node::*;
@@ -37,13 +34,15 @@ use pest::error::Error;
 use pest::iterators::{Pair, Pairs};
 use pest::{Parser, Span};
 use pest_derive::Parser;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
 #[derive(Parser)]
 #[grammar = "rshtml.pest"]
 pub struct RsHtmlParser {
     config: Config,
-    files: Vec<String>,
-    pub sources: HashMap<String, String>,
+    files: Vec<PathBuf>,
+    pub sources: HashMap<PathBuf, String>,
     fn_names: Vec<String>,
 }
 
@@ -101,10 +100,10 @@ impl RsHtmlParser {
         }
     }
 
-    fn parse_template(&mut self, path: &str) -> Result<Node, Box<Error<Rule>>> {
+    fn parse_template(&mut self, path: &Path) -> Result<Node, Box<Error<Rule>>> {
         let input = self.read_template(path).map_err(|err| {
-            E::mes(format!("Error reading template: {err:?}, path: {path}"))
-                .span(Span::new(path, 0, 0).unwrap())
+            E::mes(format!("Error reading template: {err:?}, path: {path:?}"))
+                .span(Span::new(path.to_string_lossy().to_string().as_str(), 0, 0).unwrap())
         })?;
 
         let mut pairs = Self::parse(Rule::template, &input)?;
@@ -113,9 +112,9 @@ impl RsHtmlParser {
         )?;
 
         if template_pair.as_rule() == Rule::template {
-            if self.files.contains(&path.to_string()) {
+            if self.files.contains(&path.to_owned()) {
                 return Err(
-                    E::mes(format!("Error: Circular call detected for '{path}'"))
+                    E::mes(format!("Error: Circular call detected for '{path:?}'"))
                         .span(template_pair.as_span()),
                 );
             }
@@ -123,7 +122,7 @@ impl RsHtmlParser {
             self.sources
                 .entry(path.to_owned())
                 .or_insert_with(|| input.clone());
-            self.files.push(path.to_string());
+            self.files.push(path.to_owned());
 
             let ast = self.build_ast_node(template_pair)?;
 
@@ -135,7 +134,7 @@ impl RsHtmlParser {
         }
     }
 
-    fn read_template(&self, path: &str) -> Result<String, String> {
+    fn read_template(&self, path: &Path) -> Result<String, String> {
         let view_path = self.config.base_path.join(path);
         let template = std::fs::read_to_string(&view_path).map_err(|err| {
             format!(
@@ -150,11 +149,12 @@ impl RsHtmlParser {
 
     pub fn run(&mut self, path: &str, config: Config) -> Result<Node, Box<Error<Rule>>> {
         self.config = config;
-        self.parse_template(path).map_err(|err| rename_rules(*err))
+        let path = PathBuf::from(path);
+
+        self.parse_template(&path).map_err(|err| rename_rules(*err))
     }
 
-    fn extract_component_name(&self, path: &str) -> Option<String> {
-        let path = PathBuf::from(path);
+    fn extract_component_name(&self, path: &Path) -> Option<String> {
         let filename = path.file_name().and_then(|n| n.to_str())?;
         let component_name = filename.strip_suffix(".rs.html").unwrap_or(filename);
         Some(component_name.to_owned())

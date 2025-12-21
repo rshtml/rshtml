@@ -20,11 +20,14 @@ use crate::{
     node::Node,
     position::Position,
 };
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 use syn::{Member, parse_str};
 
 pub struct Analyzer {
-    files: Vec<(String, Position)>,
+    files: Vec<(PathBuf, Position)>,
     components: HashMap<PathBuf, Component>,
     component: Component,
     layout: Option<Node>,
@@ -48,8 +51,8 @@ impl Analyzer {
 
     fn analyze(&mut self, node: &Node) {
         match node {
-            Node::Template(file, name, fn_names, nodes, position) => {
-                TemplateAnalyzer::analyze(self, file, name, fn_names, nodes, position)
+            Node::Template(path, name, fn_names, nodes, position) => {
+                TemplateAnalyzer::analyze(self, path, name, fn_names, nodes, position)
             }
             Node::Text(_) => (),
             Node::TemplateParams(params, position) => {
@@ -93,7 +96,9 @@ impl Analyzer {
         analyzer.analyze(node);
 
         if let Some(layout) = analyzer.layout.clone() {
-            analyzer.files.push((template_path, Position::default()));
+            analyzer
+                .files
+                .push((PathBuf::from(template_path), Position::default()));
             analyzer.analyze(&layout);
         }
 
@@ -112,8 +117,8 @@ impl Analyzer {
         let file = self
             .files
             .last()
-            .map(|x| x.0.as_str())
-            .unwrap_or("<unknown>");
+            .map(|x| x.0.as_path())
+            .unwrap_or(Path::new("<unknown>"));
 
         let message = match level {
             Level::Warning => self

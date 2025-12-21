@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::parser::Rule;
 use pest::iterators::Pair;
 
@@ -16,10 +18,10 @@ impl From<&Pair<'_, Rule>> for Position {
 }
 
 impl Position {
-    pub fn as_info(&self, file: &str) -> String {
+    pub fn as_info(&self, file: &Path) -> String {
         let positions = format!("{}:{}-{}:{}", self.0.0, self.0.1, self.1.0, self.1.1);
 
-        format!("{}:{}", file, positions)
+        format!("{}:{}", file.to_str().unwrap_or(""), positions)
     }
 
     pub fn byte_positions(&self) -> (usize, usize) {

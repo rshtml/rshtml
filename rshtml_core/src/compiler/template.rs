@@ -1,28 +1,26 @@
-use anyhow::Result;
-use proc_macro2::{Span, TokenStream};
-use quote::quote;
-use syn::Ident;
-
 use crate::{
     compiler::{Compiler, Component},
     node::Node,
     position::Position,
 };
+use anyhow::Result;
+use proc_macro2::{Span, TokenStream};
+use quote::quote;
+use std::path::PathBuf;
+use syn::Ident;
 
 pub struct TemplateCompiler;
 
 impl TemplateCompiler {
     pub fn compile(
         compiler: &mut Compiler,
-        file: String,
+        path: PathBuf,
         name: String,
         fn_names: Vec<String>,
         nodes: Vec<Node>,
         position: Position,
     ) -> Result<TokenStream> {
-        if !file.is_empty() {
-            compiler.files.push((file.clone(), position.clone()));
-        }
+        compiler.files.push((path.clone(), position.clone()));
 
         let fn_name = Ident::new(&compiler.generate_fn_name(&name), Span::call_site());
 
@@ -35,12 +33,12 @@ impl TemplateCompiler {
             Ok(quote! {})
         };
 
-        if !compiler.components.contains_key(&name) {
-            let prev_component_name = compiler.component_name.to_owned();
-            compiler.component_name = name.to_owned();
+        if !compiler.components.contains_key(&path) {
+            let prev_component_path = compiler.component_path.to_owned();
+            compiler.component_path = path.to_owned();
 
             compiler.components.insert(
-                name.to_owned(),
+                path.to_owned(),
                 Component::new(fn_name.to_owned(), fn_names),
             );
 
@@ -52,7 +50,7 @@ impl TemplateCompiler {
 
             let component_ts = token_stream.to_owned();
 
-            if let Some(component_data) = compiler.components.get_mut(&name) {
+            if let Some(component_data) = compiler.components.get_mut(&path) {
                 let struct_name = &compiler.struct_name;
                 let (impl_generics, type_generics, where_clause) =
                     compiler.struct_generics.split_for_impl();
@@ -84,12 +82,10 @@ impl TemplateCompiler {
                 component_data.token_stream = component_ts.to_owned();
             }
 
-            compiler.component_name = prev_component_name;
+            compiler.component_path = prev_component_path;
         }
 
-        if !file.is_empty() {
-            compiler.files.pop();
-        }
+        compiler.files.pop();
 
         fn_call_ts
     }

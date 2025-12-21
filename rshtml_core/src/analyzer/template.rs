@@ -1,23 +1,24 @@
 use crate::{
-    analyzer::{Analyzer, use_directive::UseDirectiveAnalyzer},
+    analyzer::{Analyzer, Component, use_directive::UseDirectiveAnalyzer},
     node::Node,
     position::Position,
 };
+use std::{mem, path::Path};
 
 pub struct TemplateAnalyzer;
 
 impl TemplateAnalyzer {
     pub fn analyze(
         analyzer: &mut Analyzer,
-        file: &str,
+        path: &Path,
         _name: &str,
         _fn_names: &Vec<String>,
         nodes: &Vec<Node>,
         position: &Position,
     ) {
-        if !file.is_empty() {
-            analyzer.files.push((file.to_owned(), position.clone()));
-        }
+        analyzer.files.push((path.to_owned(), position.clone()));
+        let previous_component =
+            mem::replace(&mut analyzer.component, Component::new(path.to_owned()));
 
         for node in nodes {
             analyzer.analyze(node)
@@ -29,8 +30,7 @@ impl TemplateAnalyzer {
             .or_insert(analyzer.component.clone());
         UseDirectiveAnalyzer::analyze_uses(analyzer);
 
-        if !file.is_empty() {
-            analyzer.files.pop();
-        }
+        analyzer.component = previous_component;
+        analyzer.files.pop();
     }
 }

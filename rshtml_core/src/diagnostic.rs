@@ -1,18 +1,21 @@
 use crate::position::Position;
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 pub struct Diagnostic {
-    pub sources: HashMap<String, String>,
+    pub sources: HashMap<PathBuf, String>,
 }
 
 impl Diagnostic {
-    pub fn new(sources: HashMap<String, String>) -> Self {
+    pub fn new(sources: HashMap<PathBuf, String>) -> Self {
         Self { sources }
     }
 
     pub fn message(
         &self,
-        file: &str,
+        file: &Path,
         position: &Position,
         title: &str,
         lines: &[usize],
@@ -69,7 +72,7 @@ impl Diagnostic {
 
     pub fn warning(
         &self,
-        file: &str,
+        file: &Path,
         position: &Position,
         title: &str,
         lines: &[usize],
@@ -86,7 +89,7 @@ impl Diagnostic {
 
     pub fn caution(
         &self,
-        file: &str,
+        file: &Path,
         position: &Position,
         title: &str,
         lines: &[usize],
@@ -101,20 +104,20 @@ impl Diagnostic {
         format!("{magenta}caution:{reset} {cau}")
     }
 
-    fn extract_source_snippet(&self, file: &str, position: &Position) -> Option<&str> {
+    fn extract_source_snippet(&self, file: &Path, position: &Position) -> Option<&str> {
         let source = self.sources.get(file)?;
         let (start, end) = position.byte_positions();
         Some(&source[start..end])
     }
 
-    fn source_first_line(&self, file: &str, position: &Position) -> Option<&str> {
+    fn source_first_line(&self, file: &Path, position: &Position) -> Option<&str> {
         self.sources
             .get(file)?
             .lines()
             .nth((position.0).0.saturating_sub(1))
     }
 
-    fn files_to_info(&self, file: &str, position: &Position) -> String {
+    fn files_to_info(&self, file: &Path, position: &Position) -> String {
         position.as_info(file)
     }
 }

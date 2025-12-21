@@ -29,7 +29,7 @@ impl FnDirectiveCompiler {
 
         compiler
             .components
-            .entry(compiler.component_name.to_owned())
+            .entry(compiler.component_path.to_owned())
             .and_modify(|component_data| {
                 component_data.fns.push((fn_sign_ts, fn_body_ts));
             });
