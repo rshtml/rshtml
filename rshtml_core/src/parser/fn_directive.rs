@@ -1,6 +1,6 @@
 use crate::{
     error::E,
-    node::Node,
+    node::{Function, Node},
     parser::{IParser, RsHtmlParser, Rule, template_params::TemplateParamsParser},
     position::Position,
 };
@@ -42,7 +42,10 @@ impl IParser for FnDirectiveParser {
             _ => vec![],
         };
 
-        parser.fn_names.push(fn_name.to_owned());
+        parser.fns.push(Function {
+            name: fn_name.to_owned(),
+            params: params.to_owned(),
+        });
 
         Ok(Node::FnDirective(fn_name, params, body, position))
     }

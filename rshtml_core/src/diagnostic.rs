@@ -55,6 +55,10 @@ impl Diagnostic {
             let lp = left_pad - current_line.to_string().len();
             let lp = " ".repeat(lp);
 
+            let source_line = source_line
+                .trim_matches(|c| c == ' ' || c == '\t')
+                .to_string();
+
             if lines.contains(&current_line) {
                 source.push_str(format!("{lp}{current_line} | {source_line}\n").as_str());
             }

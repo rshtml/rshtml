@@ -1,6 +1,6 @@
 use crate::{
     compiler::{Compiler, Component},
-    node::Node,
+    node::{Function, Node},
     position::Position,
 };
 use anyhow::Result;
@@ -16,7 +16,7 @@ impl TemplateCompiler {
         compiler: &mut Compiler,
         path: PathBuf,
         name: String,
-        fn_names: Vec<String>,
+        fns: Vec<Function>,
         nodes: Vec<Node>,
         _position: Position,
     ) -> Result<TokenStream> {
@@ -37,7 +37,10 @@ impl TemplateCompiler {
 
             compiler.components.insert(
                 path.to_owned(),
-                Component::new(fn_name.to_owned(), fn_names),
+                Component::new(
+                    fn_name.to_owned(),
+                    fns.iter().map(|f| f.name.to_owned()).collect(),
+                ),
             );
 
             let mut token_stream = TokenStream::new();

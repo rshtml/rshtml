@@ -1,6 +1,12 @@
 use crate::position::Position;
 use std::path::PathBuf;
 
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct Function {
+    pub name: String,
+    pub params: Vec<(String, String, Position)>,
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum ComponentParameterValue {
     Bool(bool),
@@ -20,8 +26,8 @@ pub struct ComponentParameter {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node {
-    Template(PathBuf, String, Vec<String>, Vec<Node>, Position), // main template, contains child nodes (path, name, fn_names, nodes, position)
-    Text(String),                                                // plain text content (@@ -> @)
+    Template(PathBuf, String, Vec<Function>, Vec<Node>, Position), // main template, contains child nodes (path, name, fns, nodes, position)
+    Text(String),                                                  // plain text content (@@ -> @)
     TemplateParams(Vec<(String, String, Position)>, Position),
     RustBlock(String, Position),  // @{ ... } block content (with trim)
     Expr(String, bool, Position), // @expr or @(expr) ... (simple expression) or (expression parentheses)

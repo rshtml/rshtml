@@ -4,6 +4,7 @@ use crate::parser::{IParser, RsHtmlParser, Rule};
 use crate::position::Position;
 use pest::error::Error;
 use pest::iterators::Pair;
+use std::mem;
 use std::path::PathBuf;
 
 pub struct TemplateParser;
@@ -26,15 +27,16 @@ impl IParser for TemplateParser {
             .span(span),
         )?;
 
-        parser.fn_names = Vec::new();
+        let prev_fns = mem::take(&mut parser.fns);
+
         let body = parser.build_nodes_from_pairs(pair.into_inner())?;
-        let fn_names = parser.fn_names.to_owned();
-        parser.fn_names = Vec::new();
+
+        let fns = mem::replace(&mut parser.fns, prev_fns);
 
         Ok(Node::Template(
             component_path,
             component_name,
-            fn_names,
+            fns,
             body,
             position,
         ))

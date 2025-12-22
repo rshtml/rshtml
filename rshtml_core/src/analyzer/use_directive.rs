@@ -4,7 +4,7 @@ use crate::{
     node::Node,
     position::Position,
 };
-use std::{mem, path::PathBuf};
+use std::path::PathBuf;
 
 pub struct UseDirectiveAnalyzer;
 
@@ -40,21 +40,15 @@ impl UseDirectiveAnalyzer {
             is_used: false,
         });
 
-        let previous_component =
-            mem::replace(&mut analyzer.component, Component::new(path.to_owned()));
-
         analyzer.analyze(component);
-
-        analyzer.component = previous_component;
     }
 
-    pub fn analyze_uses(analyzer: &Analyzer) {
+    pub fn analyze_uses(analyzer: &Analyzer, component: &Component) {
         if analyzer.no_warn {
             return;
         }
 
-        analyzer
-            .component
+        component
             .use_directives
             .iter()
             .filter(|use_directive| !use_directive.is_used)

@@ -63,8 +63,8 @@ impl Compiler {
 
     pub fn compile(&mut self, node: Node) -> Result<TokenStream> {
         match node {
-            Node::Template(path, name, fn_names, nodes, position) => {
-                TemplateCompiler::compile(self, path, name, fn_names, nodes, position)
+            Node::Template(path, name, fns, nodes, position) => {
+                TemplateCompiler::compile(self, path, name, fns, nodes, position)
             }
             Node::Text(text) => TextCompiler::compile(self, text),
             Node::TemplateParams(params, position) => {

@@ -17,7 +17,7 @@ use crate::{
         template_params::TemplateParamsAnalyzer, use_directive::UseDirectiveAnalyzer,
     },
     diagnostic::{Diagnostic, Level},
-    node::Node,
+    node::{Function, Node},
     position::Position,
 };
 use std::{
@@ -51,8 +51,8 @@ impl Analyzer {
 
     fn analyze(&mut self, node: &Node) {
         match node {
-            Node::Template(path, name, fn_names, nodes, position) => {
-                TemplateAnalyzer::analyze(self, path, name, fn_names, nodes, position)
+            Node::Template(path, name, fns, nodes, position) => {
+                TemplateAnalyzer::analyze(self, path, name, fns, nodes, position)
             }
             Node::Text(_) => (),
             Node::TemplateParams(params, position) => {
@@ -155,12 +155,14 @@ struct Component {
     has_child_content: bool,
     parameters: Vec<String>,
     use_directives: Vec<UseDirective>,
+    fns: Vec<Function>,
 }
 
 impl Component {
-    pub fn new(path: PathBuf) -> Self {
+    pub fn new(path: PathBuf, fns: Vec<Function>) -> Self {
         Self {
             path,
+            fns,
             ..Default::default()
         }
     }
