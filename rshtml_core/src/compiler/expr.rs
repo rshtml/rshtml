@@ -44,7 +44,8 @@ impl<'a> ExprCompiler<'a> {
                 "this expression does not implement the Display trait.",
                 expr.len(),
             );
-            Self::escape_or_raw(quote!(#expression), is_escaped, &message)
+            // Self::escape_or_raw(quote!(#expression), is_escaped, &message)
+            quote! { ::rshtml::F::<_, #is_escaped>(&(#expression)).render(__f__, #message)?; }
         };
 
         let expr_ts = compiler.with_info(expr_ts, position, None);
@@ -52,13 +53,13 @@ impl<'a> ExprCompiler<'a> {
         Ok(expr_ts)
     }
 
-    fn escape_or_raw(expr_ts: TokenStream, is_escaped: bool, message: &str) -> TokenStream {
-        if is_escaped {
-            quote! { ::rshtml::F(&(#expr_ts)).render(&mut ::rshtml::EscapingWriter { inner: __f__ }, #message)?; }
-        } else {
-            quote! { ::rshtml::F(&(#expr_ts)).render(__f__, #message)?; }
-        }
-    }
+    // fn escape_or_raw(expr_ts: TokenStream, is_escaped: bool, message: &str) -> TokenStream {
+    //     if is_escaped {
+    //         quote! { ::rshtml::F(&(#expr_ts)).render(&mut ::rshtml::EscapingWriter { inner: __f__ }, #message)?; }
+    //     } else {
+    //         quote! { ::rshtml::F(&(#expr_ts)).render(__f__, #message)?; }
+    //     }
+    // }
 }
 
 impl<'a> VisitMut for ExprCompiler<'a> {

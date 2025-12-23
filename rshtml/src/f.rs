@@ -1,38 +1,61 @@
+use crate::EscapingWriter;
 use crate::traits::Render;
-use std::fmt;
+use std::fmt::{self, Debug, Write};
 use std::ops::Deref;
 
-pub struct F<T>(pub T);
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct F<T: ?Sized, const ESCAPE: bool = true>(pub T);
 
-impl F<fmt::Result> {
+impl<const ESCAPE: bool> F<fmt::Result, ESCAPE> {
+    #[inline(always)]
     pub fn render(&self, _f: &mut dyn fmt::Write, _e: &'static str) -> fmt::Result {
         self.0
     }
 }
 
-impl F<&fmt::Result> {
+impl<const ESCAPE: bool> F<&fmt::Result, ESCAPE> {
+    #[inline(always)]
     pub fn render(&self, _f: &mut dyn fmt::Write, _e: &'static str) -> fmt::Result {
         *self.0
     }
 }
 
-impl<T> F<F<T>>
+impl<T: ?Sized, const ESCAPE1: bool, const ESCAPE2: bool> F<F<T, ESCAPE1>, ESCAPE2>
 where
     T: Fn(&mut dyn fmt::Write) -> fmt::Result,
 {
+    #[inline(always)]
     pub fn render(&self, f: &mut dyn fmt::Write, _e: &'static str) -> fmt::Result {
         (self.0.0)(f)
     }
 }
 
-impl<T: fmt::Display> Render for F<T> {
-    fn render(&self, f: &mut dyn fmt::Write, _e: &'static str) -> fmt::Result {
-        write!(f, "{}", self.0)
+impl<T: ?Sized, const ESCAPE1: bool, const ESCAPE2: bool> F<&F<T, ESCAPE1>, ESCAPE2>
+where
+    T: Fn(&mut dyn fmt::Write) -> fmt::Result,
+{
+    #[inline(always)]
+    pub fn render(&self, f: &mut dyn fmt::Write, _e: &'static str) -> fmt::Result {
+        (self.0.0)(f)
     }
 }
 
-impl<T> Deref for F<T> {
+impl<T: fmt::Display + ?Sized, const ESCAPE: bool> Render for F<T, ESCAPE> {
+    #[inline(always)]
+    fn render(&self, f: &mut dyn fmt::Write, _e: &'static str) -> fmt::Result {
+        if ESCAPE {
+            write!(&mut EscapingWriter { inner: f }, "{}", &self.0)
+        } else {
+            write!(f, "{}", &self.0)
+        }
+    }
+}
+
+impl<T: ?Sized, const ESCAPE: bool> Deref for F<T, ESCAPE> {
     type Target = ();
+
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &()
     }
@@ -45,7 +68,7 @@ impl Render for () {
     }
 }
 
-impl<T> fmt::Display for F<T>
+impl<T: ?Sized, const ESCAPE: bool> fmt::Display for F<T, ESCAPE>
 where
     T: Fn(&mut dyn fmt::Write) -> fmt::Result,
 {
