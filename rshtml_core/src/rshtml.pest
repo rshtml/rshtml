@@ -34,7 +34,7 @@ template_params = { "@" ~ params ~ ";"? }
 
 params            = _{ ("(" ~ (param ~ ("," ~ param)* ~ ","?)? ~ ")") }
 param             =  { (param_name ~ (":" ~ param_type)?) }
-param_name        = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+param_name        = @{ rust_identifier }
 param_type        = @{ (param_type_nested | !("(" | "[" | "{" | "<" | "," | ")") ~ ANY)+ }
 param_type_nested = _{
     ("(" ~ (param_type_nested | (!")" ~ ANY))* ~ ")")
