@@ -60,6 +60,8 @@ pub fn process_template(
         use ::std::fmt::{Write, Display};
         #[allow(unused_imports)]
         use ::rshtml::traits::Render;
+        #[allow(unused_imports)]
+        use ::rshtml::Block;
     };
 
     let generated_code = quote! {

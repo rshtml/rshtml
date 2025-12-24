@@ -45,7 +45,7 @@ impl<'a> ExprCompiler<'a> {
                 expr.len(),
             );
             // Self::escape_or_raw(quote!(#expression), is_escaped, &message)
-            quote! { ::rshtml::F::<_, #is_escaped>(&(#expression)).render(__f__, #message)?; }
+            quote! { ::rshtml::Expr::<_, #is_escaped>(&(#expression)).render(__f__, #message)?; }
         };
 
         let expr_ts = compiler.with_info(expr_ts, position, None);
