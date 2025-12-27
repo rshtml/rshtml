@@ -49,7 +49,7 @@ param_type_nested = _{
 
 block = !{
     component
-  | ("@" ~ ((raw_block | child_content_directive | use_directive | fn_directive) | (rust_block | rust_expr | rust_expr_paren | match_expr | continue_directive | break_directive | rust_expr_simple)))
+  | ("@" ~ ((raw_block | child_content_directive | use_directive) | (rust_block | rust_expr | rust_expr_paren | match_expr | continue_directive | break_directive | rust_expr_simple)))
 }
 
 // endregion
@@ -229,14 +229,6 @@ string = @{ _normal_string }
 // region @use directive @use "components/Comp.rshtml" as Component
 
 use_directive = { &"use" ~ "use" ~ string_line ~ ("as" ~ component_tag_identifier)? ~ ";"? }
-
-// endregion
-
-// region @def directive @def def_name(param1: i32, param2) {}
-
-fn_directive =  { fn_head ~ fn_params ~ "{" ~ inner_template ~ "}" }
-fn_head      = ${ "fn" ~ WHITESPACE+ ~ rust_identifier }
-fn_params    =  { params }
 
 // endregion
 

@@ -90,24 +90,6 @@ pub fn view_node(node: &Node, indent: usize) {
         Node::ChildContent => {
             println!("- ChildContent");
         }
-        Node::FnDirective(name, params, body, _) => {
-            println!("- FnDirective");
-            print_indent(indent + 1);
-            println!("- Name: {name}");
-            print_indent(indent + 1);
-            println!("- Parameters");
-            for (pname, ptype, _) in params {
-                print_indent(indent + 2);
-                println!("- Name: {pname}");
-                print_indent(indent + 2);
-                println!("- Type: {ptype}");
-            }
-            print_indent(indent + 2);
-            println!("- Body:");
-            for inner_node in body {
-                view_node(inner_node, indent + 3);
-            }
-        }
         Node::Raw(s) => println!("- Raw: {s:?}"),
         Node::UseDirective(component_name, import_path, component, _) => {
             println!("- UseDirective:");

@@ -35,9 +35,8 @@ pub enum Node {
     RustExpr(Vec<(String, Position, Vec<Node>)>, Position), // @if ...  { ... } else { ... } / @for ... { ... }
     Component(String, Vec<ComponentParameter>, Vec<Node>, Position), // <ComponentName param1 = value1, param2 = value2> tags
     ChildContent, // @child_content (component child content)
-    FnDirective(String, Vec<(String, String, Position)>, Vec<Node>, Position), // @fn name(x: i32, y) {}
-    Raw(String),                                        // @raw {} (raw content)
+    Raw(String),  // @raw {} (raw content)
     UseDirective(String, PathBuf, Box<Node>, Position), // @use "component.rs.html" as Component
-    ContinueDirective,                                  // @continue for the loops
-    BreakDirective,                                     // @break for the loops
+    ContinueDirective, // @continue for the loops
+    BreakDirective, // @break for the loops
 }

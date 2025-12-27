@@ -1,6 +1,5 @@
 mod block;
 mod component;
-mod fn_directive;
 mod inner_text;
 mod match_expr;
 mod raw_block;
@@ -13,29 +12,28 @@ mod template_params;
 mod text;
 mod use_directive;
 
-use crate::config::Config;
-use crate::error::{E, rename_rules};
-use crate::node::*;
-use crate::parser::block::BlockParser;
-use crate::parser::component::ComponentParser;
-use crate::parser::fn_directive::FnDirectiveParser;
-use crate::parser::inner_text::InnerTextParser;
-use crate::parser::match_expr::MatchExprParser;
-use crate::parser::raw_block::RawBlockParser;
-use crate::parser::rust_block::RustBlockParser;
-use crate::parser::rust_expr::RustExprParser;
-use crate::parser::rust_expr_paren::RustExprParenParser;
-use crate::parser::rust_expr_simple::RustExprSimpleParser;
-use crate::parser::template::TemplateParser;
-use crate::parser::template_params::TemplateParamsParser;
-use crate::parser::text::TextParser;
-use crate::parser::use_directive::UseDirectiveParser;
-use pest::error::Error;
-use pest::iterators::{Pair, Pairs};
-use pest::{Parser, Span};
+use crate::{
+    config::Config,
+    error::{E, rename_rules},
+    node::*,
+    parser::{
+        block::BlockParser, component::ComponentParser, inner_text::InnerTextParser,
+        match_expr::MatchExprParser, raw_block::RawBlockParser, rust_block::RustBlockParser,
+        rust_expr::RustExprParser, rust_expr_paren::RustExprParenParser,
+        rust_expr_simple::RustExprSimpleParser, template::TemplateParser,
+        template_params::TemplateParamsParser, text::TextParser, use_directive::UseDirectiveParser,
+    },
+};
+use pest::{
+    Parser, Span,
+    error::Error,
+    iterators::{Pair, Pairs},
+};
 use pest_derive::Parser;
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 #[derive(Parser)]
 #[grammar = "rshtml.pest"]
@@ -91,7 +89,6 @@ impl RsHtmlParser {
             Rule::match_expr => MatchExprParser::parse(self, pair),
             Rule::component => ComponentParser::parse(self, pair),
             Rule::child_content_directive => Ok(Node::ChildContent),
-            Rule::fn_directive => FnDirectiveParser::parse(self, pair),
             Rule::raw_block => RawBlockParser::parse(self, pair),
             Rule::use_directive => UseDirectiveParser::parse(self, pair),
             Rule::continue_directive => Ok(Node::ContinueDirective),

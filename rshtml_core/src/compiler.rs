@@ -1,6 +1,5 @@
 mod component;
 mod expr;
-mod fn_directive;
 mod match_expr;
 mod raw;
 mod rust_block;
@@ -10,31 +9,22 @@ mod template_params;
 mod text;
 mod use_directive;
 
-use crate::Node;
-use crate::compiler::component::ComponentCompiler;
-use crate::compiler::expr::ExprCompiler;
-use crate::compiler::fn_directive::FnDirectiveCompiler;
-use crate::compiler::match_expr::MatchExprCompiler;
-use crate::compiler::raw::RawCompiler;
-use crate::compiler::rust_block::RustBlockCompiler;
-use crate::compiler::rust_expr::RustExprCompiler;
-use crate::compiler::template::TemplateCompiler;
-use crate::compiler::template_params::TemplateParamsCompiler;
-use crate::compiler::text::TextCompiler;
-use crate::compiler::use_directive::UseDirectiveCompiler;
-use crate::diagnostic::Diagnostic;
-use crate::position::Position;
-use anyhow::Result;
-use anyhow::anyhow;
-use proc_macro2::Span;
-use proc_macro2::TokenStream;
+use crate::{
+    Node,
+    compiler::{
+        component::ComponentCompiler, expr::ExprCompiler, match_expr::MatchExprCompiler,
+        raw::RawCompiler, rust_block::RustBlockCompiler, rust_expr::RustExprCompiler,
+        template::TemplateCompiler, template_params::TemplateParamsCompiler, text::TextCompiler,
+        use_directive::UseDirectiveCompiler,
+    },
+    diagnostic::Diagnostic,
+    position::Position,
+};
+use anyhow::{Result, anyhow};
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use std::collections::HashMap;
-use std::path::PathBuf;
-use syn::Generics;
-use syn::Ident;
-use syn::Type;
-use syn::parse_str;
+use std::{collections::HashMap, path::PathBuf};
+use syn::{Generics, Ident, Type, parse_str};
 
 pub struct Compiler {
     struct_name: Ident,
@@ -84,9 +74,6 @@ impl Compiler {
                 ComponentCompiler::compile(self, name, parameters, body, position)
             }
             Node::ChildContent => Ok(quote! {child_content(__f__)?;}),
-            Node::FnDirective(name, params, body, position) => {
-                FnDirectiveCompiler::compile(self, name, params, body, position)
-            }
             Node::Raw(body) => RawCompiler::compile(self, body),
             Node::UseDirective(name, path, component, position) => {
                 UseDirectiveCompiler::compile(self, name, path, *component, position)
