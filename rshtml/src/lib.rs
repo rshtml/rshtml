@@ -16,7 +16,7 @@
 //! 1.  **Define a Rust struct** (e.g., `HomePage`) to hold your template's data.
 //! 2.  **Annotate it with `#[derive(RsHtml)]`**.
 //! 3.  **Create a template file** (e.g., `home.rs.html`) using `@` prefixed
-//!     expressions, control flow (`@if`, `@for`), components, layouts, etc.
+//!     expressions, control flow (`@if`, `@for`), components, etc.
 //! 4.  **Call the generated `render()` method** on an instance of your struct and get the HTML output.
 //!
 //! ## Key Syntax Highlights
@@ -46,7 +46,7 @@
 //! use rshtml::RsHtml;
 //!
 //! #[derive(RsHtml)] // Looks for "home.rs.html" by default (adjust to your naming)
-//! // #[rshtml(path = "home.rs.html")]
+//! // #[rshtml(path = "home.rs.html", no_warn)]
 //! struct HomePage {
 //!     product_name: String,
 //!     price: f64,
