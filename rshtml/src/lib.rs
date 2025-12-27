@@ -24,7 +24,6 @@
 //! - **Expressions:** `@self.field`, `@self.my_function()`, `@(3 + 5)`
 //! - **Control Flow:** `@if ...`, `@for ...`, `@match ...`
 //! - **Code Blocks:** `@{ let a = 5; }`
-//! - **Layouts/Sections:** `@extends`, `@section`, `@render`
 //! - **Components:** `<MyComponent data=@value />`
 //! - **Raw Blocks:** `@raw{ ... }`
 //! - **Comments:** `@* server-side comment *@`
@@ -89,7 +88,7 @@
 //!  **4. Change views settings:** (Optional)
 //! ```toml
 //! [package.metadata.rshtml]
-//! views = { path = "views", layout = "layout.rs.html", extract_file_on_debug = false } # these are the default values
+//! views = { path = "views", extract_file_on_debug = false } # these are the default values
 //! ```
 //!
 //!
@@ -97,7 +96,7 @@
 //!
 //! - **[`RsHtml` (derive macro)]**: The main entry point. Apply to a struct to
 //!   enable template rendering. It handles parsing the associated template file
-//!   (path can be customized via `#[rshtml(path = "...")]`) and generates
+//!   (path can be customized via `#[rshtml(path = "...", no_warn)]`) and generates
 //!   the rendering logic.
 //!
 //! ---
