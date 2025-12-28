@@ -85,7 +85,7 @@ To use RsHtml in your Rust project, add it as a dependency in your `Cargo.toml`:
 [dependencies]
 rshtml = "x.y.z"
 
-# The default folder and layout can be changed. This is the default setup:
+# The default folder can be changed. This is the default setup:
 [package.metadata.rshtml]
 views = { path = "views", extract_file_on_debug = false }
 ```
