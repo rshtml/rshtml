@@ -11,7 +11,6 @@ RsHtml is a compile-time, type-safe, lightweight and flexible template engine fo
 - Embeds Rust expressions and blocks directly into HTML templates using the `@` prefix or HTML-like component syntax (e.g., `<Component/>`).
 - Supports conditional rendering (`@if`, `@else`), loops (`@for`), and pattern matching (`@match`).
 - Supports Rust code blocks (`@{}`), various Rust expression syntaxes (e.g., `@expression`, `@(expression)`, and a broad range of other Rust syntax.
-- Includes a `section` system, `layout` system, and `component` system.
 - Provides helper functions (e.g., `@time()`).
 - Supports raw output with `@raw` blocks and server-side comments with `@* ... *@`.
 - Generates `efficient Rust code` for template rendering at compile time.
@@ -66,30 +65,6 @@ Please see the [Editor Support](https://rshtml.github.io/#5-editor-support) sect
 @* This is a comment and will not appear in the output *@
 ```
 
-### Sections and Layout
-##### Section Page:
-```razor
-@section("title", "Home Page")
-
-@section content {
-    <p>content section</p>
-}
-
-<p>default content</p>
-```
-##### Layout Page:
-```razor
-@render("title")
-
-@render_body   @* renders the default content *@
-
-@if has_section("content") {
-    <p>content section defined</p>
-}
-
-@render("content")
-```
-
 ### Components
 ```razor
 @use "Component.rs.html" as Component
@@ -112,7 +87,7 @@ rshtml = "x.y.z"
 
 # The default folder and layout can be changed. This is the default setup:
 [package.metadata.rshtml]
-views = { path = "views", layout = "layout.rs.html", extract_file_on_debug = false }
+views = { path = "views", extract_file_on_debug = false }
 ```
 
 ## Usage
@@ -129,13 +104,13 @@ You can override this with `#[rshtml(path = "...")]`.
 use rshtml::{RsHtml, traits::RsHtml};
 
 #[derive(RsHtml)]
-//#[rshtml(path = "about.rs.html")] // Template can change from rshtml path param, relative to views folder.
+//#[rshtml(path = "about.rs.html", no_warn)] // The template location can be configured via the rshtml path parameter. RsHtml warnings can be disabled.
 struct HomePage { // Looks for home.rs.html in views folder.
     title: String,
 }
 
 fn main() {
-    let mut homepage = HomePage {
+    let homepage = HomePage {
         title: "Home Page".to_string()
     };
 
