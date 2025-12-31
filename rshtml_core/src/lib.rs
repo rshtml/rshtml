@@ -5,6 +5,7 @@ mod compiler;
 pub mod config;
 mod diagnostic;
 mod error;
+pub mod function_like;
 mod node;
 mod parser;
 mod position;
@@ -130,4 +131,8 @@ fn parse_and_compile(
     let ts = compiler.run(node)?;
 
     Ok((ts, compiler.text_size, compiler.component_fns()))
+}
+
+pub fn process_function_like(input: TokenStream) -> TokenStream {
+    function_like::compile(input)
 }
