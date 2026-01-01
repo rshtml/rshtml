@@ -124,5 +124,5 @@ fn get_struct_fields(data: &Data) -> Vec<String> {
 
 #[proc_macro]
 pub fn v(input: TokenStream) -> TokenStream {
-    TokenStream::from(process_function_like(input))
+    TokenStream::from(process_function_like(input.into()))
 }

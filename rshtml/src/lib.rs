@@ -140,3 +140,5 @@ pub use track_views_folder::track_views_folder;
 mod expr;
 pub use expr::Block;
 pub use expr::Expr;
+
+pub use rshtml_macro::v;
