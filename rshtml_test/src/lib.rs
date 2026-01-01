@@ -90,7 +90,7 @@ mod tests {
         let markup = move |f: &mut dyn Write| -> fmt::Result {
             write!(f, "{}", "<div></div>")?;
 
-            Expr::<_, false>({
+            Expr({
                 let mut users = Vec::new();
                 for i in 0..10 {
                     users.push(move |f: &mut dyn Write| -> fmt::Result {
@@ -104,10 +104,10 @@ mod tests {
             .render(f, "iiiiiiiiiiii")?;
 
             if 5 == 7 {
-                Expr::<_, false>(move |_f: &mut dyn Write| -> fmt::Result { Ok(()) })
+                Expr(move |_f: &mut dyn Write| -> fmt::Result { Ok(()) })
                     .render(f, "555555555555")?;
             } else {
-                Expr::<_, false>(move |_f: &mut dyn Write| -> fmt::Result { Ok(()) })
+                Expr(move |_f: &mut dyn Write| -> fmt::Result { Ok(()) })
                     .render(f, "7777777777777")?;
             }
 
