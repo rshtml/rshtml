@@ -1,8 +1,16 @@
 #![allow(unused_imports, dead_code)]
 
-use rshtml::{RsHtml, functions::*, traits::RsHtml, v};
+use rshtml::{
+    Exp, Expr, RsHtml, ViewFn,
+    functions::*,
+    traits::{Render, RsHtml, View},
+    v,
+};
 use serde::Serialize;
-use std::fmt::Write;
+use std::{
+    borrow::Cow,
+    fmt::{self, Display, Write},
+};
 
 #[derive(RsHtml)]
 // #[rshtml(path = "bar.rs.html", no_warn)]
@@ -40,7 +48,7 @@ mod tests {
     use super::*;
     use chrono::prelude::*;
     use pest::Parser;
-    use rshtml::{Block, Expr, traits::Render};
+    use rshtml::{Block, Exp, traits::View};
     use std::{fmt, fmt::Error, fmt::Write, fs};
     use syn::__private::Span;
 
@@ -85,80 +93,189 @@ mod tests {
 
     #[test]
     fn test_function_like() {
-        let mut buffer = String::with_capacity(144);
+        let x = 5;
+        let mut users = Vec::new();
+        for i in 0..10 {
+            users.push(v!(move <User age={i} />));
+        }
 
-        let markup = move |f: &mut dyn Write| -> fmt::Result {
-            write!(f, "{}", "<div></div>")?;
+        let s = String::from("heyy");
 
-            Expr({
-                let mut users = Vec::new();
-                for i in 0..10 {
-                    users.push(move |f: &mut dyn Write| -> fmt::Result {
-                        write!(f, "{}", i)?;
-                        Ok(())
-                    });
-                }
-
-                users
-            })
-            .render(f, "iiiiiiiiiiii")?;
-
-            if 5 == 7 {
-                Expr(move |_f: &mut dyn Write| -> fmt::Result { Ok(()) })
-                    .render(f, "555555555555")?;
-            } else {
-                Expr(move |_f: &mut dyn Write| -> fmt::Result { Ok(()) })
-                    .render(f, "7777777777777")?;
-            }
-
-            Ok(())
+        let content = if x == 5 {
+            v!(<Card/>).boxed()
+        } else {
+            v!(<SideBar title={&s}/>).boxed()
         };
 
-        markup.render(&mut buffer, "aaaaa").unwrap();
+        // let hold = users.iter().map(|_user| v!(aa <User/>));
 
-        println!("buff: {buffer}");
-        /*
+        // println!("{s}");
 
-            let mut users = Vec::new();
-            for i in 0..10 {
-                users.push(v!(<User age=@{i} />));
-            };
+        // let a: V<impl View> = v!(a);
+        // let c = card();
 
-            let content = if self.x == 5 {
-                v!(<Card/>)
-            } else {
-                v!(<SideBar/>)
-            };
+        let res = v!(
+            {card()}
 
-            v!(
-                @(content)
+            // {side_bar(&c)}
 
-                @(users)
+            {nonono()}
 
-                <div></div>
-                @(3+5)
+            {(0..10).filter(|x| x % 2 == 0).map(|x| x * x).sum::<i32>()}
 
-                @{users.map(|user| v!(<User/>))}
+            {&content}
 
-                @{
-                    let mut users = Vec::new();
-                    for i in 0..10 {
-                        users.push(v!(<User/>));
-                    };
+            {&users}
 
-                    users
+            <div>fsdf sd</div>
+            {3+5}
+
+            {users.iter().map(|_user| v!(aa <User/>)).collect::<Vec<_>>()}
+            {users.iter().map(|_user| v!(bb <User/>)).collect::<Vec<_>>()}
+            {
+                // let mut users = Vec::new();
+                for i in 0..10 {
+                    // users.push(v!(move <User x={i}/>));
+                    v!(move <User x={i}/>)(f)?;
                 }
+                // users
+            }
+            {
+                 if x == 5 {
+                     v!(< Card/>).boxed()
+                } else {
+                     v!(<SideBar/>).boxed()
+                 }
+             }
 
-                @{
-                    if self.x == 5 {
-                        v!(<Card/>)
-                    } else {
-                        v!(<SideBar/>)
-                    }
-                }
+             <p></p>
+        );
 
-                <p></p>
-            );
-        */
+        let mut f = String::with_capacity(144);
+        res.render(&mut f).unwrap();
+        println!("{f}");
+
+        other();
     }
 }
+
+fn card() -> impl View {
+    let x = 5;
+    let s = String::from("oooo");
+
+    return v!(move this is x: {x}, this is s: {&s});
+}
+
+fn bar() -> Box<dyn View> {
+    let x = 5;
+    let s = String::from("oooo");
+
+    if x == 5 {
+        v!(move this is x: {x}, this is s: {&s}).boxed()
+    } else {
+        v!(oooo).boxed()
+    }
+}
+
+fn side_bar(a: impl View) -> impl View {
+    v!(move {&a} is a crazy)
+}
+
+fn nonono() -> impl View {
+    let s = String::from("abc");
+    v!(move { &s })
+}
+
+fn other() {
+    let s = String::from("fsd");
+
+    let _ = || &s;
+
+    println!("{s}");
+
+    let mut a = Vec::new();
+
+    for i in 0..10 {
+        let d = i.to_owned();
+        a.push(move || d);
+    }
+
+    let mut buffer = String::with_capacity(100);
+
+    let a = v!(<p>{&s}</p>);
+
+    println!("{s}");
+    println!("{s}");
+
+    a.render(&mut buffer).unwrap();
+    println!("{s}");
+}
+
+// fn fn_like() {
+//     let mut buffer = String::with_capacity(144);
+
+//     let markup = move |f: &mut dyn Write| -> fmt::Result {
+//         write!(f, "{}", "<div></div>")?;
+
+//         Exp({
+//             let mut users = Vec::new();
+//             for i in 0..10 {
+//                 users.push(move |f: &mut dyn Write| -> fmt::Result {
+//                     write!(f, "{}", i)?;
+//                     Ok(())
+//                 });
+//             }
+
+//             users
+//         })
+//         .render(f)?;
+
+//         if 5 == 7 {
+//             Exp(move |_f: &mut dyn Write| -> fmt::Result { Ok(()) }).render(f)?;
+//         } else {
+//             Exp(move |_f: &mut dyn Write| -> fmt::Result { Ok(()) }).render(f)?;
+//         }
+
+//         Ok(())
+//     };
+
+//     markup.render(&mut buffer).unwrap();
+
+//     println!("buff: {buffer}");
+// }
+
+// enum Node<'a> {
+//     Template(Vec<Node<'a>>),
+//     Text(&'static str),
+//     Expr(Box<dyn View + 'a>),
+// }
+
+// impl<'a> Display for Node<'a> {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         todo!()
+//     }
+// }
+
+// fn fn_fn() {
+//     let users = vec!["a".to_string(), "b".to_string()];
+//     let x = 5;
+
+//     let content = if x == 5 {
+//         Node::Template(vec![Node::Text("<Card/>")])
+//     } else {
+//         Node::Template(vec![Node::Text("<Card/>"), Node::Expr(Box::new(Exp(5)))])
+//     };
+
+//     let x = Exp(users
+//         .iter()
+//         .map(|a| {
+//             let b = Box::new(Exp(a));
+//             Node::Template(vec![Node::Expr(b)])
+//         })
+//         .collect::<Vec<_>>());
+
+//     // println!("{x}");
+//     let y = x;
+
+//     Node::Template(vec![Node::Text(""), Node::Expr(Box::new(Exp(content)))]);
+// }
