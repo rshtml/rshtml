@@ -1,5 +1,5 @@
 use crate::traits::View;
-use std::fmt;
+use std::{fmt, ops::Deref};
 
 pub struct ViewFn<T>(pub T);
 
@@ -21,13 +21,13 @@ where
     }
 }
 
-// impl<T> Deref for ViewFn<T> {
-//     type Target = dyn Fn() -> fmt::Result;
+impl<T> Deref for ViewFn<T> {
+    type Target = T;
 
-//     fn deref(&self) -> &Self::Target {
-//         &|| self.0()?
-//     }
-// }
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 /*
 pub struct ViewIter<I>(pub I);

@@ -93,6 +93,14 @@ mod tests {
 
     #[test]
     fn test_function_like() {
+        let mut out = String::with_capacity(144);
+
+        let mut mys = String::from("hellooo");
+        v!({ &mys })(&mut out).unwrap();
+        println!("{mys}");
+        mys.push_str("def");
+        v!({ &mys }).render(&mut out).unwrap();
+
         let x = 5;
         let mut users = Vec::new();
         for i in 0..10 {
@@ -151,9 +159,8 @@ mod tests {
              <p></p>
         );
 
-        let mut f = String::with_capacity(144);
-        res.render(&mut f).unwrap();
-        println!("{f}");
+        res.render(&mut out).unwrap();
+        println!("{out}");
 
         other();
     }
