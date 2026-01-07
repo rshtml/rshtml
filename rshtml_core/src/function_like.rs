@@ -33,7 +33,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
         });
 
     quote! {
-        ::rshtml::ViewFn::new(#r#move |f: &mut dyn std::fmt::Write| -> std::fmt::Result {
+        ::rshtml::ViewFn(#r#move |f: &mut dyn std::fmt::Write| -> std::fmt::Result {
             #body
             Ok(())
         })
