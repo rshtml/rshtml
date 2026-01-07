@@ -30,16 +30,3 @@ impl Exp<()> {
         write!(f, "")
     }
 }
-
-// impl<'a, I, V> Exp<I>
-// where
-//     I: IntoIterator<Item = V> + Clone + 'a,
-//     V: View + 'a,
-// {
-//     fn render(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-//         for item in self.0.clone() {
-//             item.render(f)?;
-//         }
-//         Ok(())
-//     }
-// }

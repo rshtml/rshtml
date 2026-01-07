@@ -33,7 +33,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
         });
 
     quote! {
-        ::rshtml::ViewFn(#r#move |f: &mut dyn std::fmt::Write| -> std::fmt::Result {
+        ::rshtml::ViewFn::new(#r#move |f: &mut dyn std::fmt::Write| -> std::fmt::Result {
             #body
             Ok(())
         })
@@ -63,8 +63,8 @@ fn expr<'a>() -> impl Parsed<'a> {
     select! { TokenTree::Group(g) if matches!(g.delimiter(), Delimiter::Brace) => g }.map(|group| {
         let stream = group.stream();
         match parse2::<syn::Block>(stream.clone()) {
-            Ok(block) => quote! { Exp({#block}).render(f)?; },
-            Err(_) => quote! { Exp({#stream}).render(f)?; },
+            Ok(block) => quote! { ::rshtml::Exp({#block}).render(f)?; },
+            Err(_) => quote! { ::rshtml::Exp({#stream}).render(f)?; },
         }
     })
 }
@@ -84,7 +84,7 @@ fn text<'a>() -> impl Parsed<'a> {
                 s.push_str(&t.to_string());
                 s.push(' ');
             }
-            quote! { write!(f, "{} ", #s).unwrap(); }
+            quote! { write!(f, "{} ", #s)?; }
         })
 }
 
