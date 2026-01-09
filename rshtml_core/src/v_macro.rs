@@ -2,8 +2,9 @@ use proc_macro2::{Delimiter, Group, Span, TokenStream, TokenTree};
 use quote::quote;
 use syn::parse2;
 use winnow::ModalResult;
-use winnow::combinator::{alt, cut_err, eof, opt, repeat, terminated};
+use winnow::combinator::{alt, cut_err, eof, fail, opt, repeat, terminated};
 use winnow::error::{ContextError, ErrMode, StrContext, StrContextValue};
+use winnow::stream::Stream;
 use winnow::{Parser, token::any};
 
 pub fn compile(input: TokenStream) -> TokenStream {
@@ -110,7 +111,7 @@ fn text(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
 }
 
 fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
-    let open_tag = (lt, ident, attributes, cut_err(gt))
+    let mut open_tag = (lt, ident, attributes, cut_err(gt))
         .map(|(lt, ident, attributes, gt)| {
             let mut ts = TokenStream::new();
 
@@ -120,18 +121,20 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
             let gt = format!(" {gt}");
             ts.extend(quote! { write!(f, "{}", #gt)?; });
 
-            ts
+            (ts, ident)
         })
         .context(StrContext::Label("tag open"));
 
     let close_tag = (lt, slash, cut_err(ident), cut_err(gt))
         .map(|(lt, slash, ident, gt)| {
             let closing = format!(" {lt}{slash}{ident}{gt}");
-            quote! { write!(f, "{}", #closing)?; }
+            let ts = quote! { write!(f, "{}", #closing)?; };
+
+            (ts, ident)
         })
         .context(StrContext::Label("tag close"));
 
-    let self_close_tag = (lt, ident, attributes, slash, cut_err(gt))
+    let mut self_close_tag = (lt, ident, attributes, slash, cut_err(gt))
         .map(|(lt, ident, attributes, slash, gt)| {
             let mut ts = TokenStream::new();
 
@@ -145,19 +148,57 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
         })
         .context(StrContext::Label("self-closing tag"));
 
-    alt((
-        self_close_tag,
-        (open_tag, template, cut_err(close_tag)).map(|(open_tag, template, close_tag)| {
+    // ----------------
+
+    let checkpoint = input.checkpoint();
+
+    match self_close_tag.parse_next(input) {
+        Ok(ts) => return Ok(ts),
+        Err(ErrMode::Backtrack(_)) => {
+            input.reset(&checkpoint);
+        }
+        Err(e) => return Err(e),
+    }
+
+    let open_checkpoint = input.checkpoint();
+    let (open_ts, open_tag_name) = open_tag.parse_next(input)?;
+
+    let body_ts = template.parse_next(input)?;
+
+    let close_checkpoint = input.checkpoint();
+    let close_opt = opt(close_tag).parse_next(input)?;
+
+    match close_opt {
+        Some((close_ts, close_tag_name)) => {
+            if open_tag_name.to_string() != close_tag_name.to_string() {
+                input.reset(&close_checkpoint);
+
+                let expected_str = format!("corresponding closing tag for <{}>", open_tag_name);
+                let exp_static: &'static str = Box::leak(expected_str.into_boxed_str());
+
+                return cut_err(fail)
+                    .context(StrContext::Expected(StrContextValue::Description(
+                        exp_static,
+                    )))
+                    .parse_next(input);
+            }
             let mut ts = TokenStream::new();
+            ts.extend(open_ts);
+            ts.extend(body_ts);
+            ts.extend(close_ts);
+            Ok(ts)
+        }
+        None => {
+            input.reset(&open_checkpoint);
 
-            ts.extend(open_tag);
-            ts.extend(template);
-            ts.extend(close_tag);
-
-            ts
-        }),
-    ))
-    .parse_next(input)
+            cut_err(fail)
+                .context(StrContext::Label("tag opened here but never closed"))
+                .context(StrContext::Expected(StrContextValue::Description(
+                    "matching closing tag",
+                )))
+                .parse_next(input)
+        }
+    }
 }
 
 fn attributes(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
@@ -216,6 +257,15 @@ fn ident(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     )))
     .parse_next(input)
 }
+
+// fn ident_with_span(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Span)> {
+//     any.verify_map(|tt: TokenTree| match tt {
+//         TokenTree::Ident(i) => Some((quote! {#i}, i.span())),
+//         _ => None,
+//     })
+//     .context(StrContext::Label("ident"))
+//     .parse_next(input)
+// }
 
 fn lt(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     any.verify_map(|tt: TokenTree| match tt {
