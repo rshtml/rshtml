@@ -13,6 +13,7 @@ pub mod str_extensions;
 mod temporary_file;
 #[cfg(test)]
 mod tests;
+mod v_macro;
 
 use crate::parser::RsHtmlParser;
 use crate::{config::Config, diagnostic::Diagnostic};
@@ -134,5 +135,5 @@ fn parse_and_compile(
 }
 
 pub fn process_function_like(input: TokenStream) -> TokenStream {
-    function_like::compile(input)
+    v_macro::compile(input)
 }

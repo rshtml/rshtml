@@ -1,5 +1,7 @@
 #![allow(unused_imports, dead_code)]
 
+mod v_macro;
+
 use rshtml::{
     Exp, Expr, RsHtml, ViewFn,
     functions::*,
@@ -123,11 +125,11 @@ mod tests {
         // let c = card();
 
         let res = v!(
-            {card()}
+        {card()}
 
-            // {side_bar(&c)}
+        // {side_bar(&c)}
 
-            {nonono()}
+        {nonono()}
 
             {(0..10).filter(|x| x % 2 == 0).map(|x| x * x).sum::<i32>()}
 
@@ -149,11 +151,11 @@ mod tests {
                 // users
             }
             {
-                 if x == 5 {
+                if x == 5 {
                      v!(< Card/>).boxed()
                 } else {
                      v!(<SideBar/>).boxed()
-                 }
+                }
              }
 
              <p></p>

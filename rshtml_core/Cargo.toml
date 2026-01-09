@@ -14,3 +14,4 @@ anyhow = "1.0.98"
 toml = "0.8.22"
 syn = { version = "2.0.101", features = ["full", "visit", "visit-mut"] }
 chumsky = "0.12.0"
+winnow = "0.7.14"

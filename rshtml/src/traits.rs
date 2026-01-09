@@ -43,6 +43,15 @@ impl<T: View + ?Sized> View for Box<T> {
     }
 }
 
+// impl<F> View for F
+// where
+//     F: Fn(&mut dyn fmt::Write) -> fmt::Result,
+// {
+//     fn render(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+//         self(f)
+//     }
+// }
+
 // impl<'a, I, V> View for I
 // where
 //     I: IntoIterator<Item = V> + Clone + 'a,

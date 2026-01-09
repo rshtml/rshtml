@@ -30,3 +30,9 @@ impl Exp<()> {
         write!(f, "")
     }
 }
+
+impl Exp<&()> {
+    pub fn render(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+        write!(f, "")
+    }
+}
