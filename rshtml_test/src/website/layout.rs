@@ -1,9 +1,9 @@
 use rshtml::{traits::View, v};
 
+use crate::website::scripts::scripts;
+
 pub fn layout(title: &str, navbar: impl View, footer: impl View, content: impl View) -> impl View {
     v! {move
-        mfkisdla
-        {4%4}
         // <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -36,7 +36,7 @@ pub fn layout(title: &str, navbar: impl View, footer: impl View, content: impl V
             {footer}
         </div>
 
-        <Scripts/>
+        {scripts()}
 
         </body>
         </html>

@@ -10,6 +10,9 @@ chrono = "0.4.41"
 syn = "2.0.101"
 pest = "2.8.0"
 serde = { version = "1.0.219", features = ["derive"] }
+axum = "0.8.8"
+tokio = { version = "1.49.0", features = ["full"] }
+tower-http = { version = "0.6.8", features = ["fs"] }
 
 [package.metadata.rshtml]
 views = { path = "views", extract_file_on_debug = false }

@@ -1,4 +1,5 @@
-use crate::traits::View;
+use crate::{EscapingWriter, traits::View};
+use std::fmt::Write;
 use std::fmt::{self, Debug};
 
 #[derive(Debug)]
@@ -12,7 +13,7 @@ impl<T: View + ?Sized> Exp<T> {
 
 impl<T: fmt::Display + ?Sized> View for Exp<T> {
     fn render(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-        write!(f, "{}", &self.0)
+        write!(&mut EscapingWriter { inner: f }, "{}", &self.0)
     }
 }
 

@@ -1,18 +1,6 @@
-use crate::v_macro::layout::layout;
 use rshtml::{traits::View, v};
 
-fn index() -> impl View {
-    let sections = &[
-        ("#tm-section-1", "Home"),
-        ("#tm-section-2", "Services"),
-        ("#tm-section-3", "About"),
-        ("#tm-section-4", "Contact"),
-    ];
-
-    layout("RsHtml Web Page", navbar(sections), v!(), v!())
-}
-
-fn navbar(sections: &[(&str, &str)]) -> impl View {
+pub fn navbar(sections: &[(&str, &str)]) -> impl View {
     v! {
         <div class="row navbar-row">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 navbar-container">
@@ -25,7 +13,6 @@ fn navbar(sections: &[(&str, &str)]) -> impl View {
               <ul class="nav navbar-nav">
               {
                 for (link, name) in sections.iter() {
-                    let link = format!("\"{link}\"");
                     v!{
                         <li class="nav-item">
                             <a class="nav-link" href={link}>{name}</a>

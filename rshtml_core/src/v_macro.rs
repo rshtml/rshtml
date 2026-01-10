@@ -2,7 +2,7 @@ use proc_macro2::{Delimiter, Group, Span, TokenStream, TokenTree};
 use quote::quote;
 use syn::parse2;
 use winnow::ModalResult;
-use winnow::combinator::{alt, cut_err, eof, fail, opt, repeat, terminated};
+use winnow::combinator::{alt, cut_err, eof, fail, not, opt, peek, preceded, repeat, terminated};
 use winnow::error::{ContextError, ErrMode, StrContext, StrContextValue};
 use winnow::stream::Stream;
 use winnow::{Parser, token::any};
@@ -16,10 +16,10 @@ pub fn compile(input: TokenStream) -> TokenStream {
             tokens = &tokens[1..];
             quote! {move }
         } else {
-            quote! {}
+            TokenStream::new()
         }
     } else {
-        quote! {}
+        TokenStream::new()
     };
 
     let body = terminated(template, eof.context(StrContext::Label("end of template")))
@@ -106,7 +106,7 @@ fn text(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
         acc.push(' ');
         acc
     })
-    .map(|s| quote! { write!(f, "{}", #s)?; })
+    .map(|s| quote! { write!(f, " {}", #s)?; })
     .parse_next(input)
 }
 
@@ -163,7 +163,13 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     let open_checkpoint = input.checkpoint();
     let (open_ts, open_tag_name) = open_tag.parse_next(input)?;
 
-    let body_ts = template.parse_next(input)?;
+    let body_ts = match open_tag_name.to_string().as_str() {
+        "script" => script_tag_body.parse_next(input)?,
+        "style" => style_tag_body.parse_next(input)?,
+        _ => template.parse_next(input)?,
+    };
+
+    // let body_ts = template.parse_next(input)?;
 
     let close_checkpoint = input.checkpoint();
     let close_opt = opt(close_tag).parse_next(input)?;
@@ -243,6 +249,46 @@ fn string_literal(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
         _ => None,
     })
     .parse_next(input)
+}
+
+fn script_tag_body(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
+    let script_end_tag = (
+        lt,
+        slash,
+        any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Ident(i) if i.to_string() == "script")),
+        gt,
+    );
+
+    repeat(0.., preceded(not(peek(script_end_tag)), any))
+        .fold(TokenStream::new, |mut acc, tt| {
+            acc.extend(std::iter::once(tt));
+            acc
+        })
+        .map(|ts| {
+            let ts = ts.to_string();
+            quote! { write!(f, "{}", #ts)?; }
+        })
+        .parse_next(input)
+}
+
+fn style_tag_body(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
+    let style_end_tag = (
+        lt,
+        slash,
+        any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Ident(i) if i.to_string() == "style")),
+        gt,
+    );
+
+    repeat(0.., preceded(not(peek(style_end_tag)), any))
+        .fold(TokenStream::new, |mut acc, tt| {
+            acc.extend(std::iter::once(tt));
+            acc
+        })
+        .map(|ts| {
+            let ts = ts.to_string();
+            quote! { write!(f, "{}", #ts)?; }
+        })
+        .parse_next(input)
 }
 
 // TOKENS
