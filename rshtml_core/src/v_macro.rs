@@ -106,9 +106,7 @@ fn text(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
         )),
     )
     .fold(String::new, |mut acc, item| {
-        // if !acc.is_empty() {
         acc.push(' ');
-        // }
         acc.push_str(&item);
         acc
     })
@@ -341,7 +339,6 @@ fn html_entity(input: &mut &[TokenTree]) -> ModalResult<String> {
             }
 
             s
-            // quote! { write!(f, "{}", #s)?; }
         })
         .parse_next(input)
 }
