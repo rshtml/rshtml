@@ -176,8 +176,6 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
         _ => template.parse_next(input)?,
     };
 
-    // let body_ts = template.parse_next(input)?;
-
     let close_checkpoint = input.checkpoint();
     let close_opt = opt(close_tag).parse_next(input)?;
 
