@@ -53,7 +53,7 @@ pub fn contact(title: &str, email: &str) -> impl View {
                                 <span class="green-text contact-info">
                                     Tel: <a href="tel:0100200340" class="contact-info-link">090-080-0760</a></span>
                 <span class="green-text contact-info">
-                                    Email: <a href="mailto:info@@company.com"
+                                    Email: <a href="mailto:info@company.com"
                                               class="contact-info-link">{ email }</a></span>
               </div>
 

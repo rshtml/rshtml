@@ -95,18 +95,27 @@ fn expr(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
 fn text(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     repeat(
         1..,
-        any.verify(|tt: &TokenTree| match tt {
-            TokenTree::Group(g) if g.delimiter() == Delimiter::Brace => false,
-            TokenTree::Punct(p) if p.as_char() == '<' => false,
-            _ => true,
-        }),
+        alt((
+            html_entity,
+            any.verify(|tt: &TokenTree| match tt {
+                TokenTree::Group(g) if g.delimiter() == Delimiter::Brace => false,
+                TokenTree::Punct(p) if p.as_char() == '<' => false,
+                _ => true,
+            })
+            .map(|tt: TokenTree| tt.to_string()),
+        )),
     )
-    .fold(String::new, |mut acc, item: TokenTree| {
-        acc.push_str(&item.to_string());
+    .fold(String::new, |mut acc, item| {
+        // if !acc.is_empty() {
         acc.push(' ');
+        // }
+        acc.push_str(&item);
         acc
     })
-    .map(|s| quote! { write!(f, " {}", #s)?; })
+    .map(|mut s| {
+        s.push(' ');
+        quote! { write!(f, "{}", #s)?; }
+    })
     .parse_next(input)
 }
 
@@ -118,7 +127,7 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
             let starting = format!(" {lt}{ident}");
             ts.extend(quote! { write!(f, "{}", #starting)?; });
             ts.extend(attributes);
-            let gt = format!(" {gt}");
+            let gt = format!("{gt} ");
             ts.extend(quote! { write!(f, "{}", #gt)?; });
 
             (ts, ident)
@@ -127,7 +136,7 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
 
     let close_tag = (lt, slash, cut_err(ident), cut_err(gt))
         .map(|(lt, slash, ident, gt)| {
-            let closing = format!(" {lt}{slash}{ident}{gt}");
+            let closing = format!(" {lt}{slash}{ident}{gt} ");
             let ts = quote! { write!(f, "{}", #closing)?; };
 
             (ts, ident)
@@ -141,7 +150,7 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
             let starting = format!(" {lt}{ident}");
             ts.extend(quote! { write!(f, "{}", #starting)?; });
             ts.extend(attributes);
-            let closing = format!(" {slash}{gt}");
+            let closing = format!("{slash}{gt} ");
             ts.extend(quote! { write!(f, "{}", #closing)?; });
 
             ts
@@ -231,7 +240,7 @@ fn attribute(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
                 ts.extend(quote! { write!(f, "{}", #attr)?; });
                 ts.extend(quote! {#value });
             } else {
-                let attr = format!(" {name}");
+                let attr = format!(" {name} ");
                 ts.extend(quote! { write!(f, "{}", #attr)?; });
             }
 
@@ -287,6 +296,52 @@ fn style_tag_body(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
         .map(|ts| {
             let ts = ts.to_string();
             quote! { write!(f, "{}", #ts)?; }
+        })
+        .parse_next(input)
+}
+
+fn html_entity(input: &mut &[TokenTree]) -> ModalResult<String> {
+    let amp = any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Punct(p) if p.as_char() == '&'));
+
+    let body = alt((
+        (
+            any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Punct(p) if p.as_char() == '#')),
+            any.verify(|tt: &TokenTree| match tt {
+                // HEX CONTROL (x1F600)
+                TokenTree::Ident(i) => {
+                    let s = i.to_string();
+                    if s.starts_with('x') || s.starts_with('X') {
+                        s[1..].chars().all(|c| c.is_ascii_hexdigit())
+                    } else {
+                        false
+                    }
+                }
+                // DECIMAL CONTROL (123)
+                TokenTree::Literal(l) => l.to_string().chars().all(|c| c.is_ascii_digit()),
+                _ => false,
+            }),
+        )
+            .map(|(_, val)| format!("#{}", val)),
+        // B. Name Entity (copy, nbsp)
+        any.verify_map(|tt: TokenTree| match tt {
+            TokenTree::Ident(i) => Some(i.to_string()),
+            _ => None,
+        }),
+    ));
+
+    let semi =
+        opt(any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Punct(p) if p.as_char() == ';')));
+
+    (amp, body, semi)
+        .map(|(_, body, semi)| {
+            let mut s = String::from("&");
+            s.push_str(&body);
+            if semi.is_some() {
+                s.push(';');
+            }
+
+            s
+            // quote! { write!(f, "{}", #s)?; }
         })
         .parse_next(input)
 }
