@@ -6,14 +6,14 @@ use std::fmt::{self, Debug};
 pub struct Exp<T: ?Sized>(pub T);
 
 impl<T: View + ?Sized> Exp<T> {
-    pub fn render(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-        self.0.render(f)
+    pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+        self.0.render(out)
     }
 }
 
 impl<T: fmt::Display + ?Sized> View for Exp<T> {
-    fn render(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-        write!(&mut EscapingWriter { inner: f }, "{}", &self.0)
+    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+        write!(&mut EscapingWriter { inner: out }, "{}", &self.0)
     }
 }
 
@@ -21,19 +21,19 @@ impl<T: ?Sized> fmt::Display for Exp<T>
 where
     T: View,
 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        (self.0).render(f)
+    fn fmt(&self, out: &mut fmt::Formatter<'_>) -> fmt::Result {
+        (self.0).render(out)
     }
 }
 
 impl Exp<()> {
-    pub fn render(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-        write!(f, "")
+    pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+        write!(out, "")
     }
 }
 
 impl Exp<&()> {
-    pub fn render(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-        write!(f, "")
+    pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+        write!(out, "")
     }
 }

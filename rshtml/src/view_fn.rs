@@ -7,8 +7,8 @@ impl<'a, T> View for ViewFn<T>
 where
     T: Fn(&mut dyn fmt::Write) -> fmt::Result + 'a,
 {
-    fn render(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-        (self.0)(f)
+    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+        (self.0)(out)
     }
 }
 
@@ -38,9 +38,9 @@ where
     I::IntoIter: 'a,
     V: View + 'a,
 {
-    fn render(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
         for item in self.0.clone() {
-            item.render(f)?;
+            item.render(out)?;
         }
         Ok(())
     }
@@ -56,8 +56,8 @@ pub fn viter<I>(iter: I) -> ViewIter<I> {
 // where
 //     T: Fn(&mut dyn fmt::Write) -> fmt::Result + 'static,
 // {
-//     fn render(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-//         (self.0)(f)
+//     fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+//         (self.0)(out)
 //     }
 // }
 

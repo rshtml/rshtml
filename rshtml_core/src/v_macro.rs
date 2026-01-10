@@ -23,7 +23,6 @@ pub fn compile(input: TokenStream) -> TokenStream {
     };
 
     let body = terminated(template, eof.context(StrContext::Label("end of template")))
-        // template
         .parse_next(&mut tokens)
         .unwrap_or_else(|e: ErrMode<ContextError>| {
             let span = tokens
@@ -122,11 +121,16 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
         .map(|(lt, ident, attributes, gt)| {
             let mut ts = TokenStream::new();
 
-            let starting = format!(" {lt}{ident}");
-            ts.extend(quote! { write!(f, "{}", #starting)?; });
-            ts.extend(attributes);
-            let gt = format!("{gt} ");
-            ts.extend(quote! { write!(f, "{}", #gt)?; });
+            if attributes.is_empty() {
+                let starting = format!(" {lt}{ident}{gt} ");
+                ts.extend(quote! { write!(f, "{}", #starting)?; });
+            } else {
+                let starting = format!(" {lt}{ident}");
+                ts.extend(quote! { write!(f, "{}", #starting)?; });
+                ts.extend(attributes);
+                let gt = format!("{gt} ");
+                ts.extend(quote! { write!(f, "{}", #gt)?; });
+            }
 
             (ts, ident)
         })
@@ -145,12 +149,16 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
         .map(|(lt, ident, attributes, slash, gt)| {
             let mut ts = TokenStream::new();
 
-            let starting = format!(" {lt}{ident}");
-            ts.extend(quote! { write!(f, "{}", #starting)?; });
-            ts.extend(attributes);
-            let closing = format!("{slash}{gt} ");
-            ts.extend(quote! { write!(f, "{}", #closing)?; });
-
+            if attributes.is_empty() {
+                let starting = format!(" {lt}{ident}{slash}{gt} ");
+                ts.extend(quote! { write!(f, "{}", #starting)?; });
+            } else {
+                let starting = format!(" {lt}{ident}");
+                ts.extend(quote! { write!(f, "{}", #starting)?; });
+                ts.extend(attributes);
+                let closing = format!("{slash}{gt} ");
+                ts.extend(quote! { write!(f, "{}", #closing)?; });
+            }
             ts
         })
         .context(StrContext::Label("self-closing tag"));
