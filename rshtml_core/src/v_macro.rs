@@ -7,6 +7,10 @@ use winnow::error::{ContextError, ErrMode, StrContext, StrContextValue};
 use winnow::stream::Stream;
 use winnow::{Parser, token::any};
 
+// TODO: Add length validations for html entity.
+// TODO: Enable file reading using the v_file! macro.
+// TODO: Make View implement RsHtml and call View::render(&struct, param) when rendering the View.
+
 pub fn compile(input: TokenStream) -> TokenStream {
     let tokens: Vec<TokenTree> = input.into_iter().collect();
     let mut tokens = tokens.as_slice();
