@@ -53,7 +53,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
         });
 
     quote! {
-        ::rshtml::ViewFn(#r#move |f: &mut dyn std::fmt::Write| -> std::fmt::Result {
+        ::rshtml::ViewFn(#r#move |out: &mut dyn std::fmt::Write| -> std::fmt::Result {
             #body
             Ok(())
         })
@@ -81,11 +81,11 @@ fn expr(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     let stream = group.stream();
 
     let output = if let Ok(expr) = parse2::<syn::Expr>(stream.clone()) {
-        quote! { ::rshtml::Exp(&(#expr)).render(f)?; }
+        quote! { ::rshtml::Exp(&(#expr)).render(out)?; }
     } else if let Ok(block) = parse2::<syn::Block>(stream.clone()) {
-        quote! { ::rshtml::Exp({#block}).render(f)?; }
+        quote! { ::rshtml::Exp({#block}).render(out)?; }
     } else {
-        quote! { ::rshtml::Exp({#stream}).render(f)?; }
+        quote! { ::rshtml::Exp({#stream}).render(out)?; }
     };
 
     Ok(output)
@@ -111,7 +111,7 @@ fn text(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     })
     .map(|mut s| {
         s.push(' ');
-        quote! { write!(f, "{}", #s)?; }
+        quote! { write!(out, "{}", #s)?; }
     })
     .parse_next(input)
 }
@@ -123,13 +123,13 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
 
             if attributes.is_empty() {
                 let starting = format!(" {lt}{ident}{gt} ");
-                ts.extend(quote! { write!(f, "{}", #starting)?; });
+                ts.extend(quote! { write!(out, "{}", #starting)?; });
             } else {
                 let starting = format!(" {lt}{ident}");
-                ts.extend(quote! { write!(f, "{}", #starting)?; });
+                ts.extend(quote! { write!(out, "{}", #starting)?; });
                 ts.extend(attributes);
                 let gt = format!("{gt} ");
-                ts.extend(quote! { write!(f, "{}", #gt)?; });
+                ts.extend(quote! { write!(out, "{}", #gt)?; });
             }
 
             (ts, ident)
@@ -139,7 +139,7 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     let close_tag = (lt, slash, cut_err(ident), cut_err(gt))
         .map(|(lt, slash, ident, gt)| {
             let closing = format!(" {lt}{slash}{ident}{gt} ");
-            let ts = quote! { write!(f, "{}", #closing)?; };
+            let ts = quote! { write!(out, "{}", #closing)?; };
 
             (ts, ident)
         })
@@ -151,13 +151,13 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
 
             if attributes.is_empty() {
                 let starting = format!(" {lt}{ident}{slash}{gt} ");
-                ts.extend(quote! { write!(f, "{}", #starting)?; });
+                ts.extend(quote! { write!(out, "{}", #starting)?; });
             } else {
                 let starting = format!(" {lt}{ident}");
-                ts.extend(quote! { write!(f, "{}", #starting)?; });
+                ts.extend(quote! { write!(out, "{}", #starting)?; });
                 ts.extend(attributes);
                 let closing = format!("{slash}{gt} ");
-                ts.extend(quote! { write!(f, "{}", #closing)?; });
+                ts.extend(quote! { write!(out, "{}", #closing)?; });
             }
             ts
         })
@@ -241,11 +241,11 @@ fn attribute(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
 
             if let Some((equal, value)) = equal_value {
                 let attr = format!(" {name}{equal}");
-                ts.extend(quote! { write!(f, "{}", #attr)?; });
+                ts.extend(quote! { write!(out, "{}", #attr)?; });
                 ts.extend(quote! {#value });
             } else {
                 let attr = format!(" {name} ");
-                ts.extend(quote! { write!(f, "{}", #attr)?; });
+                ts.extend(quote! { write!(out, "{}", #attr)?; });
             }
 
             ts
@@ -257,7 +257,7 @@ fn string_literal(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     any.verify_map(|tt: TokenTree| match tt {
         TokenTree::Literal(lit) => {
             let s = lit.to_string();
-            Some(quote! { write!(f, "{}", #s)?; })
+            Some(quote! { write!(out, "{}", #s)?; })
         }
         _ => None,
     })
@@ -279,7 +279,7 @@ fn script_tag_body(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
         })
         .map(|ts| {
             let ts = ts.to_string();
-            quote! { write!(f, "{}", #ts)?; }
+            quote! { write!(out, "{}", #ts)?; }
         })
         .parse_next(input)
 }
@@ -299,7 +299,7 @@ fn style_tag_body(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
         })
         .map(|ts| {
             let ts = ts.to_string();
-            quote! { write!(f, "{}", #ts)?; }
+            quote! { write!(out, "{}", #ts)?; }
         })
         .parse_next(input)
 }

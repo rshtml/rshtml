@@ -146,7 +146,7 @@ mod tests {
                 // let mut users = Vec::new();
                 for i in 0..10 {
                     // users.push(v!(move <User x={i}/>));
-                    v!(move <User x={i}/>)(f)?;
+                    v!(move <User x={i}/>)(out)?;
                 }
                 // users
             }

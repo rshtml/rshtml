@@ -17,7 +17,7 @@ pub fn navbar(sections: &[(&str, &str)]) -> impl View {
                         <li class="nav-item">
                             <a class="nav-link" href={link}>{name}</a>
                         </li>
-                    }.render(f)?;
+                    }.render(out)?;
                 }
               }
               </ul>
