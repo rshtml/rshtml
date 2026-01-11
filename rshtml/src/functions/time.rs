@@ -48,7 +48,7 @@ impl RsDateTime {
         self.0.date_naive()
     }
 
-    pub fn pretty(&mut self) -> &Self {
+    pub fn pretty(mut self) -> Self {
         self.1 = "%b %d, %Y".to_string();
         self
     }

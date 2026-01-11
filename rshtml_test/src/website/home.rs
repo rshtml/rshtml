@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use rshtml::{functions::time, traits::View, v};
 
 pub fn home(title: &str, home_time: DateTime<Utc>) -> impl View {
-    v! {move
+    v! {
       <section id="tm-section-1" class="row tm-section">
 
         <div class="tm-white-curve-left col-xs-12 col-sm-12 col-md-12 col-lg-7 col-xl-6">

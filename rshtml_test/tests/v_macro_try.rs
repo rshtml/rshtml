@@ -45,14 +45,6 @@ fn v_macro_try() {
         {users.iter().map(|_user| v!(aa <User/>)).collect::<Vec<_>>()}
         {users.iter().map(|_user| v!(bb <User/>)).collect::<Vec<_>>()}
         {
-            // let mut users = Vec::new();
-            for i in 0..10 {
-                // users.push(v!(move <User x={i}/>));
-                v!(move <User x={i}/>)(out)?;
-            }
-            // users
-        }
-        {
             if x == 5 {
                  v!(< Card/>).boxed()
             } else {
@@ -73,7 +65,7 @@ fn card() -> impl View {
     let x = 5;
     let s = String::from("oooo");
 
-    return v!(move this is x: {x}, this is s: {&s});
+    return v!(this is x: {x}, this is s: {s});
 }
 
 fn bar() -> Box<dyn View> {
@@ -81,19 +73,19 @@ fn bar() -> Box<dyn View> {
     let s = String::from("oooo");
 
     if x == 5 {
-        v!(move this is x: {x}, this is s: {&s}).boxed()
+        v!(this is x: {x}, this is s: {s}).boxed()
     } else {
         v!(oooo).boxed()
     }
 }
 
 fn side_bar(a: impl View) -> impl View {
-    v!(move {&a} is a crazy)
+    v!({a} is a crazy)
 }
 
 fn nonono() -> impl View {
     let s = String::from("abc");
-    v!(move { &s })
+    v!({ s })
 }
 
 fn other() {

@@ -9,7 +9,7 @@ struct Home {
 
 impl View for Home {
     fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-        v!( <div>Home Page, title:{self.title}, count:{self.count}</div> )(out)
+        v!(<div>Home Page, title:{&self.title}, count:{self.count}</div> )(out)
     }
 }
 

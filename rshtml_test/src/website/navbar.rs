@@ -1,6 +1,15 @@
 use rshtml::{traits::View, v};
 
 pub fn navbar(sections: &[(&str, &str)]) -> impl View {
+    let mut section_views = Vec::new();
+    for (link, name) in sections {
+        section_views.push(v! {
+            <li class="nav-item">
+              <a class="nav-link" href={link}>{name}</a>
+            </li>
+        });
+    }
+
     v! {
         <div class="row navbar-row">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 navbar-container">
@@ -11,15 +20,7 @@ pub fn navbar(sections: &[(&str, &str)]) -> impl View {
             <div class="collapse navbar-toggleable-md" id="tmNavbar">
 
               <ul class="nav navbar-nav">
-              {
-                for (link, name) in sections.iter() {
-                    v!{
-                        <li class="nav-item">
-                            <a class="nav-link" href={link}>{name}</a>
-                        </li>
-                    }.render(out)?;
-                }
-              }
+                  {section_views}
               </ul>
 
             </div>

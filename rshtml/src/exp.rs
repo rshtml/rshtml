@@ -26,14 +26,14 @@ where
     }
 }
 
-impl Exp<()> {
-    pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-        write!(out, "")
-    }
-}
+// impl Exp<()> {
+//     pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+//         write!(out, "")
+//     }
+// }
 
-impl Exp<&()> {
-    pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-        write!(out, "")
-    }
-}
+// impl Exp<&()> {
+//     pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+//         write!(out, "")
+//     }
+// }
