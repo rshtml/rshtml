@@ -52,6 +52,6 @@ fn view_trait_with_v() {
 
     println!("text size: {}", res.text_size());
 
-    let mut out = String::with_capacity(res.text_size());
+    let mut out = String::with_capacity((res.text_size() as f32 * 1.1) as usize);
     res(&mut out).unwrap();
 }
