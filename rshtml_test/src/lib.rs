@@ -2,17 +2,8 @@
 
 mod website;
 
-use rshtml::{
-    Exp, Expr, RsHtml, ViewFn,
-    functions::*,
-    traits::{Render, RsHtml, View},
-    v,
-};
+use rshtml::{RsHtml, functions::*, traits::RsHtml};
 use serde::Serialize;
-use std::{
-    borrow::Cow,
-    fmt::{self, Display, Write},
-};
 
 #[derive(RsHtml)]
 // #[rshtml(path = "bar.rs.html", no_warn)]
@@ -48,11 +39,6 @@ impl HomePage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::prelude::*;
-    use pest::Parser;
-    use rshtml::{Block, Exp, traits::View};
-    use std::{fmt, fmt::Error, fmt::Write, fs};
-    use syn::__private::Span;
 
     #[test]
     fn test_macro() {
