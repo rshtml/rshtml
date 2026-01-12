@@ -8,8 +8,6 @@ use winnow::stream::Stream;
 use winnow::{Parser, token::any};
 
 // TODO: Enable file reading using the v_file! macro.
-// TODO: Make View implement RsHtml and call View::render(&struct, param) when rendering the View.
-// TODO: Only expression or with block in v macro?
 
 enum Node {
     Expr(TokenStream),

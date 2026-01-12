@@ -78,3 +78,19 @@ fn test_dynamic_attribute() {
     println!("{output}");
     assert!(output.contains(r#"class= &quot;active&quot;"#));
 }
+
+#[test]
+fn test_reuse() {
+    let mut out = String::new();
+    let mut my_string = String::from("hello");
+
+    let x = v!(<p> {
+        my_string.push_str("hii");
+        v!(<div>{my_string}</div>)
+    } </p>);
+
+    x.render(&mut out).unwrap();
+    x.render(&mut out).unwrap();
+
+    println!("{out}");
+}
