@@ -1,7 +1,13 @@
 use crate::traits::View;
 use std::{fmt, ops::Deref};
 
-pub struct ViewFn<T>(pub T);
+pub struct ViewFn<T>(pub T, usize);
+
+impl<T> ViewFn<T> {
+    pub fn new(c: (T, usize)) -> Self {
+        Self(c.0, c.1)
+    }
+}
 
 impl<'a, T> View for ViewFn<T>
 where
@@ -9,6 +15,10 @@ where
 {
     fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
         (self.0)(out)
+    }
+
+    fn text_size(&self) -> usize {
+        self.1
     }
 }
 
@@ -46,7 +56,6 @@ where
     }
 }
 
-// Kısa isim için
 pub fn viter<I>(iter: I) -> ViewIter<I> {
     ViewIter(iter)
 }

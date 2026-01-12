@@ -9,7 +9,7 @@ struct Home {
 
 impl View for Home {
     fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-        v!(<div>Home Page, title:{&self.title}, count:{self.count}</div> )(out)
+        v!(<div>Home Page, title:{&self.title}, count:{self.count}</div>)(out)
     }
 }
 
@@ -32,20 +32,26 @@ fn view_trait() {
 
 #[test]
 fn view_trait_with_v() {
-    let mut out = String::with_capacity(24);
-
     let home = Home {
         title: "home title".to_owned(),
         count: 7,
     };
+
+    let hello = String::from("Hello");
+    let greetings = v!(<p>{hello}</p>);
 
     let res = v! {
         <h1>RsHtml Title</h1>
 
         {home}
 
+        {greetings}
+
         <footer>copyright &copy;</footer>
     };
 
+    println!("text size: {}", res.text_size());
+
+    let mut out = String::with_capacity(res.text_size());
     res(&mut out).unwrap();
 }

@@ -144,5 +144,7 @@ mod exp;
 pub use exp::Exp;
 mod view_fn;
 pub use view_fn::ViewFn;
+mod text_size;
+pub use text_size::TextSize;
 
 pub use rshtml_macro::v;

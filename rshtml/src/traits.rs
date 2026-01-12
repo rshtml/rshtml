@@ -11,11 +11,19 @@ pub trait Render {
 
 pub trait View {
     fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result;
+
+    fn text_size(&self) -> usize {
+        0
+    }
 }
 
 impl<T: View + ?Sized> View for &T {
     fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
         (*self).render(out)
+    }
+
+    fn text_size(&self) -> usize {
+        (*self).text_size()
     }
 }
 
@@ -43,37 +51,8 @@ impl<T: View + ?Sized> View for Box<T> {
     }
 }
 
-// impl<F> View for F
-// where
-//     out: Fn(&mut dyn fmt::Write) -> fmt::Result,
-// {
-//     fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-//         self(f)
-//     }
-// }
-
-// impl<'a, I, V> View for I
-// where
-//     I: IntoIterator<Item = V> + Clone + 'a,
-//     V: View + 'a,
-// {
-//     fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-//         for item in self.clone() {
-//             item.render(f)?;
-//         }
-//         Ok(())
-//     }
-// }
-
-// impl<'a, I> View for &'a I
-// where
-//     &'a I: IntoIterator,
-//     <&'a I as IntoIterator>::Item: View,
-// {
-//     fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-//         for item in *self {
-//             item.render(f)?;
-//         }
-//         Ok(())
-//     }
-// }
+impl View for () {
+    fn render(&self, _out: &mut dyn fmt::Write) -> fmt::Result {
+        Ok(())
+    }
+}

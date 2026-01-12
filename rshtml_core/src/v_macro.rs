@@ -29,7 +29,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
     //     TokenStream::new()
     // };
 
-    let (expr_defs, body) =
+    let (expr_defs, body, text_size) =
         match terminated(template, eof.context(StrContext::Label("end of template")))
             .parse_next(&mut tokens)
         {
@@ -37,6 +37,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
                 let mut body = TokenStream::new();
                 let mut text_buffer = String::new();
                 let mut first = true;
+                let mut text_size = 0;
 
                 for node in nodes {
                     match node {
@@ -54,6 +55,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
                                 text_buffer.push_str(" ");
                             }
                             text_buffer.push_str(&text);
+                            text_size += text.len();
                             first = false;
                         }
                     }
@@ -63,7 +65,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
                     body.extend(quote! { write!(out, "{}", #text_buffer)?; });
                 }
 
-                (expr_defs, body)
+                (expr_defs, body, text_size)
             }
             Err(e) => {
                 let span = tokens
@@ -93,15 +95,24 @@ pub fn compile(input: TokenStream) -> TokenStream {
                     quote::quote_spanned! { span =>
                         compile_error!(#msg_lit);
                     },
+                    0,
                 )
             }
         };
 
     quote! {
-            ::rshtml::ViewFn({#expr_defs move |out: &mut dyn std::fmt::Write| -> std::fmt::Result {
-                #body
-                Ok(())
-            }})
+        ::rshtml::ViewFn::new({
+            let mut text_size = #text_size;
+            #expr_defs
+
+            (
+                move |out: &mut dyn std::fmt::Write| -> std::fmt::Result {
+                    #body
+                    Ok(())
+                },
+                text_size
+            )
+        })
     }
     .into()
 }
@@ -164,17 +175,17 @@ fn expr(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, TokenStream)> {
 
     let output = if let Ok(expr) = parse2::<syn::Expr>(stream.clone()) {
         (
-            quote! { let #def_ident = (#expr); },
+            quote! { let #def_ident = (#expr); text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
             quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
         )
     } else if let Ok(block) = parse2::<syn::Block>(stream.clone()) {
         (
-            quote! { let #def_ident = {#block}; },
+            quote! { let #def_ident = {#block}; text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
             quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
         )
     } else {
         (
-            quote! { let #def_ident = {#stream}; },
+            quote! { let #def_ident = {#stream}; text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
             quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
         )
     };
