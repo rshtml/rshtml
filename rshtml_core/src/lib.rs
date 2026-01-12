@@ -5,7 +5,6 @@ mod compiler;
 pub mod config;
 mod diagnostic;
 mod error;
-pub mod function_like;
 mod node;
 mod parser;
 mod position;
@@ -13,7 +12,7 @@ pub mod str_extensions;
 mod temporary_file;
 #[cfg(test)]
 mod tests;
-mod v_macro;
+pub mod v_macro;
 
 use crate::parser::RsHtmlParser;
 use crate::{config::Config, diagnostic::Diagnostic};
@@ -132,8 +131,4 @@ fn parse_and_compile(
     let ts = compiler.run(node)?;
 
     Ok((ts, compiler.text_size, compiler.component_fns()))
-}
-
-pub fn process_function_like(input: TokenStream) -> TokenStream {
-    v_macro::compile(input)
 }

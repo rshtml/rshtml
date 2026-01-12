@@ -43,7 +43,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
                     match node {
                         Node::Expr(tokens) => {
                             if !text_buffer.is_empty() {
-                                text_buffer.push_str(" ");
+                                text_buffer.push(' ');
                                 body.extend(quote! { write!(out, "{}", #text_buffer)?; });
                                 text_buffer.clear();
                             }
@@ -52,7 +52,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
                         }
                         Node::Text(text) => {
                             if !first {
-                                text_buffer.push_str(" ");
+                                text_buffer.push(' ');
                             }
                             text_buffer.push_str(&text);
                             text_size += text.len();
@@ -102,7 +102,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
 
     quote! {
         ::rshtml::ViewFn::new({
-            let mut text_size = #text_size;
+            let mut _text_size = #text_size;
             #expr_defs
 
             (
@@ -110,11 +110,10 @@ pub fn compile(input: TokenStream) -> TokenStream {
                     #body
                     Ok(())
                 },
-                text_size
+                _text_size
             )
         })
     }
-    .into()
 }
 
 fn template(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
@@ -175,17 +174,17 @@ fn expr(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, TokenStream)> {
 
     let output = if let Ok(expr) = parse2::<syn::Expr>(stream.clone()) {
         (
-            quote! { let #def_ident = (#expr); text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
+            quote! { let #def_ident = (#expr); _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
             quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
         )
     } else if let Ok(block) = parse2::<syn::Block>(stream.clone()) {
         (
-            quote! { let #def_ident = {#block}; text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
+            quote! { let #def_ident = {#block}; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
             quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
         )
     } else {
         (
-            quote! { let #def_ident = {#stream}; text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
+            quote! { let #def_ident = {#stream}; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
             quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
         )
     };

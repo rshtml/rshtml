@@ -1,7 +1,7 @@
 #![doc(hidden)]
 
 use proc_macro::TokenStream;
-use rshtml_core::{process_function_like, process_template};
+use rshtml_core::{process_template, v_macro};
 use syn::{Data, DeriveInput, Fields, LitStr, parse_macro_input};
 
 #[proc_macro_derive(RsHtml, attributes(rshtml))]
@@ -124,5 +124,5 @@ fn get_struct_fields(data: &Data) -> Vec<String> {
 
 #[proc_macro]
 pub fn v(input: TokenStream) -> TokenStream {
-    TokenStream::from(process_function_like(input.into()))
+    TokenStream::from(v_macro::compile(input.into()))
 }

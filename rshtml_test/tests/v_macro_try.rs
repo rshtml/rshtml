@@ -65,7 +65,7 @@ fn card() -> impl View {
     let x = 5;
     let s = String::from("oooo");
 
-    return v!(this is x: {x}, this is s: {s});
+    v!(this is x: {x}, this is s: {s})
 }
 
 fn bar() -> Box<dyn View> {

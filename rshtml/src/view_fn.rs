@@ -9,9 +9,9 @@ impl<T> ViewFn<T> {
     }
 }
 
-impl<'a, T> View for ViewFn<T>
+impl<T> View for ViewFn<T>
 where
-    T: Fn(&mut dyn fmt::Write) -> fmt::Result + 'a,
+    T: Fn(&mut dyn fmt::Write) -> fmt::Result,
 {
     fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
         (self.0)(out)
