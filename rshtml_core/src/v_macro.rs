@@ -2,14 +2,14 @@ use proc_macro2::{Delimiter, Group, Span, TokenStream, TokenTree};
 use quote::{format_ident, quote};
 use syn::parse2;
 use winnow::ModalResult;
-use winnow::combinator::{alt, cut_err, eof, fail, not, opt, peek, preceded, repeat, terminated};
+use winnow::combinator::{alt, cut_err, eof, fail, opt, repeat, terminated};
 use winnow::error::{ErrMode, StrContext, StrContextValue};
 use winnow::stream::Stream;
 use winnow::{Parser, token::any};
 
-// TODO: Add length validations for html entity.
 // TODO: Enable file reading using the v_file! macro.
 // TODO: Make View implement RsHtml and call View::render(&struct, param) when rendering the View.
+// TODO: Only expression or with block in v macro?
 
 enum Node {
     Expr(TokenStream),
@@ -38,6 +38,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
             Ok((expr_defs, nodes)) => {
                 let mut body = TokenStream::new();
                 let mut text_buffer = String::new();
+                let mut first = true;
 
                 for node in nodes {
                     match node {
@@ -51,8 +52,11 @@ pub fn compile(input: TokenStream) -> TokenStream {
                             body.extend(tokens);
                         }
                         Node::Text(text) => {
-                            text_buffer.push_str(" ");
+                            if !first {
+                                text_buffer.push_str(" ");
+                            }
                             text_buffer.push_str(&text);
+                            first = false;
                         }
                     }
                 }
@@ -284,17 +288,19 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
 
     expr_definitions.extend(expr_defs);
 
-    let (expr_defs, body_ts) = match open_tag_name.to_string().as_str() {
-        "script" => (
-            TokenStream::new(),
-            vec![Node::Text(script_tag_body.parse_next(input)?)],
-        ),
-        "style" => (
-            TokenStream::new(),
-            vec![Node::Text(style_tag_body.parse_next(input)?)],
-        ),
-        _ => template.parse_next(input)?,
-    };
+    // let (expr_defs, body_ts) = match open_tag_name.to_string().as_str() {
+    //     "script" => (
+    //         TokenStream::new(),
+    //         vec![Node::Text(script_tag_body.parse_next(input)?)],
+    //     ),
+    //     "style" => (
+    //         TokenStream::new(),
+    //         vec![Node::Text(style_tag_body.parse_next(input)?)],
+    //     ),
+    //     _ => template.parse_next(input)?,
+    // };
+
+    let (expr_defs, body_ts) = template.parse_next(input)?;
 
     expr_definitions.extend(expr_defs);
 
@@ -404,53 +410,53 @@ fn string_literal(input: &mut &[TokenTree]) -> ModalResult<String> {
     .parse_next(input)
 }
 
-fn script_tag_body(input: &mut &[TokenTree]) -> ModalResult<String> {
-    let script_end_tag = (
-        lt,
-        slash,
-        any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Ident(i) if i.to_string() == "script")),
-        gt,
-    );
+// fn script_tag_body(input: &mut &[TokenTree]) -> ModalResult<String> {
+//     let script_end_tag = (
+//         lt,
+//         slash,
+//         any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Ident(i) if i.to_string() == "script")),
+//         gt,
+//     );
 
-    repeat(0.., preceded(not(peek(script_end_tag)), any))
-        .fold(String::new, |mut acc, tt| {
-            if acc.is_empty() {
-                acc.push_str(" ");
-            }
-            acc.push_str(&tt.to_string());
-            acc.push_str(" ");
-            acc
-        })
-        // .map(|ts| {
-        //     // let ts = ts.to_string();
-        //     // quote! { write!(out, "{}", #ts)?; }
-        // })
-        .parse_next(input)
-}
+//     repeat(0.., preceded(not(peek(script_end_tag)), any))
+//         .fold(String::new, |mut acc, tt| {
+//             // if acc.is_empty() {
+//             //     acc.push_str(" ");
+//             // }
+//             acc.push_str(&tt.to_string());
+//             // acc.push_str(" ");
+//             acc
+//         })
+//         // .map(|ts| {
+//         //     // let ts = ts.to_string();
+//         //     // quote! { write!(out, "{}", #ts)?; }
+//         // })
+//         .parse_next(input)
+// }
 
-fn style_tag_body(input: &mut &[TokenTree]) -> ModalResult<String> {
-    let style_end_tag = (
-        lt,
-        slash,
-        any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Ident(i) if i.to_string() == "style")),
-        gt,
-    );
+// fn style_tag_body(input: &mut &[TokenTree]) -> ModalResult<String> {
+//     let style_end_tag = (
+//         lt,
+//         slash,
+//         any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Ident(i) if i.to_string() == "style")),
+//         gt,
+//     );
 
-    repeat(0.., preceded(not(peek(style_end_tag)), any))
-        .fold(String::new, |mut acc, tt| {
-            if acc.is_empty() {
-                acc.push_str(" ");
-            }
-            acc.push_str(&tt.to_string());
-            acc.push_str(" ");
-            acc
-        })
-        // .map(|ts| {
-        //     let ts = ts.to_string();
-        //     quote! { write!(out, "{}", #ts)?; }
-        // })
-        .parse_next(input)
-}
+//     repeat(0.., preceded(not(peek(style_end_tag)), any))
+//         .fold(String::new, |mut acc, tt| {
+//             if acc.is_empty() {
+//                 acc.push_str(" ");
+//             }
+//             acc.push_str(&tt.to_string());
+//             acc.push_str(" ");
+//             acc
+//         })
+//         // .map(|ts| {
+//         //     let ts = ts.to_string();
+//         //     quote! { write!(out, "{}", #ts)?; }
+//         // })
+//         .parse_next(input)
+// }
 
 fn html_entity(input: &mut &[TokenTree]) -> ModalResult<String> {
     let amp = any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Punct(p) if p.as_char() == '&'));
@@ -462,21 +468,35 @@ fn html_entity(input: &mut &[TokenTree]) -> ModalResult<String> {
                 // HEX CONTROL (x1F600)
                 TokenTree::Ident(i) => {
                     let s = i.to_string();
+
                     if s.starts_with('x') || s.starts_with('X') {
-                        s[1..].chars().all(|c| c.is_ascii_hexdigit())
+                        let hex = &s[1..];
+                        (1..=6).contains(&hex.len()) && hex.chars().all(|c| c.is_ascii_hexdigit())
                     } else {
                         false
                     }
                 }
                 // DECIMAL CONTROL (123)
-                TokenTree::Literal(l) => l.to_string().chars().all(|c| c.is_ascii_digit()),
+                TokenTree::Literal(l) => {
+                    let s = l.to_string();
+
+                    (1..=5).contains(&s.len()) && s.chars().all(|c| c.is_ascii_digit())
+                }
                 _ => false,
             }),
         )
             .map(|(_, val)| format!("#{}", val)),
         // B. Name Entity (copy, nbsp)
         any.verify_map(|tt: TokenTree| match tt {
-            TokenTree::Ident(i) => Some(i.to_string()),
+            TokenTree::Ident(i) => {
+                let s = i.to_string();
+
+                if (1..=30).contains(&s.len()) && s.chars().all(|c| c.is_ascii_alphabetic()) {
+                    Some(s)
+                } else {
+                    None
+                }
+            }
             _ => None,
         }),
     ));

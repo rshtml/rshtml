@@ -3,7 +3,7 @@ use rshtml::{traits::View, v};
 use crate::website::scripts::scripts;
 
 pub fn layout(title: &str, navbar: impl View, footer: impl View, content: impl View) -> impl View {
-    v! {move
+    v! {
         // <!DOCTYPE html>
         <html lang="en">
         <head>

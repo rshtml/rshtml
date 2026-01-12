@@ -17,7 +17,7 @@ pub fn index() -> impl View {
     let home_time = Utc::now();
     let email = "contact@rshtml.com";
 
-    let content = v! {move
+    let content = v! {
         <div class="tm-page-content">
             { home("Introduction", home_time) }
             { services("Our Services") }

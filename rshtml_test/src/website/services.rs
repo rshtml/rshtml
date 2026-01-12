@@ -1,7 +1,7 @@
 use rshtml::{traits::View, v};
 
 pub fn services(title: &str) -> impl View {
-    v! {move
+    v! {
       <section id="tm-section-2" class="row tm-section">
         <div class="tm-flex-center col-xs-12 col-sm-6 col-md-6 col-lg-5 col-xl-6">
           <img src="img/strip-01.jpg" alt="Image" class="img-fluid tm-img"/>

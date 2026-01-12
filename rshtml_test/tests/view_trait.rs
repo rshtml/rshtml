@@ -26,7 +26,7 @@ fn view_trait() {
 
     assert_eq!(
         out,
-        " <div>  Home Page , title : home title , count : 7 </div> "
+        "<div> Home Page , title : home title , count : 7 </div>"
     )
 }
 

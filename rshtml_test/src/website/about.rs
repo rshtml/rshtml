@@ -1,7 +1,7 @@
 use rshtml::{traits::View, v};
 
 pub fn about(title: &str) -> impl View {
-    v! {move
+    v! {
       <section id="tm-section-3" class="row tm-section">
         <div class="tm-white-curve-left col-xs-12 col-sm-6 col-md-6 col-lg-7 col-xl-6">
           <div class="tm-white-curve-left-rec">
