@@ -6,11 +6,11 @@
 
 RsHtml is a compile-time, type-safe, lightweight, and flexible template engine for Rust. It aims to seamlessly integrate Rust code with HTML content. It allows developers to write dynamic templates that embed Rust expressions and makes it easier to generate HTML content programmatically. It generates efficient Rust code for template rendering at compile time.
 
-### Documentation and Editor Support
+#### Documentation and Editor Support
 
 - See the [Documentation](https://rshtml.github.io/) for a full list of features and the [Editor Support](https://rshtml.github.io/#5-editor-support) section for editor integration details.
 
-## v macro
+## v! macro
 - Allows writing Rust blocks inside HTML (`<div>{ code() }</div>`) and embedding the resulting expressions into the template.
 - Generates a type that implements the View trait and can render types that implement either the View or Display trait.
 - HTML tags must be well-formed and properly closed.
