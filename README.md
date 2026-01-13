@@ -1,30 +1,68 @@
 [![Crates.io Version](https://img.shields.io/crates/v/rshtml.svg)](https://crates.io/crates/rshtml)
 [![Docs.rs Documentation](https://docs.rs/rshtml/badge.svg)](https://docs.rs/rshtml)
 [![Full Documentation](https://img.shields.io/badge/book-rshtml.github.io-blue.svg)](https://rshtml.github.io/)
-[![Read on Medium](https://img.shields.io/badge/Read_on_Medium-yellow?logo=medium)](https://medium.com/@mehmetkesik/announcing-rshtml-template-for-rust-e246713ba02f)
 ---
 # RsHtml
 
-RsHtml is a compile-time, type-safe, lightweight and flexible template engine for Rust, designed to seamlessly integrate Rust code within HTML templates. It allows developers to write dynamic templates with embedded Rust expressions and logic, making it easier to generate HTML content programmatically.
+RsHtml is a compile-time, type-safe, lightweight, and flexible template engine for Rust. It aims to seamlessly integrate Rust code with HTML content. It allows developers to write dynamic templates that embed Rust expressions and makes it easier to generate HTML content programmatically. It generates efficient Rust code for template rendering at compile time.
 
-## Features
+### Documentation and Editor Support
+
+- See the [Documentation](https://rshtml.github.io/) for a full list of features and the [Editor Support](https://rshtml.github.io/#5-editor-support) section for editor integration details.
+
+## v macro
+- Allows writing Rust blocks inside HTML (`<div>{ code() }</div>`) and embedding the resulting expressions into the template.
+- Generates a type that implements the View trait and can render types that implement either the View or Display trait.
+- HTML tags must be well-formed and properly closed.
+
+```rust
+    let user_info = v!(<p>name: {user.name}</p>);
+
+    v! {
+         <div class="user-info"> {user_info} </div>
+    }
+```
+
+```rust
+    fn cards(cards: &[Card]) -> impl View {
+        let mut card_views = Vec::new();
+        for card in cards {
+            card_views.push(v!(<div class="card">{&card.title}</div>));
+        }
+
+        v! {
+            <div>
+                { card_views }
+            </div>
+        }
+    }
+```
+
+```rust
+    impl View for Home {
+        fn render(&self, out: &mut dyn Write) -> Result {
+            v!(<p>Home Page {&self.title}</p>).render(out)
+        }
+    }
+```
+
+## RsHtml derive macro
+- Processes `.rs.html` templates from the default `views` directory.
 - Embeds Rust expressions and blocks directly into HTML templates using the `@` prefix or HTML-like component syntax (e.g., `<Component/>`).
 - Supports conditional rendering (`@if`, `@else`), loops (`@for`), and pattern matching (`@match`).
 - Supports Rust code blocks (`@{}`), various Rust expression syntaxes (e.g., `@expression`, `@(expression)`, and a broad range of other Rust syntax.
 - Provides helper functions (e.g., `@time()`).
 - Supports raw output with `@raw` blocks and server-side comments with `@* ... *@`.
-- Generates `efficient Rust code` for template rendering at compile time.
-- **See the [documentation](https://rshtml.github.io/) for a full list of features. You can also read the [Medium](https://medium.com/@mehmetkesik/announcing-rshtml-template-for-rust-e246713ba02f) article.**
 
-## Editor Support
-
-Please see the [Editor Support](https://rshtml.github.io/#5-editor-support) section in the documentation.
-
-## Syntax Overview
-
-### Condition, Iteration, Pattern Matching
 ```razor
 <h1>Welcome to RsHtml</h1>
+
+@use "Component.rs.html" as Component
+
+<Component title="home" is_ok=true>
+    <p>child content</p>
+</Component>
+
 @if self.is_logged_in {
     <p>Hello, @self.username!</p>
 } else {
@@ -37,74 +75,19 @@ Please see the [Editor Support](https://rshtml.github.io/#5-editor-support) sect
     }
 </ul>
 
-@match self.count {
-    0 => <p>this is zero</p>,
-    1 => true,
-    2 => self.count,
-    3 => {
-        <p>this is @self.count</p>
-        @if self.my_var == "rshtml" {
-            <p>rshtml</p>
-        }
-    },
-    _ => <p>other</p>
-}
-```
-
-### Rust Code Blocks
-```razor
 @{
     let x = 42;
     let y = x * 2;
     println!("Debug: x = {}, y = {}", x, y);
 }
-```
 
-### Comments
-```razor
 @* This is a comment and will not appear in the output *@
 ```
 
-### Components
-```razor
-@use "Component.rs.html" as Component
-@use "Component.rs.html" @* take Component as name *@
-
-<Component title="home" is_ok=true>
-    <p>child content</p>
-</Component>
-```
-
-#### And much more..
-
-## Installation
-
-To use RsHtml in your Rust project, add it as a dependency in your `Cargo.toml`:
-
-```toml
-[dependencies]
-rshtml = "x.y.z"
-
-# The default folder can be changed. This is the default setup:
-[package.metadata.rshtml]
-views = { path = "views", extract_file_on_debug = false }
-```
-
-## Usage
-
-1. Define your template in an HTML file (e.g., home.rs.html) in `views` folder.
-2. Use the `RsHtml` derive macro to parse the template.
-3. Render the template with render function.
-
-### main.rs
-By default, #[derive(RsHtml)] infers the template file path from the struct's name.
-It converts `StructNamePage` to `struct_name.rs.html`.
-You can override this with `#[rshtml(path = "...")]`.
 ```rust
 use rshtml::{RsHtml, traits::RsHtml};
 
 #[derive(RsHtml)]
-//#[rshtml(path = "about.rs.html", no_warn)] // The template location can be configured via the rshtml path parameter. RsHtml warnings can be disabled.
 struct HomePage { // Looks for home.rs.html in views folder.
     title: String,
 }
@@ -118,6 +101,20 @@ fn main() {
 
     print!("{}", result);
 }
+```
+
+## Installation
+
+To use RsHtml in your Rust project, run `cargo add rshtml` command or add it as a dependency in your `Cargo.toml`:
+
+```toml
+[dependencies]
+rshtml = "0.5.0"
+
+# For RsHtml derive macro:
+# The default folder can be changed. This is the default setup:
+[package.metadata.rshtml]
+views = { path = "views", extract_file_on_debug = false }
 ```
 
 ## Contributing

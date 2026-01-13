@@ -1,9 +1,9 @@
 use rshtml::traits::View;
-use rshtml::v;
+use rshtml::{ViewFn, v};
 use std::fmt;
 
-fn render_view(view: ::rshtml::ViewFn<impl Fn(&mut dyn fmt::Write) -> fmt::Result>) -> String {
-    let mut buffer = String::new();
+fn render_view(view: ViewFn<impl Fn(&mut dyn fmt::Write) -> fmt::Result>) -> String {
+    let mut buffer = String::with_capacity(view.text_size());
     let _ = (view.0)(&mut buffer);
     buffer
 }
@@ -93,4 +93,53 @@ fn test_reuse() {
     x.render(&mut out).unwrap();
 
     println!("{out}");
+}
+
+struct Card {
+    title: String,
+}
+
+#[test]
+fn test_let_and_fn() {
+    struct User {
+        name: String,
+        cards: Vec<Card>,
+    }
+
+    let user = User {
+        name: "John".to_owned(),
+        cards: vec![
+            Card {
+                title: "card1".to_owned(),
+            },
+            Card {
+                title: "card2".to_owned(),
+            },
+        ],
+    };
+
+    let user_info = v!(<p>name: {user.name}</p>);
+
+    let res = v! {
+         <div class="user-info"> {user_info} </div>
+
+         {cards(&user.cards)}
+    };
+
+    let out = render_view(res);
+
+    assert!(out.contains("John"));
+}
+
+fn cards(cards: &[Card]) -> impl View {
+    let mut card_views = Vec::new();
+    for card in cards {
+        card_views.push(v!(<div class="card">{&card.title}</div>));
+    }
+
+    v! {
+        <div>
+            { card_views }
+        </div>
+    }
 }
