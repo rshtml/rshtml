@@ -123,7 +123,7 @@ fn test_let_and_fn() {
     let res = v! {
          <div class="user-info"> {user_info} </div>
 
-         {cards(&user.cards)}
+         {cards("Card Title", &user.cards)}
     };
 
     let out = render_view(res);
@@ -131,13 +131,17 @@ fn test_let_and_fn() {
     assert!(out.contains("John"));
 }
 
-fn cards(cards: &[Card]) -> impl View {
+fn cards(title: &str, cards: &[Card]) -> impl View {
+    let title = v!(<h1>{ title }</h1>);
+
     let mut card_views = Vec::new();
     for card in cards {
         card_views.push(v!(<div class="card">{&card.title}</div>));
     }
 
     v! {
+        { title }
+
         <div>
             { card_views }
         </div>

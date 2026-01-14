@@ -7,7 +7,10 @@ use winnow::error::{ErrMode, StrContext, StrContextValue};
 use winnow::stream::Stream;
 use winnow::{Parser, token::any};
 
-// TODO: Enable file reading using the v_file! macro.
+// TODO: Enable file reading using the v_file!  or vfile! macro.
+// TODO: look tag, may use alt instead of checkpoint.
+// TODO: think <!doctype>
+// TODO: Provide a proper error message for tags that close without being opened. need to hold a stack pointer.
 
 enum Node {
     Expr(TokenStream),
@@ -17,17 +20,6 @@ enum Node {
 pub fn compile(input: TokenStream) -> TokenStream {
     let tokens: Vec<TokenTree> = input.into_iter().collect();
     let mut tokens = tokens.as_slice();
-
-    // let r#move = if let Some(TokenTree::Ident(ident)) = tokens.first() {
-    //     if ident == "move" {
-    //         tokens = &tokens[1..];
-    //         quote! {move }
-    //     } else {
-    //         TokenStream::new()
-    //     }
-    // } else {
-    //     TokenStream::new()
-    // };
 
     let (expr_defs, body, text_size) =
         match terminated(template, eof.context(StrContext::Label("end of template")))
@@ -117,47 +109,23 @@ pub fn compile(input: TokenStream) -> TokenStream {
 }
 
 fn template(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
-    let mut expr_defs = TokenStream::new();
-    let mut nodes = Vec::new();
-
-    loop {
-        let checkpoint = input.checkpoint();
-
-        if let Ok((expr_def, body)) = expr.parse_next(input) {
+    repeat(
+        0..,
+        alt((
+            expr.map(|(ts, expr)| (ts, vec![Node::Expr(expr)])),
+            tag,
+            text.map(|t| (TokenStream::new(), vec![Node::Text(t)])),
+        )),
+    )
+    .fold(
+        || (TokenStream::new(), Vec::new()),
+        |(mut expr_defs, mut bodies), (expr_def, body)| {
             expr_defs.extend(expr_def);
-            nodes.push(Node::Expr(body));
-            continue;
-        }
-        input.reset(&checkpoint);
-
-        if let Ok((expr_def, body)) = tag.parse_next(input) {
-            expr_defs.extend(expr_def);
-            nodes.extend(body);
-            continue;
-        }
-        input.reset(&checkpoint);
-
-        if let Ok(t) = text.parse_next(input) {
-            nodes.push(Node::Text(t));
-            continue;
-        }
-        input.reset(&checkpoint);
-
-        break;
-    }
-
-    Ok((expr_defs, nodes))
-
-    // repeat(0.., alt((expr, tag, text.map(|t| (TokenStream::new(), t)))))
-    //     .fold(
-    //         || (TokenStream::new(), TokenStream::new()),
-    //         |(mut expr_defs, mut bodies), (expr_def, body)| {
-    //             expr_defs.extend(expr_def);
-    //             bodies.extend(body);
-    //             (expr_defs, bodies)
-    //         },
-    //     )
-    //     .parse_next(input)
+            bodies.extend(body);
+            (expr_defs, bodies)
+        },
+    )
+    .parse_next(input)
 }
 
 fn expr(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, TokenStream)> {
@@ -212,11 +180,6 @@ fn text(input: &mut &[TokenTree]) -> ModalResult<String> {
         acc.push_str(&item);
         acc
     })
-    .map(|s| {
-        // s.push(' ');
-        // quote! { write!(out, "{}", #s)?; }
-        s
-    })
     .parse_next(input)
 }
 
@@ -226,21 +189,13 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
     let mut open_tag = (lt, ident, attributes, cut_err(gt))
         .map(|(lt, ident, (expr_defs, attributes), gt)| {
             let mut nodes = Vec::new();
-            // let mut ts = TokenStream::new();
 
             if attributes.is_empty() {
                 nodes.push(Node::Text(format!("{lt}{ident}{gt}")));
-                // let starting = format!(" {lt}{ident}{gt} ");
-                // ts.extend(quote! { write!(out, "{}", #starting)?; });
             } else {
                 nodes.push(Node::Text(format!("{lt}{ident}")));
                 nodes.extend(attributes);
                 nodes.push(Node::Text(format!("{gt}")));
-                // let starting = format!(" {lt}{ident}");
-                // ts.extend(quote! { write!(out, "{}", #starting)?; });
-                // ts.extend(attributes);
-                // let gt = format!("{gt} ");
-                // ts.extend(quote! { write!(out, "{}", #gt)?; });
             }
 
             (expr_defs, nodes, ident)
@@ -248,32 +203,19 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
         .context(StrContext::Label("tag open"));
 
     let close_tag = (lt, slash, cut_err(ident), cut_err(gt))
-        .map(|(lt, slash, ident, gt)| {
-            // let closing = format!(" {lt}{slash}{ident}{gt} ");
-            // let ts = quote! { write!(out, "{}", #closing)?; };
-
-            (Node::Text(format!("{lt}{slash}{ident}{gt}")), ident)
-        })
+        .map(|(lt, slash, ident, gt)| (Node::Text(format!("{lt}{slash}{ident}{gt}")), ident))
         .context(StrContext::Label("tag close"));
 
     let mut self_close_tag = (lt, ident, attributes, slash, cut_err(gt))
         .map(|(lt, ident, (expr_defs, attributes), slash, gt)| {
-            // let mut ts = TokenStream::new();
             let mut nodes = Vec::new();
 
             if attributes.is_empty() {
-                // let starting = format!(" {lt}{ident}{slash}{gt} ");
-                // ts.extend(quote! { write!(out, "{}", #starting)?; });
                 nodes.push(Node::Text(format!("{lt}{ident}{slash}{gt}")));
             } else {
                 nodes.push(Node::Text(format!("{lt}{ident}")));
                 nodes.extend(attributes);
                 nodes.push(Node::Text(format!("{slash}{gt}")));
-                // let starting = format!(" {lt}{ident}");
-                // ts.extend(quote! { write!(out, "{}", #starting)?; });
-                // ts.extend(attributes);
-                // let closing = format!("{slash}{gt} ");
-                // ts.extend(quote! { write!(out, "{}", #closing)?; });
             }
             (expr_defs, nodes)
         })
@@ -296,18 +238,6 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
 
     expr_definitions.extend(expr_defs);
 
-    // let (expr_defs, body_ts) = match open_tag_name.to_string().as_str() {
-    //     "script" => (
-    //         TokenStream::new(),
-    //         vec![Node::Text(script_tag_body.parse_next(input)?)],
-    //     ),
-    //     "style" => (
-    //         TokenStream::new(),
-    //         vec![Node::Text(style_tag_body.parse_next(input)?)],
-    //     ),
-    //     _ => template.parse_next(input)?,
-    // };
-
     let (expr_defs, body_ts) = template.parse_next(input)?;
 
     expr_definitions.extend(expr_defs);
@@ -329,7 +259,7 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
                     )))
                     .parse_next(input);
             }
-            // let mut ts = TokenStream::new();
+
             let mut nodes = Vec::new();
             nodes.extend(open_ts);
             nodes.extend(body_ts);
@@ -361,7 +291,6 @@ fn attributes(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)>
                 if let Some(val) = value {
                     items.push(val);
                 }
-                // items.extend(value);
                 (expr_defs, items)
             },
         )
@@ -385,86 +314,26 @@ fn attribute(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, String, Opti
         )),
     )
         .map(|(name, equal_value)| {
-            // let mut ts = TokenStream::new();
             let mut expr_defs = TokenStream::new();
 
             if let Some((equal, (expr_def, value))) = equal_value {
                 expr_defs.extend(expr_def);
 
-                // let attr = format!(" {name}{equal}");
-                // ts.extend(quote! { write!(out, "{}", #attr)?; });
-                // ts.extend(quote! {#value });
                 (expr_defs, format!("{name}{equal}"), Some(value))
             } else {
-                // let attr = format!(" {name} ");
-                // ts.extend(quote! { write!(out, "{}", #attr)?; });
                 (expr_defs, format!("{name}"), None)
             }
-
-            // (expr_defs, ts)
         })
         .parse_next(input)
 }
 
 fn string_literal(input: &mut &[TokenTree]) -> ModalResult<String> {
     any.verify_map(|tt: TokenTree| match tt {
-        TokenTree::Literal(lit) => {
-            Some(lit.to_string())
-            // let s = lit.to_string();
-            // Some(quote! { write!(out, "{}", #s)?; })
-        }
+        TokenTree::Literal(lit) => Some(lit.to_string()),
         _ => None,
     })
     .parse_next(input)
 }
-
-// fn script_tag_body(input: &mut &[TokenTree]) -> ModalResult<String> {
-//     let script_end_tag = (
-//         lt,
-//         slash,
-//         any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Ident(i) if i.to_string() == "script")),
-//         gt,
-//     );
-
-//     repeat(0.., preceded(not(peek(script_end_tag)), any))
-//         .fold(String::new, |mut acc, tt| {
-//             // if acc.is_empty() {
-//             //     acc.push_str(" ");
-//             // }
-//             acc.push_str(&tt.to_string());
-//             // acc.push_str(" ");
-//             acc
-//         })
-//         // .map(|ts| {
-//         //     // let ts = ts.to_string();
-//         //     // quote! { write!(out, "{}", #ts)?; }
-//         // })
-//         .parse_next(input)
-// }
-
-// fn style_tag_body(input: &mut &[TokenTree]) -> ModalResult<String> {
-//     let style_end_tag = (
-//         lt,
-//         slash,
-//         any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Ident(i) if i.to_string() == "style")),
-//         gt,
-//     );
-
-//     repeat(0.., preceded(not(peek(style_end_tag)), any))
-//         .fold(String::new, |mut acc, tt| {
-//             if acc.is_empty() {
-//                 acc.push_str(" ");
-//             }
-//             acc.push_str(&tt.to_string());
-//             acc.push_str(" ");
-//             acc
-//         })
-//         // .map(|ts| {
-//         //     let ts = ts.to_string();
-//         //     quote! { write!(out, "{}", #ts)?; }
-//         // })
-//         .parse_next(input)
-// }
 
 fn html_entity(input: &mut &[TokenTree]) -> ModalResult<String> {
     let amp = any.verify(|tt: &TokenTree| matches!(tt, TokenTree::Punct(p) if p.as_char() == '&'));
@@ -494,7 +363,7 @@ fn html_entity(input: &mut &[TokenTree]) -> ModalResult<String> {
             }),
         )
             .map(|(_, val)| format!("#{}", val)),
-        // B. Name Entity (copy, nbsp)
+        // Name Entity (copy, nbsp)
         any.verify_map(|tt: TokenTree| match tt {
             TokenTree::Ident(i) => {
                 let s = i.to_string();
@@ -538,15 +407,6 @@ fn ident(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     .parse_next(input)
 }
 
-// fn ident_with_span(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Span)> {
-//     any.verify_map(|tt: TokenTree| match tt {
-//         TokenTree::Ident(i) => Some((quote! {#i}, i.span())),
-//         _ => None,
-//     })
-//     .context(StrContext::Label("ident"))
-//     .parse_next(input)
-// }
-
 fn lt(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     any.verify_map(|tt: TokenTree| match tt {
         TokenTree::Punct(p) if p.as_char() == '<' => Some(quote! {#p}),
@@ -564,15 +424,6 @@ fn gt(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     .context(StrContext::Expected(StrContextValue::CharLiteral('>')))
     .parse_next(input)
 }
-
-// fn not_gt(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
-//     any.verify_map(|tt: TokenTree| match tt {
-//         TokenTree::Punct(p) if p.as_char() == '>' => None,
-//         _ => Some(quote! {#tt}),
-//     })
-//     .context(StrContext::Label("not gt"))
-//     .parse_next(input)
-// }
 
 fn equal(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     any.verify_map(|tt: TokenTree| match tt {
@@ -592,15 +443,6 @@ fn hyphen(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     .parse_next(input)
 }
 
-// fn not_hyphen(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
-//     any.verify_map(|tt: TokenTree| match tt {
-//         TokenTree::Punct(p) if p.as_char() == '-' => None,
-//         _ => Some(quote! {#tt}),
-//     })
-//     .context(StrContext::Label("not hyphen"))
-//     .parse_next(input)
-// }
-
 fn slash(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     any.verify_map(|tt: TokenTree| match tt {
         TokenTree::Punct(p) if p.as_char() == '/' => Some(quote! {#p}),
@@ -616,32 +458,5 @@ fn slash(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
 //         _ => None,
 //     })
 //     .context(StrContext::Label("exclamation mark"))
-//     .parse_next(input)
-// }
-
-// fn backslash(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
-//     any.verify_map(|tt: TokenTree| match tt {
-//         TokenTree::Punct(p) if p.as_char() == '\\' => Some(quote! {#p}),
-//         _ => None,
-//     })
-//     .context(StrContext::Label("Token Error Comes From Me"))
-//     .parse_next(input)
-// }
-
-// fn dq(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
-//     any.verify_map(|tt: TokenTree| match tt {
-//         TokenTree::Punct(p) if p.as_char() == '"' => Some(quote! {#p}),
-//         _ => None,
-//     })
-//     .context(StrContext::Label("Token Error Comes From Me"))
-//     .parse_next(input)
-// }
-
-// fn sq(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
-//     any.verify_map(|tt: TokenTree| match tt {
-//         TokenTree::Punct(p) if p.as_char() == '\'' => Some(quote! {#p}),
-//         _ => None,
-//     })
-//     .context(StrContext::Label("Token Error Comes From Me"))
 //     .parse_next(input)
 // }
