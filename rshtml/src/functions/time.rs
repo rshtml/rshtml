@@ -3,6 +3,8 @@ use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 
+use crate::traits::View;
+
 pub fn time<T: Display + ?Sized>(value: &T) -> RsDateTime {
     let value_str = value.to_string();
     let value_str = value_str.trim();
@@ -51,6 +53,12 @@ impl RsDateTime {
     pub fn pretty(mut self) -> Self {
         self.1 = "%b %d, %Y".to_string();
         self
+    }
+}
+
+impl View for RsDateTime {
+    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+        write!(out, "{}", self.0.format(self.1.as_str()))
     }
 }
 

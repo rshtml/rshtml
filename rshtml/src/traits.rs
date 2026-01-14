@@ -1,4 +1,8 @@
-use std::fmt;
+use crate::EscapingWriter;
+use std::{
+    borrow::Cow,
+    fmt::{self, Write},
+};
 
 pub trait RsHtml {
     fn fmt(&self, __f__: &mut dyn fmt::Write) -> fmt::Result;
@@ -56,3 +60,35 @@ impl View for () {
         Ok(())
     }
 }
+
+impl<'a> View for Cow<'a, str> {
+    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+        (**self).render(out)
+    }
+    fn text_size(&self) -> usize {
+        self.len()
+    }
+}
+
+impl<'a> View for fmt::Arguments<'a> {
+    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+        write!(&mut EscapingWriter { inner: out }, "{}", self)
+    }
+}
+
+macro_rules! impl_view_for_display {
+    ($($t:ty),*) => {
+        $(
+            impl View for $t {
+                fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+                    write!(&mut EscapingWriter { inner: out }, "{}", self)
+                }
+            }
+        )*
+    };
+}
+
+impl_view_for_display!(
+    String, str, char, bool, i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32,
+    f64
+);

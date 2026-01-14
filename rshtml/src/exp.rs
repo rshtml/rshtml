@@ -1,5 +1,4 @@
-use crate::{EscapingWriter, traits::View};
-use std::fmt::Write;
+use crate::traits::View;
 use std::fmt::{self, Debug};
 
 #[derive(Debug)]
@@ -8,12 +7,6 @@ pub struct Exp<T: ?Sized>(pub T);
 impl<T: View + ?Sized> Exp<T> {
     pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
         self.0.render(out)
-    }
-}
-
-impl<T: fmt::Display + ?Sized> View for Exp<T> {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-        write!(&mut EscapingWriter { inner: out }, "{}", &self.0)
     }
 }
 
@@ -26,14 +19,25 @@ where
     }
 }
 
-// impl Exp<()> {
-//     pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-//         write!(out, "")
+// impl<I> View for Exp<RefCell<Option<I>>>
+// where
+//     I: Iterator,
+//     I::Item: View,
+// {
+//     fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+//         if let Some(iter) = self.0.borrow_mut().take() {
+//             for item in iter {
+//                 item.render(out)?;
+//             }
+//         }
+//         Ok(())
 //     }
 // }
 
-// impl Exp<&()> {
-//     pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-//         write!(out, "")
-//     }
+// pub fn viter<I>(iter: I) -> Exp<RefCell<Option<I::IntoIter>>>
+// where
+//     I: IntoIterator,
+//     I::Item: View,
+// {
+//     Exp(RefCell::new(Some(iter.into_iter())))
 // }
