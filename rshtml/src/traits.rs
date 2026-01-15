@@ -1,6 +1,7 @@
-use crate::EscapingWriter;
+use crate::{EscapingWriter, ViewIter};
 use std::{
     borrow::Cow,
+    cell::RefCell,
     fmt::{self, Write},
 };
 
@@ -92,3 +93,14 @@ impl_view_for_display!(
     String, str, char, bool, i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32,
     f64
 );
+
+pub trait IntoViewIter: IntoIterator + Sized {
+    fn view_iter(self) -> ViewIter<Self::IntoIter>
+    where
+        Self::Item: View,
+    {
+        ViewIter(RefCell::new(Some(self.into_iter())))
+    }
+}
+
+impl<T: IntoIterator> IntoViewIter for T {}

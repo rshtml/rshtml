@@ -1,4 +1,4 @@
-use rshtml::traits::View;
+use rshtml::traits::*;
 use rshtml::{ViewFn, v};
 use std::fmt;
 
@@ -138,6 +138,11 @@ fn cards(title: &str, cards: &[Card]) -> impl View {
     for card in cards {
         card_views.push(v!(<div class="card">{&card.title}</div>));
     }
+
+    let card_views = cards
+        .iter()
+        .map(|card| v!(<div class="card">{&card.title}</div>))
+        .view_iter();
 
     v! {
         { title }

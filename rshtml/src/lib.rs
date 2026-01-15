@@ -146,5 +146,7 @@ mod view_fn;
 pub use view_fn::ViewFn;
 mod text_size;
 pub use text_size::TextSize;
+mod view_iter;
+pub use view_iter::ViewIter;
 
 pub use rshtml_macro::v;
