@@ -3,12 +3,11 @@ use quote::{format_ident, quote};
 use syn::parse2;
 use winnow::ModalResult;
 use winnow::combinator::{alt, cut_err, eof, fail, opt, peek, repeat, terminated};
-use winnow::error::{ErrMode, StrContext, StrContextValue};
+use winnow::error::{StrContext, StrContextValue};
 use winnow::stream::Stream;
 use winnow::{Parser, token::any};
 
 // TODO: Enable file reading using the v_file!  or vfile! macro.
-// TODO: look tag, may use alt instead of checkpoint.
 
 enum Node {
     Expr(TokenStream),
@@ -191,9 +190,13 @@ fn text(input: &mut &[TokenTree]) -> ModalResult<String> {
 }
 
 fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
-    let mut expr_definitions = TokenStream::new();
+    alt((self_closing_tag, full_tag)).parse_next(input)
+}
 
-    let mut open_tag = (lt, ident, attributes, cut_err(gt))
+fn full_tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
+    let open_checkpoint = input.checkpoint();
+
+    let (open_expr_defs, open_nodes, open_ident) = (lt, ident, attributes, cut_err(gt))
         .map(|(lt, ident, (expr_defs, attributes), gt)| {
             let mut nodes = Vec::new();
 
@@ -207,13 +210,52 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
 
             (expr_defs, nodes, ident)
         })
-        .context(StrContext::Label("tag open"));
+        .context(StrContext::Label("tag open"))
+        .parse_next(input)?;
 
-    let close_tag = (lt, slash, cut_err(ident), cut_err(gt))
+    let (body_expr_defs, body_nodes) = template.parse_next(input)?;
+
+    let close_checkpoint = input.checkpoint();
+    let Some((close_nodes, close_ident)) = opt((lt, slash, cut_err(ident), cut_err(gt))
         .map(|(lt, slash, ident, gt)| (Node::Text(format!("{lt}{slash}{ident}{gt}")), ident))
-        .context(StrContext::Label("tag close"));
+        .context(StrContext::Label("tag close")))
+    .parse_next(input)?
+    else {
+        input.reset(&open_checkpoint);
+        return cut_err(fail)
+            .context(StrContext::Label("tag opened here but never closed"))
+            .context(StrContext::Expected(StrContextValue::Description(
+                "matching closing tag",
+            )))
+            .parse_next(input);
+    };
 
-    let mut self_close_tag = (lt, ident, attributes, slash, cut_err(gt))
+    if open_ident.to_string() != close_ident.to_string() {
+        input.reset(&close_checkpoint);
+        let expected_str = format!("corresponding closing tag for <{}>", open_ident);
+        let exp_static: &'static str = Box::leak(expected_str.into_boxed_str());
+
+        return cut_err(fail)
+            .context(StrContext::Expected(StrContextValue::Description(
+                exp_static,
+            )))
+            .parse_next(input);
+    }
+
+    let mut expr_defs = TokenStream::new();
+    expr_defs.extend(open_expr_defs);
+    expr_defs.extend(body_expr_defs);
+
+    let mut nodes = Vec::new();
+    nodes.extend(open_nodes);
+    nodes.extend(body_nodes);
+    nodes.push(close_nodes);
+
+    Ok((expr_defs, nodes))
+}
+
+fn self_closing_tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
+    (lt, ident, attributes, slash, cut_err(gt))
         .map(|(lt, ident, (expr_defs, attributes), slash, gt)| {
             let mut nodes = Vec::new();
 
@@ -226,65 +268,8 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
             }
             (expr_defs, nodes)
         })
-        .context(StrContext::Label("self-closing tag"));
-
-    // ----------------
-
-    let checkpoint = input.checkpoint();
-
-    match self_close_tag.parse_next(input) {
-        Ok(ts) => return Ok(ts),
-        Err(ErrMode::Backtrack(_)) => {
-            input.reset(&checkpoint);
-        }
-        Err(e) => return Err(e),
-    }
-
-    let open_checkpoint = input.checkpoint();
-    let (expr_defs, open_ts, open_tag_name) = open_tag.parse_next(input)?;
-
-    expr_definitions.extend(expr_defs);
-
-    let (expr_defs, body_ts) = template.parse_next(input)?;
-
-    expr_definitions.extend(expr_defs);
-
-    let close_checkpoint = input.checkpoint();
-    let close_opt = opt(close_tag).parse_next(input)?;
-
-    match close_opt {
-        Some((close_ts, close_tag_name)) => {
-            if open_tag_name.to_string() != close_tag_name.to_string() {
-                input.reset(&close_checkpoint);
-
-                let expected_str = format!("corresponding closing tag for <{}>", open_tag_name);
-                let exp_static: &'static str = Box::leak(expected_str.into_boxed_str());
-
-                return cut_err(fail)
-                    .context(StrContext::Expected(StrContextValue::Description(
-                        exp_static,
-                    )))
-                    .parse_next(input);
-            }
-
-            let mut nodes = Vec::new();
-            nodes.extend(open_ts);
-            nodes.extend(body_ts);
-            nodes.push(close_ts);
-
-            Ok((expr_definitions, nodes))
-        }
-        None => {
-            input.reset(&open_checkpoint);
-
-            cut_err(fail)
-                .context(StrContext::Label("tag opened here but never closed"))
-                .context(StrContext::Expected(StrContextValue::Description(
-                    "matching closing tag",
-                )))
-                .parse_next(input)
-        }
-    }
+        .context(StrContext::Label("self-closing tag"))
+        .parse_next(input)
 }
 
 fn attributes(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
