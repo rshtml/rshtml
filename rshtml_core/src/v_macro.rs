@@ -2,14 +2,13 @@ use proc_macro2::{Delimiter, Group, Span, TokenStream, TokenTree};
 use quote::{format_ident, quote};
 use syn::parse2;
 use winnow::ModalResult;
-use winnow::combinator::{alt, cut_err, eof, fail, opt, repeat, terminated};
+use winnow::combinator::{alt, cut_err, eof, fail, opt, peek, repeat, terminated};
 use winnow::error::{ErrMode, StrContext, StrContextValue};
 use winnow::stream::Stream;
 use winnow::{Parser, token::any};
 
 // TODO: Enable file reading using the v_file!  or vfile! macro.
 // TODO: look tag, may use alt instead of checkpoint.
-// TODO: Provide a proper error message for tags that close without being opened. need to hold a stack pointer.
 
 enum Node {
     Expr(TokenStream),
@@ -21,9 +20,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
     let mut tokens = tokens.as_slice();
 
     let (expr_defs, body, text_size) =
-        match terminated(template, eof.context(StrContext::Label("end of template")))
-            .parse_next(&mut tokens)
-        {
+        match terminated(template, eof_with_check).parse_next(&mut tokens) {
             Ok((expr_defs, nodes)) => {
                 let mut body = TokenStream::new();
                 let mut text_buffer = String::new();
@@ -105,6 +102,17 @@ pub fn compile(input: TokenStream) -> TokenStream {
             )
         })
     }
+}
+
+fn eof_with_check<'a>(input: &mut &'a [TokenTree]) -> ModalResult<&'a [TokenTree]> {
+    if !input.is_empty() && peek((lt, slash)).parse_next(input).is_ok() {
+        return cut_err(fail)
+            .context(StrContext::Label("tag closed here but never opened"))
+            .parse_next(input);
+    }
+
+    eof.context(StrContext::Label("end of template"))
+        .parse_next(input)
 }
 
 fn template(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
