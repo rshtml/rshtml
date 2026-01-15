@@ -9,7 +9,6 @@ use winnow::{Parser, token::any};
 
 // TODO: Enable file reading using the v_file!  or vfile! macro.
 // TODO: look tag, may use alt instead of checkpoint.
-// TODO: think <!doctype>
 // TODO: Provide a proper error message for tags that close without being opened. need to hold a stack pointer.
 
 enum Node {
