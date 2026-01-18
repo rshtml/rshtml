@@ -1,0 +1,41 @@
+@(title, footer, x: &str, y: i32)
+
+<div>
+  <p>new rshtml</p>
+</div>
+
+@use "component/Card" as Card;
+
+<Card title="" />
+
+<div>
+  @{
+    let mut users = Vec::new();
+    for user in &self.users {
+      users.push(<p>{user.name}</p>)
+    }
+
+    users
+  }
+
+  @{&self.users.iter().map(|user| <p>{user}</p>)}
+
+  @{
+    if self.users.len() > 1 {
+      <p>{self.users.len(); <p>{5}</p> }</p>
+    }
+  }
+  
+  @self.hello()
+</div>
+
+@raw {
+  @if abc {
+    
+  }
+  @{
+   <p></p> 
+  }
+} 
+
+@* this is comment *@

@@ -12,6 +12,7 @@ pub mod str_extensions;
 mod temporary_file;
 #[cfg(test)]
 mod tests;
+pub mod v_macro;
 
 use crate::parser::RsHtmlParser;
 use crate::{config::Config, diagnostic::Diagnostic};

@@ -1,8 +1,9 @@
 #![allow(unused_imports, dead_code)]
 
+mod website;
+
 use rshtml::{RsHtml, functions::*, traits::RsHtml};
 use serde::Serialize;
-use std::fmt::Write;
 
 #[derive(RsHtml)]
 // #[rshtml(path = "bar.rs.html", no_warn)]
@@ -38,10 +39,6 @@ impl HomePage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::prelude::*;
-    use pest::Parser;
-    use std::fs;
-    use syn::__private::Span;
 
     #[test]
     fn test_macro() {

@@ -9,7 +9,8 @@ description.workspace = true
 pest = "2.8.0"
 pest_derive = "2.8.0"
 quote = "1.0.40"
-proc-macro2 = { version = "1.0.95", features = ["span-locations"]}
+proc-macro2 = { version = "1.0.95", features = ["span-locations"] }
 anyhow = "1.0.98"
 toml = "0.8.22"
 syn = { version = "2.0.101", features = ["full", "visit", "visit-mut"] }
+winnow = "0.7.14"
