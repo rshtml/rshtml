@@ -3,7 +3,7 @@ members = ["rshtml", "rshtml_core", "rshtml_macro", "rshtml_test"]
 resolver = "2"
 
 [workspace.package]
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Mehmet Kesik <mhmtkskx@gmail.com> (https://github.com/mehmetkesik)"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -21,6 +21,6 @@ categories = [
 ]
 
 [workspace.dependencies]
-rshtml = { path = "rshtml", version = "0.4.0", features = ["functions"] }
-rshtml_macro = { path = "rshtml_macro", version = "0.4.0" }
-rshtml_core = { path = "rshtml_core", version = "0.4.0" }
+rshtml = { path = "rshtml", version = "0.5.0", features = ["functions"] }
+rshtml_macro = { path = "rshtml_macro", version = "0.5.0" }
+rshtml_core = { path = "rshtml_core", version = "0.5.0" }

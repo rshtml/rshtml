@@ -5,30 +5,13 @@
 //!
 //! # RsHtml: A Template Engine for Seamless HTML and Rust Integration.
 //!
-//! RsHtml is a templating engine for Rust that allows you to embed Rust logic
-//! directly into HTML-like template files. It uses a `#[derive(RsHtml)]` macro
-//! to process these templates at compile time, generating efficient Rust code
-//! for rendering.
+//! RsHtml is a powerful template engine that transforms your HTML templates
+//! into highly efficient Rust code at compile time, allowing you to seamlessly use
+//! Rust logic and expressions together with HTML to harness the full power of Rust
+//! for dynamic content generation. It is designed to help you build flexible and
+//! maintainable web applications.
 //!
-//!
-//! ## Core Idea
-//!
-//! 1.  **Define a Rust struct** (e.g., `HomePage`) to hold your template's data.
-//! 2.  **Annotate it with `#[derive(RsHtml)]`**.
-//! 3.  **Create a template file** (e.g., `home.rs.html`) using `@` prefixed
-//!     expressions, control flow (`@if`, `@for`), components, etc.
-//! 4.  **Call the generated `render()` method** on an instance of your struct and get the HTML output.
-//!
-//! ## Key Syntax Highlights
-//!
-//! - **Expressions:** `@self.field`, `@self.my_function()`, `@(3 + 5)`
-//! - **Control Flow:** `@if ...`, `@for ...`, `@match ...`
-//! - **Code Blocks:** `@{ let a = 5; }`
-//! - **Components:** `<MyComponent data=@value />`
-//! - **Raw Blocks:** `@raw{ ... }`
-//! - **Comments:** `@* server-side comment *@`
-//!
-//! (For a detailed syntax reference, see the project's main documentation.)
+//! ![Demo](https://raw.githubusercontent.com/rshtml/rshtml/master/v_macro.gif)
 //!
 //! ## Quick Start
 //!
@@ -36,73 +19,25 @@
 //!
 //! ```toml
 //! [dependencies]
-//! rshtml = "0.4.0" # Use the latest version
+//! rshtml = "0.5.0" # Use the latest version
 //! ```
+//! ```rust
+//! use rshtml::{traits::View, v};
+//! use std::fmt;
 //!
-//! **2. Define Struct and Template:**
+//! fn main() -> fmt::Result {
+//!   let template = "RsHtml";
+//!   let hello = v!(<p>Hello {template}</p>);
 //!
-//! ```ignore
-//! // src/main.rs
-//! use rshtml::RsHtml;
+//!   let mut out = String::with_capacity(hello.text_size());
 //!
-//! #[derive(RsHtml)] // Looks for "home.rs.html" by default (adjust to your naming)
-//! // #[rshtml(path = "home.rs.html", no_warn)]
-//! struct HomePage {
-//!     product_name: String,
-//!     price: f64,
-//! }
+//!   hello.render(&mut out)?;
+//!  
+//!   print!("{out}");
 //!
-//! fn main() {
-//!     let home = HomePage {
-//!         product_name: "Ferris".to_string(),
-//!         price: 99.99,
-//!     };
-//!
-//!     // Assumes the derive macro generates a `render()` method.
-//!     let html_output = home.render().unwrap();
-//!     println!("{}", html_output);
+//!   Ok(())
 //! }
 //! ```
-//!
-//! ```html
-//!  Template file (e.g., home.rs.html):
-//!  <div>
-//!    <h2>@self.product_name</h2>
-//!    <p>Price: $@self.price</p>
-//!    @if self.price < 100.0 {
-//!      <span>Special Offer!</span>
-//!    }
-//!  </div>
-//! ```
-//!
-//! **3. Set build.rs file for tracking view changes on build:** (Optional, Highly Recommended)
-//!
-//! ```ignore
-//! use rshtml::track_views_folder;
-//!
-//! fn main() {
-//!     track_views_folder();
-//! }
-//! ```
-//!
-//!  **4. Change views settings:** (Optional)
-//! ```toml
-//! [package.metadata.rshtml]
-//! views = { path = "views", extract_file_on_debug = false } # these are the default values
-//! ```
-//!
-//!
-//! ## The `RsHtml` Derive Macro
-//!
-//! - **[`RsHtml` (derive macro)]**: The main entry point. Apply to a struct to
-//!   enable template rendering. It handles parsing the associated template file
-//!   (path can be customized via `#[rshtml(path = "...", no_warn)]`) and generates
-//!   the rendering logic.
-//!
-//! ---
-//!
-//! *For more examples and detailed information on all directives and features,
-//! please consult the project's repository or extended documentation.*
 
 /// Utility functions for use directly in RsHtml templates.
 ///
