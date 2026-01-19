@@ -2,12 +2,11 @@ use proc_macro2::{Delimiter, Group, Span, TokenStream, TokenTree};
 use quote::{format_ident, quote};
 use syn::parse2;
 use winnow::ModalResult;
-use winnow::combinator::{alt, cut_err, eof, fail, opt, peek, repeat, terminated};
+use winnow::combinator::{alt, cut_err, eof, fail, opt, peek, repeat, repeat_till, terminated};
 use winnow::error::{StrContext, StrContextValue};
-use winnow::stream::Stream;
 use winnow::{Parser, token::any};
 
-// TODO: Enable file reading using the v_file!  or vfile! macro.
+// TODO: Enable file reading using the v_file! or vfile! macro.
 
 enum Node {
     Expr(TokenStream),
@@ -119,8 +118,8 @@ fn template(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
         0..,
         alt((
             expr.map(|(ts, expr)| (ts, vec![Node::Expr(expr)])),
-            tag,
             text.map(|t| (TokenStream::new(), vec![Node::Text(t)])),
+            tag,
         )),
     )
     .fold(
@@ -190,73 +189,29 @@ fn text(input: &mut &[TokenTree]) -> ModalResult<String> {
 }
 
 fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
-    alt((self_closing_tag, full_tag)).parse_next(input)
-}
+    let open_tag = (lt, ident, attributes, gt).map(|(lt, ident, (expr_defs, attributes), gt)| {
+        let mut nodes = Vec::new();
 
-fn full_tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
-    let open_checkpoint = input.checkpoint();
+        if attributes.is_empty() {
+            nodes.push(Node::Text(format!("{lt}{ident}{gt}")));
+        } else {
+            nodes.push(Node::Text(format!("{lt}{ident}")));
+            nodes.extend(attributes);
+            nodes.push(Node::Text(format!("{gt}")));
+        }
 
-    let (open_expr_defs, open_nodes, open_ident) = (lt, ident, attributes, cut_err(gt))
-        .map(|(lt, ident, (expr_defs, attributes), gt)| {
-            let mut nodes = Vec::new();
+        (expr_defs, nodes)
+    });
 
-            if attributes.is_empty() {
-                nodes.push(Node::Text(format!("{lt}{ident}{gt}")));
-            } else {
-                nodes.push(Node::Text(format!("{lt}{ident}")));
-                nodes.extend(attributes);
-                nodes.push(Node::Text(format!("{gt}")));
-            }
+    let close_tag = (lt, slash, ident, gt).map(|(lt, slash, ident, gt)| {
+        (
+            TokenStream::new(),
+            vec![Node::Text(format!("{lt}{slash}{ident}{gt}"))],
+        )
+    });
 
-            (expr_defs, nodes, ident)
-        })
-        .context(StrContext::Label("tag open"))
-        .parse_next(input)?;
-
-    let (body_expr_defs, body_nodes) = template.parse_next(input)?;
-
-    let close_checkpoint = input.checkpoint();
-    let Some((close_nodes, close_ident)) = opt((lt, slash, cut_err(ident), cut_err(gt))
-        .map(|(lt, slash, ident, gt)| (Node::Text(format!("{lt}{slash}{ident}{gt}")), ident))
-        .context(StrContext::Label("tag close")))
-    .parse_next(input)?
-    else {
-        input.reset(&open_checkpoint);
-        return cut_err(fail)
-            .context(StrContext::Label("tag opened here but never closed"))
-            .context(StrContext::Expected(StrContextValue::Description(
-                "matching closing tag",
-            )))
-            .parse_next(input);
-    };
-
-    if open_ident.to_string() != close_ident.to_string() {
-        input.reset(&close_checkpoint);
-        let expected_str = format!("corresponding closing tag for <{}>", open_ident);
-        let exp_static: &'static str = Box::leak(expected_str.into_boxed_str());
-
-        return cut_err(fail)
-            .context(StrContext::Expected(StrContextValue::Description(
-                exp_static,
-            )))
-            .parse_next(input);
-    }
-
-    let mut expr_defs = TokenStream::new();
-    expr_defs.extend(open_expr_defs);
-    expr_defs.extend(body_expr_defs);
-
-    let mut nodes = Vec::new();
-    nodes.extend(open_nodes);
-    nodes.extend(body_nodes);
-    nodes.push(close_nodes);
-
-    Ok((expr_defs, nodes))
-}
-
-fn self_closing_tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
-    (lt, ident, attributes, slash, cut_err(gt))
-        .map(|(lt, ident, (expr_defs, attributes), slash, gt)| {
+    let self_close_tag = (lt, ident, attributes, slash, gt).map(
+        |(lt, ident, (expr_defs, attributes), slash, gt)| {
             let mut nodes = Vec::new();
 
             if attributes.is_empty() {
@@ -267,9 +222,32 @@ fn self_closing_tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<N
                 nodes.push(Node::Text(format!("{slash}{gt}")));
             }
             (expr_defs, nodes)
-        })
-        .context(StrContext::Label("self-closing tag"))
-        .parse_next(input)
+        },
+    );
+
+    let doctype = (
+        lt,
+        exclamation,
+        ident.verify(|i| i.to_string().to_lowercase() == "doctype"),
+        ident.verify(|i| i.to_string().to_lowercase() == "html"),
+        gt,
+    )
+        .map(|(lt, exclamation, ident, ident2, gt)| {
+            (
+                TokenStream::new(),
+                vec![Node::Text(format!("{lt}{exclamation}{ident} {ident2}{gt}"))],
+            )
+        });
+
+    alt((
+        open_tag,
+        close_tag,
+        self_close_tag,
+        doctype,
+        html_comment,
+        any.map(|tt: TokenTree| (TokenStream::new(), vec![Node::Text(tt.to_string())])),
+    ))
+    .parse_next(input)
 }
 
 fn attributes(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
@@ -386,6 +364,53 @@ fn html_entity(input: &mut &[TokenTree]) -> ModalResult<String> {
         .parse_next(input)
 }
 
+fn html_comment(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
+    let comment_start =
+        (lt, exclamation, hyphen, hyphen).map(|(lt, exclamation, hyphen, hyphen2)| {
+            Node::Text(format!("{lt}{exclamation}{hyphen}{hyphen2}"))
+        });
+
+    let comment_end = (hyphen, hyphen, gt)
+        .map(|(hyphen, hyphen2, gt)| Node::Text(format!("{hyphen}{hyphen2}{gt}")));
+
+    let comment_body_with_end = repeat_till(
+        0..,
+        alt((
+            expr.map(|(expr_def, expr)| (expr_def, vec![Node::Expr(expr)])),
+            any.verify(
+                |tt| !matches!(tt, TokenTree::Group(g) if g.delimiter() == Delimiter::Brace),
+            )
+            .map(|tt: TokenTree| (TokenStream::new(), vec![Node::Text(tt.to_string())])),
+        )),
+        comment_end,
+    )
+    .map(
+        |(items, comment_end): (Vec<(TokenStream, Vec<Node>)>, Node)| {
+            let mut all_nodes = Vec::new();
+            let mut all_expr_defs = TokenStream::new();
+
+            for (expr_defs, nodes) in items {
+                all_expr_defs.extend(expr_defs);
+                all_nodes.extend(nodes);
+            }
+
+            all_nodes.push(comment_end);
+
+            (all_expr_defs, all_nodes)
+        },
+    );
+
+    (comment_start, comment_body_with_end)
+        .map(|(comment_start, (expr_defs, nodes))| {
+            let mut all_nodes = Vec::with_capacity(nodes.len() + 1);
+            all_nodes.push(comment_start);
+            all_nodes.extend(nodes);
+
+            (expr_defs, all_nodes)
+        })
+        .parse_next(input)
+}
+
 // TOKENS
 
 fn ident(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
@@ -444,11 +469,11 @@ fn slash(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
     .parse_next(input)
 }
 
-// fn exclamation(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
-//     any.verify_map(|tt: TokenTree| match tt {
-//         TokenTree::Punct(p) if p.as_char() == '!' => Some(quote! {#p}),
-//         _ => None,
-//     })
-//     .context(StrContext::Label("exclamation mark"))
-//     .parse_next(input)
-// }
+fn exclamation(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
+    any.verify_map(|tt: TokenTree| match tt {
+        TokenTree::Punct(p) if p.as_char() == '!' => Some(quote! {#p}),
+        _ => None,
+    })
+    .context(StrContext::Expected(StrContextValue::CharLiteral('!')))
+    .parse_next(input)
+}
