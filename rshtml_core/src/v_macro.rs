@@ -189,35 +189,36 @@ fn text(input: &mut &[TokenTree]) -> ModalResult<String> {
 }
 
 fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
-    let open_tag = (lt, ident, attributes, gt).map(|(lt, ident, (expr_defs, attributes), gt)| {
-        let mut nodes = Vec::new();
-
-        if attributes.is_empty() {
-            nodes.push(Node::Text(format!("{lt}{ident}{gt}")));
-        } else {
-            nodes.push(Node::Text(format!("{lt}{ident}")));
-            nodes.extend(attributes);
-            nodes.push(Node::Text(format!("{gt}")));
-        }
-
-        (expr_defs, nodes)
-    });
-
-    let close_tag = (lt, slash, ident, gt).map(|(lt, slash, ident, gt)| {
-        (
-            TokenStream::new(),
-            vec![Node::Text(format!("{lt}{slash}{ident}{gt}"))],
-        )
-    });
-
-    let self_close_tag = (lt, ident, attributes, slash, gt).map(
-        |(lt, ident, (expr_defs, attributes), slash, gt)| {
+    let open_tag =
+        (lt, tag_name, attributes, gt).map(|(lt, tag_name, (expr_defs, attributes), gt)| {
             let mut nodes = Vec::new();
 
             if attributes.is_empty() {
-                nodes.push(Node::Text(format!("{lt}{ident}{slash}{gt}")));
+                nodes.push(Node::Text(format!("{lt}{tag_name}{gt}")));
             } else {
-                nodes.push(Node::Text(format!("{lt}{ident}")));
+                nodes.push(Node::Text(format!("{lt}{tag_name}")));
+                nodes.extend(attributes);
+                nodes.push(Node::Text(format!("{gt}")));
+            }
+
+            (expr_defs, nodes)
+        });
+
+    let close_tag = (lt, slash, tag_name, gt).map(|(lt, slash, tag_name, gt)| {
+        (
+            TokenStream::new(),
+            vec![Node::Text(format!("{lt}{slash}{tag_name}{gt}"))],
+        )
+    });
+
+    let self_close_tag = (lt, tag_name, attributes, slash, gt).map(
+        |(lt, tag_name, (expr_defs, attributes), slash, gt)| {
+            let mut nodes = Vec::new();
+
+            if attributes.is_empty() {
+                nodes.push(Node::Text(format!("{lt}{tag_name}{slash}{gt}")));
+            } else {
+                nodes.push(Node::Text(format!("{lt}{tag_name}")));
                 nodes.extend(attributes);
                 nodes.push(Node::Text(format!("{slash}{gt}")));
             }
@@ -250,6 +251,56 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
     .parse_next(input)
 }
 
+fn tag_name(input: &mut &[TokenTree]) -> ModalResult<String> {
+    let tag_ident_start = ident.verify_map(|i| {
+        let i = i.to_string();
+        let mut chars = i.chars();
+
+        if let Some(first) = chars.next()
+            && first.is_ascii_alphabetic()
+            && chars.all(|c| c.is_ascii_alphanumeric())
+        {
+            Some(i)
+        } else {
+            None
+        }
+    });
+
+    let tag_ident = ident
+        .verify(|i| i.to_string().chars().all(|c| c.is_ascii_alphanumeric()))
+        .map(|i| i.to_string());
+
+    let number = any.verify_map(|tt: TokenTree| match tt {
+        TokenTree::Literal(l) => {
+            let s = l.to_string();
+            if s.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+                Some(s)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    });
+
+    let non_alpha = repeat(1.., alt((hyphen.map(|h| h.to_string()), number))).fold(
+        String::new,
+        |mut acc, item| {
+            acc.push_str(&item);
+            acc
+        },
+    );
+
+    let rest = repeat(0.., (non_alpha, tag_ident)).fold(String::new, |mut acc, item| {
+        acc.push_str(&item.0);
+        acc.push_str(&item.1);
+        acc
+    });
+
+    (tag_ident_start, rest)
+        .map(|(name, rest)| format!("{}{}", name, rest).trim().to_string())
+        .parse_next(input)
+}
+
 fn attributes(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
     repeat(0.., attribute)
         .fold(
@@ -268,13 +319,8 @@ fn attributes(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)>
 }
 
 fn attribute(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, String, Option<Node>)> {
-    let name = repeat(1.., alt((ident, hyphen))).fold(TokenStream::new, |mut acc, i| {
-        acc.extend(i);
-        acc
-    });
-
     (
-        name,
+        attribute_name,
         opt((
             equal,
             alt((
@@ -283,18 +329,37 @@ fn attribute(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, String, Opti
             )),
         )),
     )
-        .map(|(name, equal_value)| {
+        .map(|(attribute_name, equal_value)| {
             let mut expr_defs = TokenStream::new();
 
             if let Some((equal, (expr_def, value))) = equal_value {
                 expr_defs.extend(expr_def);
 
-                (expr_defs, format!("{name}{equal}"), Some(value))
+                (expr_defs, format!("{attribute_name}{equal}"), Some(value))
             } else {
-                (expr_defs, format!("{name}"), None)
+                (expr_defs, attribute_name.to_string(), None)
             }
         })
         .parse_next(input)
+}
+
+fn attribute_name(input: &mut &[TokenTree]) -> ModalResult<String> {
+    repeat(
+        1..,
+        any.verify(|tt: &TokenTree| match tt {
+            TokenTree::Punct(p) if "=>/".contains(p.as_char()) => false,
+            TokenTree::Literal(l) => {
+                let s = l.to_string();
+                !s.starts_with('"') && !s.starts_with('\'')
+            }
+            _ => true,
+        }),
+    )
+    .fold(String::new, |mut acc, tt: TokenTree| {
+        acc.push_str(&tt.to_string());
+        acc
+    })
+    .parse_next(input)
 }
 
 fn string_literal(input: &mut &[TokenTree]) -> ModalResult<String> {
