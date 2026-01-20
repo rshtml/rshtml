@@ -2,11 +2,11 @@ use proc_macro2::{Delimiter, Group, Span, TokenStream, TokenTree};
 use quote::{format_ident, quote};
 use syn::parse2;
 use winnow::ModalResult;
-use winnow::combinator::{alt, cut_err, eof, fail, opt, peek, repeat, repeat_till, terminated};
+use winnow::combinator::{alt, eof, opt, repeat, repeat_till, terminated};
 use winnow::error::{StrContext, StrContextValue};
 use winnow::{Parser, token::any};
 
-// TODO: Enable file reading using the v_file! or vfile! macro.
+// TODO: Enable file reading using the v_file! macro.
 
 enum Node {
     Expr(TokenStream),
@@ -17,74 +17,73 @@ pub fn compile(input: TokenStream) -> TokenStream {
     let tokens: Vec<TokenTree> = input.into_iter().collect();
     let mut tokens = tokens.as_slice();
 
-    let (expr_defs, body, text_size) =
-        match terminated(template, eof_with_check).parse_next(&mut tokens) {
-            Ok((expr_defs, nodes)) => {
-                let mut body = TokenStream::new();
-                let mut text_buffer = String::new();
-                let mut first = true;
-                let mut text_size = 0;
+    let (expr_defs, body, text_size) = match terminated(template, eof).parse_next(&mut tokens) {
+        Ok((expr_defs, nodes)) => {
+            let mut body = TokenStream::new();
+            let mut text_buffer = String::new();
+            let mut first = true;
+            let mut text_size = 0;
 
-                for node in nodes {
-                    match node {
-                        Node::Expr(tokens) => {
-                            if !text_buffer.is_empty() {
-                                text_buffer.push(' ');
-                                body.extend(quote! { write!(out, "{}", #text_buffer)?; });
-                                text_buffer.clear();
-                            }
+            for node in nodes {
+                match node {
+                    Node::Expr(tokens) => {
+                        if !text_buffer.is_empty() {
+                            text_buffer.push(' ');
+                            body.extend(quote! { write!(out, "{}", #text_buffer)?; });
+                            text_buffer.clear();
+                        }
 
-                            body.extend(tokens);
+                        body.extend(tokens);
+                    }
+                    Node::Text(text) => {
+                        if !first {
+                            text_buffer.push(' ');
                         }
-                        Node::Text(text) => {
-                            if !first {
-                                text_buffer.push(' ');
-                            }
-                            text_buffer.push_str(&text);
-                            text_size += text.len();
-                            first = false;
-                        }
+                        text_buffer.push_str(&text);
+                        text_size += text.len();
+                        first = false;
                     }
                 }
-
-                if !text_buffer.is_empty() {
-                    body.extend(quote! { write!(out, "{}", #text_buffer)?; });
-                }
-
-                (expr_defs, body, text_size)
             }
-            Err(e) => {
-                let span = tokens
-                    .first()
-                    .map(|tt| tt.span())
-                    .unwrap_or_else(Span::call_site);
 
-                let err = e.into_inner().unwrap();
-                let msg = err
-                    .context()
-                    .filter_map(|c| match c {
-                        StrContext::Label(l) => Some(l.to_string()),
-                        StrContext::Expected(e) => Some(format!("expected {}", e)),
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>()
-                    .into_iter()
-                    .rev()
-                    .collect::<Vec<_>>()
-                    .join(": ");
-
-                let msg = format!("compile error: {msg}");
-                let msg_lit = syn::LitStr::new(&msg, span);
-
-                (
-                    TokenStream::new(),
-                    quote::quote_spanned! { span =>
-                        compile_error!(#msg_lit);
-                    },
-                    0,
-                )
+            if !text_buffer.is_empty() {
+                body.extend(quote! { write!(out, "{}", #text_buffer)?; });
             }
-        };
+
+            (expr_defs, body, text_size)
+        }
+        Err(e) => {
+            let span = tokens
+                .first()
+                .map(|tt| tt.span())
+                .unwrap_or_else(Span::call_site);
+
+            let err = e.into_inner().unwrap();
+            let msg = err
+                .context()
+                .filter_map(|c| match c {
+                    StrContext::Label(l) => Some(l.to_string()),
+                    StrContext::Expected(e) => Some(format!("expected {}", e)),
+                    _ => None,
+                })
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+                .collect::<Vec<_>>()
+                .join(": ");
+
+            let msg = format!("compile error: {msg}");
+            let msg_lit = syn::LitStr::new(&msg, span);
+
+            (
+                TokenStream::new(),
+                quote::quote_spanned! { span =>
+                    compile_error!(#msg_lit);
+                },
+                0,
+            )
+        }
+    };
 
     quote! {
         ::rshtml::ViewFn::new({
@@ -100,17 +99,6 @@ pub fn compile(input: TokenStream) -> TokenStream {
             )
         })
     }
-}
-
-fn eof_with_check<'a>(input: &mut &'a [TokenTree]) -> ModalResult<&'a [TokenTree]> {
-    if !input.is_empty() && peek((lt, slash)).parse_next(input).is_ok() {
-        return cut_err(fail)
-            .context(StrContext::Label("tag closed here but never opened"))
-            .parse_next(input);
-    }
-
-    eof.context(StrContext::Label("end of template"))
-        .parse_next(input)
 }
 
 fn template(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
