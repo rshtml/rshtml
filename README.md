@@ -16,7 +16,6 @@ RsHtml is a compile-time, type-safe, lightweight, and flexible template engine f
 ## v! macro
 - Allows writing Rust blocks inside HTML (`<div>{ code() }</div>`) and embedding the resulting expressions into the template.
 - Generates a type that implements the View trait and can render types that implement either the View or Display trait.
-- HTML tags must be well-formed and properly closed.
 
 ```rust
     let user_info = v!(<p>name: {user.name}</p>);
