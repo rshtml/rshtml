@@ -352,6 +352,7 @@ fn attribute_name(input: &mut &[TokenTree]) -> ModalResult<String> {
                 let s = l.to_string();
                 !s.starts_with('"') && !s.starts_with('\'')
             }
+            TokenTree::Group(g) if g.delimiter() == Delimiter::Brace => false,
             _ => true,
         }),
     )
