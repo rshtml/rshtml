@@ -10,7 +10,8 @@ RsHtml is a compile-time, type-safe, lightweight, and flexible template engine f
 
 #### Documentation and Editor Support
 
-- See the [Documentation](https://rshtml.github.io/) for a full list of features and the [Editor Support](https://rshtml.github.io/#-editor-support) section for editor integration details.
+- See the [Documentation](https://rshtml.github.io/) for a full list of features and the [Editor Support](https://rshtml.github.io/#-editor-support) section for editor integration details. A minimal working website example is also available in the [`rshtml_test` crate](https://github.com/rshtml/rshtml/blob/master/rshtml_test/src/main.rs).
+
 
 ## v! macro
 - Allows writing Rust blocks inside HTML (`<div>{ code() }</div>`) and embedding the resulting expressions into the template.
