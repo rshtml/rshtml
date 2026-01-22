@@ -3,7 +3,8 @@ use quote::{format_ident, quote};
 use syn::parse2;
 use winnow::ModalResult;
 use winnow::combinator::{alt, eof, opt, repeat, repeat_till, terminated};
-use winnow::error::{StrContext, StrContextValue};
+use winnow::error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue};
+use winnow::stream::Stream;
 use winnow::{Parser, token::any};
 
 // TODO: Enable file reading using the v_file! macro.
@@ -106,6 +107,7 @@ fn template(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
         0..,
         alt((
             expr.map(|(ts, expr)| (ts, vec![Node::Expr(expr)])),
+            group,
             text.map(|t| (TokenStream::new(), vec![Node::Text(t)])),
             tag,
         )),
@@ -153,13 +155,47 @@ fn expr(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, TokenStream)> {
     Ok(output)
 }
 
+fn group(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
+    let (tokens, (open, close)): (Vec<TokenTree>, (Node, Node)) = any
+        .verify_map(|tt: TokenTree| match tt {
+            TokenTree::Group(g)
+                if matches!(g.delimiter(), Delimiter::Parenthesis | Delimiter::Bracket) =>
+            {
+                Some((
+                    g.stream().into_iter().collect(),
+                    match g.delimiter() {
+                        Delimiter::Parenthesis => {
+                            (Node::Text("(".to_owned()), Node::Text(")".to_owned()))
+                        }
+                        Delimiter::Bracket => {
+                            (Node::Text("[".to_owned()), Node::Text("]".to_owned()))
+                        }
+                        _ => unreachable!(),
+                    },
+                ))
+            }
+            _ => None,
+        })
+        .parse_next(input)?;
+
+    let mut tokens = tokens.as_slice();
+
+    let (inner_expr_defs, inner_nodes) = template.parse_next(&mut tokens)?;
+
+    let mut nodes = vec![open];
+    nodes.extend(inner_nodes);
+    nodes.push(close);
+
+    Ok((inner_expr_defs, nodes))
+}
+
 fn text(input: &mut &[TokenTree]) -> ModalResult<String> {
     repeat(
         1..,
         alt((
             html_entity,
             any.verify(|tt: &TokenTree| match tt {
-                TokenTree::Group(g) if g.delimiter() == Delimiter::Brace => false,
+                TokenTree::Group(_) => false,
                 TokenTree::Punct(p) if p.as_char() == '<' => false,
                 _ => true,
             })
@@ -313,7 +349,7 @@ fn attribute(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, String, Opti
             equal,
             alt((
                 expr.map(|(expr_def, expr)| (expr_def, Node::Expr(expr))),
-                string_literal.map(|sl| (TokenStream::new(), Node::Text(sl))),
+                attribute_value.map(|attr_val| (TokenStream::new(), Node::Text(attr_val))),
             )),
         )),
     )
@@ -351,9 +387,20 @@ fn attribute_name(input: &mut &[TokenTree]) -> ModalResult<String> {
     .parse_next(input)
 }
 
-fn string_literal(input: &mut &[TokenTree]) -> ModalResult<String> {
+fn attribute_value(input: &mut &[TokenTree]) -> ModalResult<String> {
     any.verify_map(|tt: TokenTree| match tt {
-        TokenTree::Literal(lit) => Some(lit.to_string()),
+        TokenTree::Literal(lit) => {
+            let s = lit.to_string();
+            if s.starts_with('"')
+                || s.starts_with('\'')
+                || s.chars().next().is_some_and(|c| c.is_ascii_digit())
+            {
+                Some(s)
+            } else {
+                None
+            }
+        }
+        TokenTree::Ident(ident) => Some(ident.to_string()),
         _ => None,
     })
     .parse_next(input)
