@@ -3,8 +3,7 @@ use quote::{format_ident, quote};
 use syn::parse2;
 use winnow::ModalResult;
 use winnow::combinator::{alt, eof, opt, repeat, repeat_till, terminated};
-use winnow::error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue};
-use winnow::stream::Stream;
+use winnow::error::{StrContext, StrContextValue};
 use winnow::{Parser, token::any};
 
 // TODO: Enable file reading using the v_file! macro.
