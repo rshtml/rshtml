@@ -1,17 +1,13 @@
 use proc_macro2::{Span, TokenStream};
-use quote::{quote, quote_spanned};
+use quote::{format_ident, quote, quote_spanned};
 use std::{env, fs, path::PathBuf};
-use syn::{LitStr, spanned::Spanned};
+use syn::{LitStr, parse_str, spanned::Spanned};
 use winnow::{
-    ModalResult, Parser,
-    combinator::{eof, terminated},
+    Parser, Result,
+    combinator::{alt, delimited, eof, repeat, terminated},
     error::StrContext,
+    token::{any, none_of, take_until, take_while},
 };
-
-enum Node {
-    Expr(TokenStream),
-    Text(String),
-}
 
 pub fn compile(path: LitStr) -> TokenStream {
     let path = path.value();
@@ -40,44 +36,10 @@ pub fn compile(path: LitStr) -> TokenStream {
 
     let mut tokens = input.as_str();
 
-    let (expr_defs, body, text_size) = match terminated(template, eof).parse_next(&mut tokens) {
-        Ok((expr_defs, nodes)) => {
-            let mut body = TokenStream::new();
-            let mut text_buffer = String::new();
-            let mut first = true;
-            let mut text_size = 0;
-
-            for node in nodes {
-                match node {
-                    Node::Expr(tokens) => {
-                        if !text_buffer.is_empty() {
-                            text_buffer.push(' ');
-                            body.extend(quote! { write!(out, "{}", #text_buffer)?; });
-                            text_buffer.clear();
-                        }
-
-                        body.extend(tokens);
-                    }
-                    Node::Text(text) => {
-                        if !first {
-                            text_buffer.push(' ');
-                        }
-                        text_buffer.push_str(&text);
-                        text_size += text.len();
-                        first = false;
-                    }
-                }
-            }
-
-            if !text_buffer.is_empty() {
-                body.extend(quote! { write!(out, "{}", #text_buffer)?; });
-            }
-
-            (expr_defs, body, text_size)
-        }
-        Err(e) => {
+    let (text_size, expr_defs, body) = match terminated(template, eof).parse_next(&mut tokens) {
+        Ok(res) => res,
+        Err(err) => {
             let span = Span::call_site();
-            let err = e.into_inner().unwrap();
             let msg = err
                 .context()
                 .filter_map(|c| match c {
@@ -95,11 +57,11 @@ pub fn compile(path: LitStr) -> TokenStream {
             let msg_lit = syn::LitStr::new(&msg, span);
 
             (
+                0,
                 TokenStream::new(),
                 quote::quote_spanned! { span =>
                     compile_error!(#msg_lit);
                 },
-                0,
             )
         }
     };
@@ -124,14 +86,126 @@ pub fn compile(path: LitStr) -> TokenStream {
     }
 }
 
-fn template(input: &mut &str) -> ModalResult<(TokenStream, Vec<Node>)> {
-    todo!()
+fn template(input: &mut &str) -> Result<(usize, TokenStream, TokenStream)> {
+    repeat(
+        0..,
+        alt((
+            expr.map(|(expr_def, expr)| (0, expr_def, expr)),
+            text.map(|t| (t.0, TokenStream::new(), t.1)),
+        )),
+    )
+    .fold(
+        || (0, TokenStream::new(), TokenStream::new()),
+        |(mut total_size, mut expr_defs, mut bodies), (text_size, expr_def, body)| {
+            expr_defs.extend(expr_def);
+            bodies.extend(body);
+            total_size += text_size;
+            (total_size, expr_defs, bodies)
+        },
+    )
+    .parse_next(input)
 }
 
-fn expr(input: &mut &str) -> ModalResult<(TokenStream, Node)> {
-    todo!()
+fn text(input: &mut &str) -> Result<(usize, TokenStream)> {
+    take_until(1.., "@{")
+        .map(|text: &str| (text.chars().count(), quote! { out.write_str(#text)?; }))
+        .parse_next(input)
 }
 
-fn text(input: &mut &str) -> ModalResult<(TokenStream, Node)> {
-    todo!()
+fn expr(input: &mut &str) -> Result<(TokenStream, TokenStream)> {
+    let rust_block = ("@", block)
+        .map(|(_, rust_block)| rust_block)
+        .parse_next(input)?;
+
+    let def_ident = format_ident!("_exp{}", input.len());
+
+    let output = if let Ok(block) = parse_str::<syn::Block>(rust_block) {
+        (
+            quote! { let #def_ident = #block; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
+            quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
+        )
+    } else {
+        (
+            quote! { let #def_ident = #rust_block; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
+            quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
+        )
+    };
+
+    Ok(output)
+}
+
+fn block<'a>(input: &mut &'a str) -> Result<&'a str> {
+    let start = *input;
+    delimited("{", block_content, "}").parse_next(input)?;
+
+    let len = start.len() - input.len();
+    Ok(&start[..len])
+}
+
+fn block_content(input: &mut &str) -> Result<()> {
+    repeat(
+        0..,
+        alt((
+            block.void(),
+            line_comment,
+            block_comment,
+            raw_string_literal,
+            string_literal,
+            char_literal,
+            take_while(1.., |c| !"{}\"'/r".contains(c)).void(),
+            any.void(),
+        )),
+    )
+    .parse_next(input)
+}
+
+fn line_comment(input: &mut &str) -> Result<()> {
+    ("//", take_while(0.., |c| c != '\n'))
+        .void()
+        .parse_next(input)
+}
+
+fn block_comment(input: &mut &str) -> Result<()> {
+    (
+        "/*",
+        repeat(
+            0..,
+            alt((block_comment, take_until(1.., "*/").void(), any.void())),
+        )
+        .map(|_: Vec<()>| ()),
+        "*/",
+    )
+        .void()
+        .parse_next(input)
+}
+
+fn raw_string_literal(input: &mut &str) -> Result<()> {
+    alt((
+        // r#"..."# formatı (basitleştirilmiş, sadece 1 hash için, gramerinizdeki gibi)
+        ("r#\"", take_until(0.., "\"#"), "\"#"),
+        // r"..." formatı
+        ("r\"", take_until(0.., "\""), "\""),
+    ))
+    .void()
+    .parse_next(input)
+}
+
+fn string_literal(input: &mut &str) -> Result<()> {
+    (
+        '"',
+        repeat(0.., alt((("\\", any).void(), none_of(['"', '\\']).void()))).map(|_: Vec<()>| ()),
+        '"',
+    )
+        .void()
+        .parse_next(input)
+}
+
+fn char_literal(input: &mut &str) -> Result<()> {
+    (
+        '\'',
+        alt((("\\", any).void(), none_of(['"', '\\']).void())),
+        '\'',
+    )
+        .void()
+        .parse_next(input)
 }
