@@ -85,3 +85,4 @@ mod view_iter;
 pub use view_iter::ViewIter;
 
 pub use rshtml_macro::v;
+pub use rshtml_macro::v_file;

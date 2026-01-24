@@ -1,0 +1,108 @@
+﻿<div>
+  @for user in &self.users {
+    <p>@user.name</p>
+  }
+</div>
+
+@use "Card.rs.html" as Card
+@use "components/Bar.rs.html"
+
+<Bar hey="hey"/>
+
+@* hello comment *@
+
+@{
+
+  struct MyStruct {
+    name: String,
+  }
+
+  let my_structs = vec![MyStruct{name: "Amy".to_string()}];
+  let greetings = vec!["hi", "hello", "hey"];
+  
+  let x = 7;
+  let y = 10;
+  println!("{}", x + y);
+
+  fn inline_function() -> String {
+    "inline function".to_string()
+  }
+}
+
+@time("2023-1:30:00Z")
+@time("2023-11-20T10:30:00Z").pretty()
+@time("2023-11-20T10:30:00Z").pretty().format("%b %d, %Y")
+@time("2023-11-20T10:30:00Z").date()
+@time("2023-11-20T10:30:00Z").time()
+
+@inline_function()
+
+<script type="text/javascript">
+  let users = @json(&self.users);
+  @json_let("users_let", &self.users);
+</script>
+
+@self.title
+@( 3+5)
+@("Hello, world! <script>alert('hello')</script>")
+
+
+@raw {
+  @if (x > 5) { print("hey"); }
+
+  <h2>{{ message }}</h2>
+  <p>Count value: {{ count }}</p>
+
+  {{-- Buttons and event listeners --}}
+  <button v-on:click="increment">Inc (+)</button>
+  <button @click="decrement">Dec (-)</button>
+}
+
+@if self.title == "Hello" {
+  <p>myvar is true</p>
+} else {
+  <p>myvar is false</p>
+}
+
+<Card title= @x footer =false my_prop={
+  <p>this is my prop @self.title</p>
+} my_prop2 = {hey} greetings=@greetings>
+  <p>hello</p>
+  <p>world</p>
+  @if true {
+    <p>say something</p>
+  }
+
+</Card>
+
+@match self.card_count {
+  0 => <div>i</div>,
+  1 => {
+    <div>hell @self.card_count looo</div>
+    <p>hello world</p>
+
+    @if self.card_count > 0 {
+      <p>Count is greater than 0</p>
+    } else {
+      <p>Count is not greater than 0</p>
+    }
+  },
+  2 => <p>hel,_..loo</p>,
+  3 => true,
+  4 => 5,
+  _ => <p>aa=>,{..a</p>,
+}
+
+@for user in &self.users {
+  <p>User @user.name</p>
+  <p>User @user.age</p>
+  <br/>
+}
+
+<div>
+  <h1>Home Page</h1>
+  <p>Welcome to the home page.</p>
+  <hr>
+
+</div>
+

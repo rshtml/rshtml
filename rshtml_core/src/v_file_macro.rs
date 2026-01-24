@@ -3,10 +3,12 @@ use quote::{format_ident, quote, quote_spanned};
 use std::{env, fs, path::PathBuf};
 use syn::{LitStr, parse_str, spanned::Spanned};
 use winnow::{
-    Parser, Result,
-    combinator::{alt, delimited, eof, repeat, terminated},
-    error::StrContext,
-    token::{any, none_of, take_until, take_while},
+    ModalResult, Parser,
+    ascii::multispace0,
+    combinator::{alt, cut_err, eof, fail, not, repeat, terminated},
+    error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
+    stream::Stream,
+    token::{any, none_of, take_while},
 };
 
 pub fn compile(path: LitStr) -> TokenStream {
@@ -36,35 +38,39 @@ pub fn compile(path: LitStr) -> TokenStream {
 
     let mut tokens = input.as_str();
 
-    let (text_size, expr_defs, body) = match terminated(template, eof).parse_next(&mut tokens) {
-        Ok(res) => res,
-        Err(err) => {
-            let span = Span::call_site();
-            let msg = err
-                .context()
-                .filter_map(|c| match c {
-                    StrContext::Label(l) => Some(l.to_string()),
-                    StrContext::Expected(e) => Some(format!("expected {}", e)),
-                    _ => None,
-                })
-                .collect::<Vec<_>>()
-                .into_iter()
-                .rev()
-                .collect::<Vec<_>>()
-                .join(": ");
+    let (text_size, expr_defs, body) =
+        match terminated(template, eof.context(StrContext::Label("end of file")))
+            .parse_next(&mut tokens)
+        {
+            Ok(res) => res,
+            Err(e) => {
+                let span = Span::call_site();
+                let err = e.into_inner().unwrap();
+                let msg = err
+                    .context()
+                    .filter_map(|c| match c {
+                        StrContext::Label(l) => Some(l.to_string()),
+                        StrContext::Expected(e) => Some(format!("expected {}", e)),
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .rev()
+                    .collect::<Vec<_>>()
+                    .join(": ");
 
-            let msg = format!("compile error: {msg}");
-            let msg_lit = syn::LitStr::new(&msg, span);
+                let msg = format!("compile error: {msg}");
+                let msg_lit = syn::LitStr::new(&msg, span);
 
-            (
-                0,
-                TokenStream::new(),
-                quote::quote_spanned! { span =>
-                    compile_error!(#msg_lit);
-                },
-            )
-        }
-    };
+                (
+                    0,
+                    TokenStream::new(),
+                    quote::quote_spanned! { span =>
+                        compile_error!(#msg_lit);
+                    },
+                )
+            }
+        };
 
     let full_path_str = full_path.to_string_lossy();
 
@@ -86,12 +92,15 @@ pub fn compile(path: LitStr) -> TokenStream {
     }
 }
 
-fn template(input: &mut &str) -> Result<(usize, TokenStream, TokenStream)> {
+fn template(input: &mut &str) -> ModalResult<(usize, TokenStream, TokenStream)> {
     repeat(
-        0..,
+        1..,
         alt((
-            expr.map(|(expr_def, expr)| (0, expr_def, expr)),
-            text.map(|t| (t.0, TokenStream::new(), t.1)),
+            expr.map(|(expr_def, expr)| (0, expr_def, expr))
+                .context(StrContext::Label("rust block")),
+            text.map(|t| (t.0, TokenStream::new(), t.1))
+                .context(StrContext::Label("text")),
+            fail.context(StrContext::Label("text or rust block")),
         )),
     )
     .fold(
@@ -106,16 +115,38 @@ fn template(input: &mut &str) -> Result<(usize, TokenStream, TokenStream)> {
     .parse_next(input)
 }
 
-fn text(input: &mut &str) -> Result<(usize, TokenStream)> {
-    take_until(1.., "@{")
-        .map(|text: &str| (text.chars().count(), quote! { out.write_str(#text)?; }))
-        .parse_next(input)
+fn text(input: &mut &str) -> ModalResult<(usize, TokenStream)> {
+    enum Chunk<'a> {
+        Str(&'a str),
+        Char(char),
+    }
+
+    repeat(
+        1..,
+        alt((
+            take_while(1.., |c| c != '@').map(Chunk::Str),
+            (not(("@", multispace0, "{")), any).map(|(_, c)| Chunk::Char(c)),
+        )),
+    )
+    .fold(String::new, |mut acc, chunk| {
+        match chunk {
+            Chunk::Str(s) => acc.push_str(s),
+            Chunk::Char(c) => acc.push(c),
+        }
+        acc
+    })
+    .map(|text| (text.chars().count(), quote! { write!(out, "{}", #text)?; }))
+    .parse_next(input)
 }
 
-fn expr(input: &mut &str) -> Result<(TokenStream, TokenStream)> {
-    let rust_block = ("@", block)
-        .map(|(_, rust_block)| rust_block)
-        .parse_next(input)?;
+fn expr(input: &mut &str) -> ModalResult<(TokenStream, TokenStream)> {
+    let start = *input;
+    let checkpoint = input.checkpoint();
+
+    ("@", multispace0, block).parse_next(input)?;
+
+    let len = start.len() - input.len();
+    let rust_block = &start[1..len];
 
     let def_ident = format_ident!("_exp{}", input.len());
 
@@ -125,8 +156,16 @@ fn expr(input: &mut &str) -> Result<(TokenStream, TokenStream)> {
             quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
         )
     } else {
+        let tokens: TokenStream = rust_block.parse().map_err(|_| {
+            ErrMode::Cut(ContextError::new().add_context(
+                input,
+                &checkpoint,
+                StrContext::Label("Lex Error"),
+            ))
+        })?;
+
         (
-            quote! { let #def_ident = #rust_block; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
+            quote! { let #def_ident = #tokens; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
             quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
         )
     };
@@ -134,63 +173,57 @@ fn expr(input: &mut &str) -> Result<(TokenStream, TokenStream)> {
     Ok(output)
 }
 
-fn block<'a>(input: &mut &'a str) -> Result<&'a str> {
-    let start = *input;
-    delimited("{", block_content, "}").parse_next(input)?;
-
-    let len = start.len() - input.len();
-    Ok(&start[..len])
+fn block(input: &mut &str) -> ModalResult<()> {
+    (
+        "{",
+        block_content,
+        cut_err("}").context(StrContext::Expected(StrContextValue::CharLiteral('}'))),
+    )
+        .void()
+        .parse_next(input)
 }
 
-fn block_content(input: &mut &str) -> Result<()> {
+fn block_content(input: &mut &str) -> ModalResult<()> {
     repeat(
         0..,
         alt((
             block.void(),
             line_comment,
             block_comment,
-            raw_string_literal,
             string_literal,
             char_literal,
-            take_while(1.., |c| !"{}\"'/r".contains(c)).void(),
-            any.void(),
+            take_while(1.., |c| !r#"{}"'/"#.contains(c)).void(),
+            none_of('}').void(),
         )),
     )
     .parse_next(input)
 }
 
-fn line_comment(input: &mut &str) -> Result<()> {
+fn line_comment(input: &mut &str) -> ModalResult<()> {
     ("//", take_while(0.., |c| c != '\n'))
         .void()
         .parse_next(input)
 }
 
-fn block_comment(input: &mut &str) -> Result<()> {
+fn block_comment(input: &mut &str) -> ModalResult<()> {
     (
         "/*",
         repeat(
             0..,
-            alt((block_comment, take_until(1.., "*/").void(), any.void())),
+            alt((
+                block_comment,
+                take_while(1.., |c| c != '/' && c != '*').void(),
+                (not(alt(("/*", "*/"))), any).void(),
+            )),
         )
-        .map(|_: Vec<()>| ()),
+        .fold(|| (), |_, _| ()),
         "*/",
     )
         .void()
         .parse_next(input)
 }
 
-fn raw_string_literal(input: &mut &str) -> Result<()> {
-    alt((
-        // r#"..."# formatı (basitleştirilmiş, sadece 1 hash için, gramerinizdeki gibi)
-        ("r#\"", take_until(0.., "\"#"), "\"#"),
-        // r"..." formatı
-        ("r\"", take_until(0.., "\""), "\""),
-    ))
-    .void()
-    .parse_next(input)
-}
-
-fn string_literal(input: &mut &str) -> Result<()> {
+fn string_literal(input: &mut &str) -> ModalResult<()> {
     (
         '"',
         repeat(0.., alt((("\\", any).void(), none_of(['"', '\\']).void()))).map(|_: Vec<()>| ()),
@@ -200,7 +233,7 @@ fn string_literal(input: &mut &str) -> Result<()> {
         .parse_next(input)
 }
 
-fn char_literal(input: &mut &str) -> Result<()> {
+fn char_literal(input: &mut &str) -> ModalResult<()> {
     (
         '\'',
         alt((("\\", any).void(), none_of(['"', '\\']).void())),
