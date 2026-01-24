@@ -17,73 +17,76 @@ pub fn compile(input: TokenStream) -> TokenStream {
     let tokens: Vec<TokenTree> = input.into_iter().collect();
     let mut tokens = tokens.as_slice();
 
-    let (expr_defs, body, text_size) = match terminated(template, eof).parse_next(&mut tokens) {
-        Ok((expr_defs, nodes)) => {
-            let mut body = TokenStream::new();
-            let mut text_buffer = String::new();
-            let mut first = true;
-            let mut text_size = 0;
+    let (expr_defs, body, text_size) =
+        match terminated(template, eof.context(StrContext::Label("end of template")))
+            .parse_next(&mut tokens)
+        {
+            Ok((expr_defs, nodes)) => {
+                let mut body = TokenStream::new();
+                let mut text_buffer = String::new();
+                let mut first = true;
+                let mut text_size = 0;
 
-            for node in nodes {
-                match node {
-                    Node::Expr(tokens) => {
-                        if !text_buffer.is_empty() {
-                            text_buffer.push(' ');
-                            body.extend(quote! { write!(out, "{}", #text_buffer)?; });
-                            text_buffer.clear();
-                        }
+                for node in nodes {
+                    match node {
+                        Node::Expr(tokens) => {
+                            if !text_buffer.is_empty() {
+                                text_buffer.push(' ');
+                                body.extend(quote! { write!(out, "{}", #text_buffer)?; });
+                                text_buffer.clear();
+                            }
 
-                        body.extend(tokens);
-                    }
-                    Node::Text(text) => {
-                        if !first {
-                            text_buffer.push(' ');
+                            body.extend(tokens);
                         }
-                        text_buffer.push_str(&text);
-                        text_size += text.len();
-                        first = false;
+                        Node::Text(text) => {
+                            if !first {
+                                text_buffer.push(' ');
+                            }
+                            text_buffer.push_str(&text);
+                            text_size += text.len();
+                            first = false;
+                        }
                     }
                 }
+
+                if !text_buffer.is_empty() {
+                    body.extend(quote! { write!(out, "{}", #text_buffer)?; });
+                }
+
+                (expr_defs, body, text_size)
             }
+            Err(e) => {
+                let span = tokens
+                    .first()
+                    .map(|tt| tt.span())
+                    .unwrap_or_else(Span::call_site);
 
-            if !text_buffer.is_empty() {
-                body.extend(quote! { write!(out, "{}", #text_buffer)?; });
+                let err = e.into_inner().unwrap();
+                let msg = err
+                    .context()
+                    .filter_map(|c| match c {
+                        StrContext::Label(l) => Some(l.to_string()),
+                        StrContext::Expected(e) => Some(format!("expected {}", e)),
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .rev()
+                    .collect::<Vec<_>>()
+                    .join(": ");
+
+                let msg = format!("compile error: {msg}");
+                let msg_lit = syn::LitStr::new(&msg, span);
+
+                (
+                    TokenStream::new(),
+                    quote::quote_spanned! { span =>
+                        compile_error!(#msg_lit);
+                    },
+                    0,
+                )
             }
-
-            (expr_defs, body, text_size)
-        }
-        Err(e) => {
-            let span = tokens
-                .first()
-                .map(|tt| tt.span())
-                .unwrap_or_else(Span::call_site);
-
-            let err = e.into_inner().unwrap();
-            let msg = err
-                .context()
-                .filter_map(|c| match c {
-                    StrContext::Label(l) => Some(l.to_string()),
-                    StrContext::Expected(e) => Some(format!("expected {}", e)),
-                    _ => None,
-                })
-                .collect::<Vec<_>>()
-                .into_iter()
-                .rev()
-                .collect::<Vec<_>>()
-                .join(": ");
-
-            let msg = format!("compile error: {msg}");
-            let msg_lit = syn::LitStr::new(&msg, span);
-
-            (
-                TokenStream::new(),
-                quote::quote_spanned! { span =>
-                    compile_error!(#msg_lit);
-                },
-                0,
-            )
-        }
-    };
+        };
 
     quote! {
         ::rshtml::ViewFn::new({
