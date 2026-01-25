@@ -8,6 +8,7 @@ mod error;
 mod node;
 mod parser;
 mod position;
+pub mod rshtml_macro;
 pub mod str_extensions;
 mod temporary_file;
 #[cfg(test)]

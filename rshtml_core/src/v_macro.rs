@@ -6,8 +6,6 @@ use winnow::combinator::{alt, eof, opt, repeat, repeat_till, terminated};
 use winnow::error::{StrContext, StrContextValue};
 use winnow::{Parser, token::any};
 
-// TODO: Enable file reading using the v_file! macro.
-
 enum Node {
     Expr(TokenStream),
     Text(String),
