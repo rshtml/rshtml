@@ -1,15 +1,22 @@
+use crate::diagnostic::Diagnostic;
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote, quote_spanned};
-use std::{env, fs, path::PathBuf};
+use std::{collections::HashMap, env, fs, path::PathBuf};
 use syn::{LitStr, parse_str, spanned::Spanned};
 use winnow::{
     ModalResult, Parser,
     ascii::multispace0,
-    combinator::{alt, cut_err, eof, fail, not, repeat, terminated},
+    combinator::{alt, cut_err, eof, fail, not, repeat},
     error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
     stream::Stream,
     token::{any, none_of, take_while},
 };
+
+struct Context {
+    // path: PathBuf,
+    // source: String,
+    diagnostic: Diagnostic,
+}
 
 pub fn compile(path: LitStr) -> TokenStream {
     let path = path.value();
@@ -38,39 +45,46 @@ pub fn compile(path: LitStr) -> TokenStream {
 
     let mut tokens = input.as_str();
 
-    let (text_size, expr_defs, body) =
-        match terminated(template, eof.context(StrContext::Label("end of file")))
+    let ctx = Context {
+        // path: full_path.to_owned(),
+        // source: input.to_owned(),
+        diagnostic: Diagnostic::new(HashMap::from([(full_path.to_owned(), input.to_owned())])),
+    };
+
+    let (text_size, expr_defs, body) = match template(&mut tokens, &ctx).and_then(|res| {
+        eof.context(StrContext::Label("end of file"))
             .parse_next(&mut tokens)
-        {
-            Ok(res) => res,
-            Err(e) => {
-                let span = Span::call_site();
-                let err = e.into_inner().unwrap();
-                let msg = err
-                    .context()
-                    .filter_map(|c| match c {
-                        StrContext::Label(l) => Some(l.to_string()),
-                        StrContext::Expected(e) => Some(format!("expected {}", e)),
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>()
-                    .into_iter()
-                    .rev()
-                    .collect::<Vec<_>>()
-                    .join(": ");
+            .map(|_| res)
+    }) {
+        Ok(res) => res,
+        Err(e) => {
+            let span = Span::call_site();
+            let err = e.into_inner().unwrap();
+            let msg = err
+                .context()
+                .filter_map(|c| match c {
+                    StrContext::Label(l) => Some(l.to_string()),
+                    StrContext::Expected(e) => Some(format!("expected {}", e)),
+                    _ => None,
+                })
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+                .collect::<Vec<_>>()
+                .join(": ");
 
-                let msg = format!("compile error: {msg}");
-                let msg_lit = syn::LitStr::new(&msg, span);
+            let msg = format!("compile error: {msg}");
+            let msg_lit = syn::LitStr::new(&msg, span);
 
-                (
-                    0,
-                    TokenStream::new(),
-                    quote::quote_spanned! { span =>
-                        compile_error!(#msg_lit);
-                    },
-                )
-            }
-        };
+            (
+                0,
+                TokenStream::new(),
+                quote::quote_spanned! { span =>
+                    compile_error!(#msg_lit);
+                },
+            )
+        }
+    };
 
     let full_path_str = full_path.to_string_lossy();
 
@@ -92,11 +106,12 @@ pub fn compile(path: LitStr) -> TokenStream {
     }
 }
 
-fn template(input: &mut &str) -> ModalResult<(usize, TokenStream, TokenStream)> {
+fn template(input: &mut &str, ctx: &Context) -> ModalResult<(usize, TokenStream, TokenStream)> {
     repeat(
         1..,
         alt((
-            expr.map(|(expr_def, expr)| (0, expr_def, expr))
+            (move |i: &mut &str| -> ModalResult<(TokenStream, TokenStream)> { expr(i, ctx) })
+                .map(|(expr_def, expr)| (0, expr_def, expr))
                 .context(StrContext::Label("rust block")),
             text.map(|t| (t.0, TokenStream::new(), t.1))
                 .context(StrContext::Label("text")),
@@ -139,7 +154,7 @@ fn text(input: &mut &str) -> ModalResult<(usize, TokenStream)> {
     .parse_next(input)
 }
 
-fn expr(input: &mut &str) -> ModalResult<(TokenStream, TokenStream)> {
+fn expr(input: &mut &str, ctx: &Context) -> ModalResult<(TokenStream, TokenStream)> {
     let start = *input;
     let checkpoint = input.checkpoint();
 
@@ -150,24 +165,31 @@ fn expr(input: &mut &str) -> ModalResult<(TokenStream, TokenStream)> {
 
     let def_ident = format_ident!("_exp{}", input.len());
 
-    let output = if let Ok(block) = parse_str::<syn::Block>(rust_block) {
-        (
+    let output = match parse_str::<syn::Block>(rust_block) {
+        Ok(block) => (
             quote! { let #def_ident = #block; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
             quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
-        )
-    } else {
-        let tokens: TokenStream = rust_block.parse().map_err(|_| {
-            ErrMode::Cut(ContextError::new().add_context(
-                input,
-                &checkpoint,
-                StrContext::Label("Lex Error"),
-            ))
-        })?;
+        ),
+        Err(e) => {
+            let span = e.span();
+            let start = span.start();
+            let end = span.end();
 
-        (
-            quote! { let #def_ident = #tokens; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
-            quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
-        )
+            // ctx.diagnostic.caution(, position, title, lines, info, name_len)
+
+            let tokens: TokenStream = rust_block.parse().map_err(|_| {
+                ErrMode::Cut(ContextError::new().add_context(
+                    input,
+                    &checkpoint,
+                    StrContext::Label("Lex Error"),
+                ))
+            })?;
+
+            (
+                quote! { let #def_ident = #tokens; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
+                quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
+            )
+        }
     };
 
     Ok(output)
