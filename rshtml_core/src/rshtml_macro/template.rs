@@ -16,14 +16,14 @@ pub fn template<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         .void(),
         template_content,
     )
-        .map(|(_, _, content)| todo!())
+        .map(|(_, _, content)| content)
         .parse_next(input)
 }
 
 pub fn template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     repeat(0.., text)
         .fold(TokenStream::new, |mut acc, txt| {
-            acc.extend(txt.1);
+            acc.extend(txt);
             acc
         })
         .parse_next(input)

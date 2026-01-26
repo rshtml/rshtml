@@ -1,6 +1,6 @@
 use crate::rshtml_macro::Input;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::parse_str;
 use winnow::{
     ModalResult, Parser,
@@ -19,14 +19,17 @@ pub fn rust_block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let len = start.len() - input.len();
     let rust_block = &start[1..len];
 
-    let def_ident = format_ident!("_exp{}", input.len());
-
     let output = match parse_str::<syn::Block>(rust_block) {
-        Ok(block) => quote! { #block },
+        Ok(block) => {
+            let stmts = &block.stmts;
+            quote! { #(#stmts)* }
+        }
         Err(e) => {
             let span = e.span();
             let start = span.start();
             let end = span.end();
+
+            e.span().start();
 
             // ctx.diagnostic.caution(, position, title, lines, info, name_len)
 

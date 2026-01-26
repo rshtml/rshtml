@@ -6,12 +6,15 @@ use winnow::{
 };
 
 pub fn template_params<'a>(input: &mut Input<'a>) -> ModalResult<()> {
-    let params: Vec<(&str, &str)> = ("@", params, opt("?"))
+    let params: Vec<(String, String)> = ("@", params, opt("?"))
         .map(|(_, params, _)| {
             params
                 .iter()
                 .map(|(p_name, p_type_opt)| {
-                    (*p_name, p_type_opt.unwrap_or("impl ::std::fmt::Display"))
+                    (
+                        p_name.to_string(),
+                        p_type_opt.unwrap_or("impl ::std::fmt::Display").to_string(),
+                    )
                 })
                 .collect()
         })
