@@ -1,12 +1,12 @@
-use crate::rshtml_macro::{Input, template::rust_identifier};
+use crate::rshtml_macro::{Input, extensions::ParserDiagnostic, template::rust_identifier};
 use winnow::{
     ModalResult, Parser,
-    combinator::{alt, cut_err, opt, repeat, separated},
+    combinator::{alt, cut_err, opt, peek, repeat, separated},
     token::any,
 };
 
 pub fn template_params<'a>(input: &mut Input<'a>) -> ModalResult<()> {
-    let params: Vec<(String, String)> = ("@", params, opt("?"))
+    let parsed_params: Vec<(String, String)> = ("@", params, opt("?"))
         .map(|(_, params, _)| {
             params
                 .iter()
@@ -20,27 +20,35 @@ pub fn template_params<'a>(input: &mut Input<'a>) -> ModalResult<()> {
         })
         .parse_next(input)?;
 
-    input.state.template_params = params;
+    input.state.template_params = parsed_params;
 
     Ok(())
 }
 
 fn params<'a>(input: &mut Input<'a>) -> ModalResult<Vec<(&'a str, Option<&'a str>)>> {
-    ("(", separated(0.., param, ","), opt(","), ")")
+    ("(", separated(0.., param, ","), opt(","), ")".expected(")"))
         .map(|(_, params, _, _)| params)
         .parse_next(input)
 }
 
-// TODO: add diagnostic message
 fn param<'a>(input: &mut Input<'a>) -> ModalResult<(&'a str, Option<&'a str>)> {
     (
-        cut_err(rust_identifier),
+        cut_err(rust_identifier).expected("identifier"),
+        cut_err(peek(alt((
+            ':'.void(),
+            ','.void(),
+            ')'.void(),
+            any.verify(|c: &char| c.is_whitespace()).void(),
+        ))))
+        .void()
+        .expected("identifier"),
         opt((
             ":",
-            cut_err(param_type.verify(|pt| syn::parse_str::<syn::Type>(pt).is_ok())),
+            cut_err(param_type.verify(|pt| syn::parse_str::<syn::Type>(pt).is_ok()))
+                .expected("type"),
         )),
     )
-        .map(|(name, type_opt)| {
+        .map(|(name, _, type_opt)| {
             let type_str = type_opt.map(|(_, ty)| ty);
             (name, type_str)
         })

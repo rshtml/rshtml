@@ -1,3 +1,4 @@
+mod extensions;
 mod inner_text;
 mod rust_block;
 mod template;
@@ -6,11 +7,15 @@ mod text;
 
 use crate::diagnostic::Diagnostic;
 use proc_macro2::{Span, TokenStream};
+use quote::quote;
 use quote::quote_spanned;
 use std::{collections::HashMap, env, fs, path::PathBuf};
 use syn::{LitStr, spanned::Spanned};
 use template::template;
 use winnow::Stateful;
+use winnow::error::AddContext;
+use winnow::error::ParserError;
+use winnow::stream::Stream;
 use winnow::{Parser, combinator::eof, error::StrContext};
 
 pub type Input<'a> = Stateful<&'a str, &'a mut RshtmlMacro>;
@@ -24,14 +29,6 @@ pub struct RshtmlMacro {
     pub template_params: Vec<(String, String)>,
 }
 
-// #[derive(Debug)]
-// struct Context<'a> {
-//     path: PathBuf,
-//     source: String,
-//     diagnostic: Diagnostic,
-//     text_size: usize,
-//     template_params: Vec<(&'a str, &'a str)>,
-// }
 impl RshtmlMacro {
     pub fn new() -> Self {
         RshtmlMacro {
@@ -68,7 +65,7 @@ impl RshtmlMacro {
             }
         };
 
-        // self.source = input;
+        self.source = input.clone();
         // let tokens = self.source.as_str();
         let tokens = input.as_str();
 
@@ -79,6 +76,8 @@ impl RshtmlMacro {
         //     text_size: -1,
         //     template_params: Vec::new(),
         // };
+
+        let source_len = self.source.len();
 
         let mut input = Input {
             input: tokens,
@@ -92,7 +91,6 @@ impl RshtmlMacro {
         }) {
             Ok(res) => res,
             Err(e) => {
-                let span = Span::call_site();
                 let err = e.into_inner().unwrap();
                 let msg = err
                     .context()
@@ -107,8 +105,13 @@ impl RshtmlMacro {
                     .collect::<Vec<_>>()
                     .join(": ");
 
-                let msg = format!("compile error: {msg}");
-                let msg_lit = syn::LitStr::new(&msg, span);
+                println!("source len:{source_len}, {}", input.input.len());
+
+                let offset = source_len.saturating_sub(input.input.len());
+                let diag = self.show_error(offset, &format!("{msg:?}"));
+
+                // let msg = format!("compile error: {msg}");
+                let msg_lit = syn::LitStr::new(&diag, Span::call_site());
 
                 quote::quote_spanned! { span =>
                     compile_error!(#msg_lit);
@@ -116,9 +119,53 @@ impl RshtmlMacro {
             }
         };
 
-        // let full_path_str = full_path.to_string_lossy();
+        let full_path_str = full_path.to_string_lossy();
 
-        body
+        quote! {
+            let _ = include_str!(#full_path_str);
+
+            #body
+        }
+    }
+
+    fn line_col(&self, byte_offset: usize) -> (usize, usize) {
+        let mut line = 1;
+        let mut col = 1;
+
+        for (i, ch) in self.source.char_indices() {
+            if i >= byte_offset {
+                break;
+            }
+            if ch == '\n' {
+                line += 1;
+                col = 1;
+            } else {
+                col += 1;
+            }
+        }
+        (line, col)
+    }
+
+    fn show_error(&self, byte_offset: usize, msg: &str) -> String {
+        let (line, col) = self.line_col(byte_offset);
+
+        // ilgili satırı bul
+        let line_start = self.source[..byte_offset]
+            .rfind('\n')
+            .map(|i| i + 1)
+            .unwrap_or(0);
+        let line_end = self.source[byte_offset..]
+            .find('\n')
+            .map(|i| byte_offset + i)
+            .unwrap_or(self.source.len());
+
+        let line_text = &self.source[line_start..line_end];
+
+        let mut caret = String::new();
+        caret.push_str(&" ".repeat(col.saturating_sub(1)));
+        caret.push('^');
+
+        format!("{msg}\n --> line {line}, col {col}\n{line_text}\n{caret}")
     }
 }
 

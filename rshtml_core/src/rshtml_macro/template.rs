@@ -1,19 +1,22 @@
-use crate::rshtml_macro::{Input, template_params::template_params, text::text};
+use crate::rshtml_macro::{
+    Input, extensions::ParserDiagnostic, template_params::template_params, text::text,
+};
 use proc_macro2::TokenStream;
 use winnow::{
     ModalResult, Parser,
-    combinator::{alt, not, opt, peek, repeat},
+    combinator::{alt, cut_err, not, opt, peek, repeat},
+    error::{StrContext, StrContextValue},
     token::{any, take_while},
 };
 
 pub fn template<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     (
         opt("\u{FEFF}").void(),
-        alt((
-            (peek(('@', '(')), template_params).void(),
-            not(('@', '(')).void(),
-        ))
-        .void(),
+        (
+            peek(('@', '(')),
+            template_params.label("template parameters"),
+        )
+            .void(),
         template_content,
     )
         .map(|(_, _, content)| content)
