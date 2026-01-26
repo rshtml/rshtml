@@ -1,32 +1,35 @@
-use crate::rshtml_macro::{Context, rust_identifier};
+use crate::rshtml_macro::{Input, rust_identifier};
 use winnow::{
     ModalResult, Parser,
     combinator::{alt, cut_err, opt, repeat, separated},
     token::any,
 };
 
-pub fn template_params<'a>(
-    input: &mut &'a str,
-    ctx: &Context,
-) -> ModalResult<Vec<(&'a str, Option<&'a str>)>> {
-    ("@", (move |i: &mut &'a str| params(i, ctx)), opt("?"))
-        .map(|(_, params, _)| params)
-        .parse_next(input)
+pub fn template_params<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+    let params: Vec<(&str, &str)> = ("@", params, opt("?"))
+        .map(|(_, params, _)| {
+            params
+                .iter()
+                .map(|(p_name, p_type_opt)| {
+                    (*p_name, p_type_opt.unwrap_or("impl ::std::fmt::Display"))
+                })
+                .collect()
+        })
+        .parse_next(input)?;
+
+    input.state.template_params = params;
+
+    Ok(())
 }
 
-fn params<'a>(input: &mut &'a str, ctx: &Context) -> ModalResult<Vec<(&'a str, Option<&'a str>)>> {
-    (
-        "(",
-        separated(0.., |i: &mut &'a str| param(i, ctx), ","),
-        opt(","),
-        ")",
-    )
+fn params<'a>(input: &mut Input<'a>) -> ModalResult<Vec<(&'a str, Option<&'a str>)>> {
+    ("(", separated(0.., param, ","), opt(","), ")")
         .map(|(_, params, _, _)| params)
         .parse_next(input)
 }
 
 // TODO: add diagnostic message
-fn param<'a>(input: &mut &'a str, ctx: &Context) -> ModalResult<(&'a str, Option<&'a str>)> {
+fn param<'a>(input: &mut Input<'a>) -> ModalResult<(&'a str, Option<&'a str>)> {
     (
         cut_err(rust_identifier),
         opt((
@@ -41,8 +44,8 @@ fn param<'a>(input: &mut &'a str, ctx: &Context) -> ModalResult<(&'a str, Option
         .parse_next(input)
 }
 
-fn param_type<'a>(input: &mut &'a str) -> ModalResult<&'a str> {
-    let start = *input;
+fn param_type<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
+    let start = input.input;
 
     repeat(
         1..,
@@ -58,7 +61,7 @@ fn param_type<'a>(input: &mut &'a str) -> ModalResult<&'a str> {
     Ok(&start[..consumed])
 }
 
-fn param_type_nested(input: &mut &str) -> ModalResult<()> {
+fn param_type_nested<'a>(input: &mut Input<'a>) -> ModalResult<()> {
     alt((
         (
             "(".void(),

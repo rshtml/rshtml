@@ -1,4 +1,4 @@
-use crate::rshtml_macro::component_tag_identifier;
+use crate::rshtml_macro::{Input, component_tag_identifier};
 use proc_macro2::TokenStream;
 use quote::quote;
 use winnow::{
@@ -8,13 +8,13 @@ use winnow::{
     token::{any, take_while},
 };
 
-pub fn text(input: &mut &str) -> ModalResult<(usize, TokenStream)> {
+pub fn text<'a>(input: &mut Input<'a>) -> ModalResult<(usize, TokenStream)> {
     enum Chunk<'a> {
         Str(&'a str),
         Char(char),
     }
 
-    repeat(
+    let (text_size, text_ts) = repeat(
         1..,
         alt((
             take_while(1.., |c| c != '@' || c != '<').map(Chunk::Str),
@@ -38,5 +38,9 @@ pub fn text(input: &mut &str) -> ModalResult<(usize, TokenStream)> {
         acc
     })
     .map(|text| (text.chars().count(), quote! { write!(out, "{}", #text)?; }))
-    .parse_next(input)
+    .parse_next(input)?;
+
+    input.state.text_size += text_size;
+
+    Ok((text_size, text_ts))
 }
