@@ -1,4 +1,4 @@
-use crate::rshtml_macro::{Input, rust_identifier};
+use crate::rshtml_macro::{Input, template::rust_identifier};
 use winnow::{
     ModalResult, Parser,
     combinator::{alt, cut_err, opt, repeat, separated},

@@ -1,27 +1,20 @@
-use crate::rshtml_macro::Context;
+use crate::rshtml_macro::Input;
 use proc_macro2::TokenStream;
-use quote::format_ident;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::parse_str;
-use winnow::combinator::alt;
-use winnow::combinator::cut_err;
-use winnow::combinator::not;
-use winnow::combinator::repeat;
-use winnow::error::AddContext;
-use winnow::error::ContextError;
-use winnow::error::ErrMode;
-use winnow::error::StrContext;
-use winnow::error::StrContextValue;
-use winnow::token::any;
-use winnow::token::none_of;
-use winnow::token::take_while;
-use winnow::{ModalResult, Parser, ascii::multispace0, stream::Stream};
+use winnow::{
+    ModalResult, Parser,
+    ascii::multispace0,
+    combinator::{alt, cut_err, not, repeat},
+    error::{StrContext, StrContextValue},
+    stream::Stream,
+    token::{any, none_of, take_while},
+};
 
-pub fn rust_block(input: &mut &str, ctx: &Context) -> ModalResult<(TokenStream, TokenStream)> {
-    let start = *input;
-    let checkpoint = input.checkpoint();
+pub fn rust_block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+    let start = input.input;
 
-    ("@", multispace0, block).parse_next(input)?;
+    ('@'.void(), multispace0.void(), block).parse_next(input)?;
 
     let len = start.len() - input.len();
     let rust_block = &start[1..len];
@@ -29,10 +22,7 @@ pub fn rust_block(input: &mut &str, ctx: &Context) -> ModalResult<(TokenStream, 
     let def_ident = format_ident!("_exp{}", input.len());
 
     let output = match parse_str::<syn::Block>(rust_block) {
-        Ok(block) => (
-            quote! { let #def_ident = #block; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
-            quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
-        ),
+        Ok(block) => quote! { #block },
         Err(e) => {
             let span = e.span();
             let start = span.start();
@@ -40,25 +30,26 @@ pub fn rust_block(input: &mut &str, ctx: &Context) -> ModalResult<(TokenStream, 
 
             // ctx.diagnostic.caution(, position, title, lines, info, name_len)
 
-            let tokens: TokenStream = rust_block.parse().map_err(|_| {
-                ErrMode::Cut(ContextError::new().add_context(
-                    input,
-                    &checkpoint,
-                    StrContext::Label("Lex Error"),
-                ))
-            })?;
+            // let tokens: TokenStream = rust_block.parse().map_err(|_| {
+            //     ErrMode::Cut(ContextError::new().add_context(
+            //         input,
+            //         &checkpoint,
+            //         StrContext::Label("Lex Error"),
+            //     ))
+            // })?;
 
-            (
-                quote! { let #def_ident = #tokens; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
-                quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
-            )
+            // (
+            //     quote! { let #def_ident = #tokens; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
+            //     quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
+            // )
+            todo!()
         }
     };
 
     Ok(output)
 }
 
-fn block(input: &mut &str) -> ModalResult<()> {
+fn block<'a>(input: &mut Input<'a>) -> ModalResult<()> {
     (
         "{",
         block_content,
@@ -68,7 +59,7 @@ fn block(input: &mut &str) -> ModalResult<()> {
         .parse_next(input)
 }
 
-fn block_content(input: &mut &str) -> ModalResult<()> {
+fn block_content<'a>(input: &mut Input<'a>) -> ModalResult<()> {
     repeat(
         0..,
         alt((
@@ -84,13 +75,13 @@ fn block_content(input: &mut &str) -> ModalResult<()> {
     .parse_next(input)
 }
 
-fn line_comment(input: &mut &str) -> ModalResult<()> {
+fn line_comment<'a>(input: &mut Input<'a>) -> ModalResult<()> {
     ("//", take_while(0.., |c| c != '\n'))
         .void()
         .parse_next(input)
 }
 
-fn block_comment(input: &mut &str) -> ModalResult<()> {
+fn block_comment<'a>(input: &mut Input<'a>) -> ModalResult<()> {
     (
         "/*",
         repeat(
@@ -108,7 +99,7 @@ fn block_comment(input: &mut &str) -> ModalResult<()> {
         .parse_next(input)
 }
 
-fn string_literal(input: &mut &str) -> ModalResult<()> {
+fn string_literal<'a>(input: &mut Input<'a>) -> ModalResult<()> {
     (
         '"',
         repeat(0.., alt((("\\", any).void(), none_of(['"', '\\']).void()))).map(|_: Vec<()>| ()),
@@ -118,7 +109,7 @@ fn string_literal(input: &mut &str) -> ModalResult<()> {
         .parse_next(input)
 }
 
-fn char_literal(input: &mut &str) -> ModalResult<()> {
+fn char_literal<'a>(input: &mut Input<'a>) -> ModalResult<()> {
     (
         '\'',
         alt((("\\", any).void(), none_of(['"', '\\']).void())),

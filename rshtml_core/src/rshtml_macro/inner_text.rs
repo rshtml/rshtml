@@ -1,4 +1,4 @@
-use crate::rshtml_macro::{Input, component_tag_identifier};
+use crate::rshtml_macro::{Input, template::component_tag_identifier};
 use proc_macro2::TokenStream;
 use quote::quote;
 use winnow::{
@@ -8,7 +8,7 @@ use winnow::{
     token::{any, take_while},
 };
 
-pub fn inner_text<'a>(input: &mut Input<'a>) -> ModalResult<(usize, TokenStream)> {
+pub fn inner_text<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     enum Chunk<'a> {
         Str(&'a str),
         Char(char),
@@ -43,5 +43,5 @@ pub fn inner_text<'a>(input: &mut Input<'a>) -> ModalResult<(usize, TokenStream)
 
     input.state.text_size += text_size;
 
-    Ok((text_size, text_ts))
+    Ok(text_ts)
 }

@@ -6,17 +6,12 @@ mod text;
 
 use crate::diagnostic::Diagnostic;
 use proc_macro2::{Span, TokenStream};
-use quote::{quote, quote_spanned};
+use quote::quote_spanned;
 use std::{collections::HashMap, env, fs, path::PathBuf};
 use syn::{LitStr, spanned::Spanned};
 use template::template;
 use winnow::Stateful;
-use winnow::{
-    ModalResult, Parser,
-    combinator::eof,
-    error::StrContext,
-    token::{any, take_while},
-};
+use winnow::{Parser, combinator::eof, error::StrContext};
 
 #[derive(Debug)]
 struct Context<'a> {
@@ -54,7 +49,7 @@ fn compile(path: LitStr) -> TokenStream {
         }
     };
 
-    let mut tokens = input.as_str();
+    let tokens = input.as_str();
 
     let ctx = Context {
         path: full_path.to_owned(),
@@ -71,7 +66,7 @@ fn compile(path: LitStr) -> TokenStream {
 
     let body = match template(&mut input).and_then(|res| {
         eof.context(StrContext::Label("end of file"))
-            .parse_next(&mut tokens)
+            .parse_next(&mut input)
             .map(|_| res)
     }) {
         Ok(res) => res,
@@ -100,27 +95,7 @@ fn compile(path: LitStr) -> TokenStream {
         }
     };
 
-    let full_path_str = full_path.to_string_lossy();
+    // let full_path_str = full_path.to_string_lossy();
 
-    todo!()
-}
-
-pub fn rust_identifier<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
-    take_while(1.., |c: char| c.is_alphanumeric() || c == '_')
-        .verify(|s: &str| syn::parse_str::<syn::Ident>(s).is_ok())
-        .parse_next(input)
-}
-
-fn component_tag_identifier<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
-    let start = input.input;
-
-    (
-        any.verify(|c: &char| c.is_ascii_uppercase()),
-        take_while(0.., |c: char| c.is_ascii_alphanumeric()),
-    )
-        .parse_next(input)?;
-
-    let consumed = start.len() - input.len();
-
-    Ok(&start[..consumed])
+    body
 }
