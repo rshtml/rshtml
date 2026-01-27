@@ -4,7 +4,6 @@ use quote::quote;
 use syn::parse_str;
 use winnow::{
     ModalResult, Parser,
-    ascii::multispace0,
     combinator::{alt, cut_err, not, repeat},
     error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
     stream::Stream,
@@ -15,10 +14,10 @@ pub fn rust_block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let start = input.input;
     let checkpoint = input.checkpoint();
 
-    ('@'.void(), multispace0.void(), block).parse_next(input)?;
+    block.parse_next(input)?;
 
     let len = start.len() - input.len();
-    let rust_block = &start[1..len];
+    let rust_block = &start[..len];
 
     let output = match parse_str::<syn::Block>(rust_block) {
         Ok(block) => {

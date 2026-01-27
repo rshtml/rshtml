@@ -1,6 +1,7 @@
 mod extensions;
 mod inner_text;
 mod rust_block;
+mod simple_expr_paren;
 mod template;
 mod template_params;
 mod text;
@@ -8,13 +9,15 @@ mod use_directive;
 
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
-use std::{env, fs, path::PathBuf};
+use std::{collections::HashMap, env, fs, path::PathBuf};
 use syn::{LitStr, spanned::Spanned};
 use template::template;
 use winnow::{
     Stateful,
     error::{StrContext, StrContextValue},
 };
+
+use crate::diagnostic::Diagnostic;
 
 pub type Input<'a> = Stateful<&'a str, &'a mut Context>;
 
@@ -23,6 +26,7 @@ pub struct Context {
     text_size: usize,
     template_params: Vec<(String, String)>,
     use_directives: Vec<(String, PathBuf)>,
+    diagnostic: Diagnostic,
 }
 
 pub fn compile(path: LitStr) -> (TokenStream, Context) {
@@ -62,6 +66,7 @@ pub fn compile(path: LitStr) -> (TokenStream, Context) {
         text_size: 0,
         template_params: Vec::new(),
         use_directives: Vec::new(),
+        diagnostic: Diagnostic::new(HashMap::from([(full_path.clone(), source.to_string())])), // TODO: remove clones and change the logic
     };
 
     let mut input = Input {

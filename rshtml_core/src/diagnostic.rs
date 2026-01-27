@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Diagnostic {
     pub sources: HashMap<PathBuf, String>,
 }

@@ -17,8 +17,6 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
 
     let (name, path) = (
-        '@',
-        multispace0,
         "use",
         multispace0,
         cut_err(string_line).expected("path"),
@@ -30,7 +28,7 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         )),
         opt(';'),
     )
-        .map(|(_, _, _, _, path_str, _, name_opt, _)| {
+        .map(|(_, _, path_str, _, name_opt, _)| {
             let mut path_str = if path_str.starts_with('\'') {
                 path_str.trim_matches('\'')
             } else {

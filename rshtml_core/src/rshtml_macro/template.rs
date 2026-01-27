@@ -1,12 +1,14 @@
 use crate::rshtml_macro::{
-    Input, extensions::ParserDiagnostic, rust_block::rust_block, template_params::template_params,
-    text::text, use_directive::use_directive,
+    Input, extensions::ParserDiagnostic, rust_block::rust_block,
+    simple_expr_paren::simple_expr_paren, template_params::template_params, text::text,
+    use_directive::use_directive,
 };
 use proc_macro2::TokenStream;
+use quote::quote;
 use winnow::{
     ModalResult, Parser,
     ascii::multispace0,
-    combinator::{alt, eof, opt, peek, repeat},
+    combinator::{alt, eof, not, opt, peek, repeat},
     token::{any, none_of, take_while},
 };
 
@@ -29,13 +31,24 @@ pub fn template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     repeat(
         0..,
         alt((
-            use_directive.label("use directive"),
-            rust_block.label("code block"),
             text.label("html text"),
+            (
+                '@',
+                multispace0,
+                alt((
+                    use_directive.label("use directive"),
+                    rust_block.label("code block"),
+                    child_content_directive.label("child content"),
+                    continue_directive.label("continue"),
+                    break_directive.label("break"),
+                    simple_expr_paren.label("parenthesized expression"),
+                )),
+            )
+                .map(|(_, _, ts)| ts),
         )),
     )
-    .fold(TokenStream::new, |mut acc, txt| {
-        acc.extend(txt);
+    .fold(TokenStream::new, |mut acc, ts| {
+        acc.extend(ts);
         acc
     })
     .parse_next(input)
@@ -83,4 +96,33 @@ pub fn string_line<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
 
     let parsed_len = start.len() - input.input.len();
     Ok(&start[..parsed_len])
+}
+
+pub fn continue_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+    ("continue", multispace0)
+        .map(|(_, _)| quote! { continue })
+        .parse_next(input)
+}
+
+pub fn break_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+    ("break", multispace0)
+        .map(|(_, _)| quote! { break })
+        .parse_next(input)
+}
+
+pub fn child_content_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+    (
+        "child_content",
+        alt(("()".void(), peek(not(rust_identifier)).void())),
+    )
+        .map(|(_, _)| quote! {child_content(__f__)?;})
+        .parse_next(input)
+}
+
+pub fn escape_or_raw(expr_ts: TokenStream, is_escaped: bool, message: &str) -> TokenStream {
+    if is_escaped {
+        quote! { ::rshtml::Expr(&(#expr_ts)).render(&mut ::rshtml::EscapingWriter { inner: __f__ }, #message)?; }
+    } else {
+        quote! { ::rshtml::Expr(&(#expr_ts)).render(__f__, #message)?; }
+    }
 }
