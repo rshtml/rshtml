@@ -6,13 +6,14 @@ use winnow::{
     ModalResult, Parser,
     ascii::multispace0,
     combinator::{alt, cut_err, not, repeat},
-    error::{StrContext, StrContextValue},
+    error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
     stream::Stream,
     token::{any, none_of, take_while},
 };
 
 pub fn rust_block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let start = input.input;
+    let checkpoint = input.checkpoint();
 
     ('@'.void(), multispace0.void(), block).parse_next(input)?;
 
@@ -27,25 +28,24 @@ pub fn rust_block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         Err(e) => {
             let span = e.span();
             let start = span.start();
-            let end = span.end();
 
-            e.span().start();
+            let offset = rust_block
+                .split_inclusive('\n')
+                .take(start.line - 1)
+                .map(|line| line.len())
+                .sum::<usize>()
+                + start.column;
+            input.reset(&checkpoint);
 
-            // ctx.diagnostic.caution(, position, title, lines, info, name_len)
+            let _ = input.next_slice(offset);
 
-            // let tokens: TokenStream = rust_block.parse().map_err(|_| {
-            //     ErrMode::Cut(ContextError::new().add_context(
-            //         input,
-            //         &checkpoint,
-            //         StrContext::Label("Lex Error"),
-            //     ))
-            // })?;
+            let error_msg = Box::leak(e.to_string().into_boxed_str());
 
-            // (
-            //     quote! { let #def_ident = #tokens; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
-            //     quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
-            // )
-            todo!()
+            return Err(ErrMode::Cut(ContextError::new().add_context(
+                input,
+                &checkpoint,
+                StrContext::Expected(StrContextValue::Description(error_msg)),
+            )));
         }
     };
 

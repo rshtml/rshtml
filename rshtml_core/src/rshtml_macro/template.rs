@@ -1,35 +1,39 @@
 use crate::rshtml_macro::{
-    Input, extensions::ParserDiagnostic, template_params::template_params, text::text,
+    Input, extensions::ParserDiagnostic, rust_block::rust_block, template_params::template_params,
+    text::text,
 };
 use proc_macro2::TokenStream;
 use winnow::{
     ModalResult, Parser,
-    combinator::{alt, cut_err, not, opt, peek, repeat},
-    error::{StrContext, StrContextValue},
+    combinator::{alt, eof, opt, peek, repeat},
     token::{any, take_while},
 };
 
 pub fn template<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     (
         opt("\u{FEFF}").void(),
-        (
+        opt((
             peek(('@', '(')),
             template_params.label("template parameters"),
-        )
-            .void(),
+        ))
+        .void(),
         template_content,
+        eof.expected("end of file"),
     )
-        .map(|(_, _, content)| content)
+        .map(|(_, _, content, _)| content)
         .parse_next(input)
 }
 
 pub fn template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
-    repeat(0.., text)
-        .fold(TokenStream::new, |mut acc, txt| {
-            acc.extend(txt);
-            acc
-        })
-        .parse_next(input)
+    repeat(
+        0..,
+        alt((rust_block.label("code block"), text.label("html text"))),
+    )
+    .fold(TokenStream::new, |mut acc, txt| {
+        acc.extend(txt);
+        acc
+    })
+    .parse_next(input)
 }
 
 pub fn rust_identifier<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {

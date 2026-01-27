@@ -17,7 +17,7 @@ pub fn text<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let (text_size, text_ts) = repeat(
         1..,
         alt((
-            take_while(1.., |c| c != '@' || c != '<').map(Chunk::Str),
+            take_while(1.., |c| c != '@' && c != '<').map(Chunk::Str),
             "@@".map(|_| Chunk::Char('@')),
             (
                 not(alt((
