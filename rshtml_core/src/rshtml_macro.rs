@@ -4,6 +4,7 @@ mod rust_block;
 mod template;
 mod template_params;
 mod text;
+mod use_directive;
 
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
@@ -21,6 +22,7 @@ pub type Input<'a> = Stateful<&'a str, &'a mut Context>;
 pub struct Context {
     text_size: usize,
     template_params: Vec<(String, String)>,
+    use_directives: Vec<(String, PathBuf)>,
 }
 
 pub fn compile(path: LitStr) -> (TokenStream, Context) {
@@ -59,6 +61,7 @@ pub fn compile(path: LitStr) -> (TokenStream, Context) {
     let mut ctx = Context {
         text_size: 0,
         template_params: Vec::new(),
+        use_directives: Vec::new(),
     };
 
     let mut input = Input {
@@ -153,5 +156,8 @@ fn test_rshtml_macro() {
     let path = LitStr::new("views/rshtml_macro.rs.html", Span::call_site());
     let result = compile(path);
 
-    println!("{0}, {1:?}", result.0, result.1.template_params);
+    println!(
+        "{0}, {1:?} {2:?}",
+        result.0, result.1.template_params, result.1.use_directives
+    );
 }

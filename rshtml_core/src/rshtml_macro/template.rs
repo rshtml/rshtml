@@ -1,19 +1,20 @@
 use crate::rshtml_macro::{
     Input, extensions::ParserDiagnostic, rust_block::rust_block, template_params::template_params,
-    text::text,
+    text::text, use_directive::use_directive,
 };
 use proc_macro2::TokenStream;
 use winnow::{
     ModalResult, Parser,
+    ascii::multispace0,
     combinator::{alt, eof, opt, peek, repeat},
-    token::{any, take_while},
+    token::{any, none_of, take_while},
 };
 
 pub fn template<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     (
         opt("\u{FEFF}").void(),
         opt((
-            peek(('@', '(')),
+            peek(('@', multispace0, '(')),
             template_params.label("template parameters"),
         ))
         .void(),
@@ -27,7 +28,11 @@ pub fn template<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 pub fn template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     repeat(
         0..,
-        alt((rust_block.label("code block"), text.label("html text"))),
+        alt((
+            use_directive.label("use directive"),
+            rust_block.label("code block"),
+            text.label("html text"),
+        )),
     )
     .fold(TokenStream::new, |mut acc, txt| {
         acc.extend(txt);
@@ -54,4 +59,28 @@ pub fn component_tag_identifier<'a>(input: &mut Input<'a>) -> ModalResult<&'a st
     let consumed = start.len() - input.len();
 
     Ok(&start[..consumed])
+}
+
+pub fn string_line<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
+    let start = input.input;
+
+    alt((
+        (
+            '"',
+            repeat(0.., alt((("\\", any).void(), none_of(['"', '\\']).void())))
+                .map(|_: Vec<()>| ()),
+            '"',
+        ),
+        (
+            '\'',
+            repeat(0.., alt((("\\", any).void(), none_of(['\'', '\\']).void())))
+                .map(|_: Vec<()>| ()),
+            '\'',
+        ),
+    ))
+    .void()
+    .parse_next(input)?;
+
+    let parsed_len = start.len() - input.input.len();
+    Ok(&start[..parsed_len])
 }
