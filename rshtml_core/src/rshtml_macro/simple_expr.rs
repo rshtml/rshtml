@@ -8,7 +8,7 @@ use syn::{Expr, parse_str};
 use winnow::{
     ModalResult, Parser,
     ascii::{multispace0, multispace1},
-    combinator::{alt, not, opt, peek, repeat},
+    combinator::{alt, not, opt, repeat},
     error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
     stream::Stream,
     token::any,
@@ -19,7 +19,7 @@ pub fn simple_expr<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 
     not((
         multispace0,
-        alt(("{", "if", "for", "else", "use", "child_content")),
+        alt(("{", "if", "for", "use", "child_content")),
         alt((multispace1.void(), not(rust_identifier).void())),
     ))
     .parse_next(input)?;
