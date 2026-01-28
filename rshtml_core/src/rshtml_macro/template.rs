@@ -1,14 +1,14 @@
 use crate::rshtml_macro::{
-    Input, extensions::ParserDiagnostic, rust_block::rust_block,
-    simple_expr_paren::simple_expr_paren, template_params::template_params, text::text,
-    use_directive::use_directive,
+    Input, extensions::ParserDiagnostic, inner_text::inner_text, rust_block::rust_block,
+    rust_stmt::rust_stmt, simple_expr_paren::simple_expr_paren, template_params::template_params,
+    text::text, use_directive::use_directive,
 };
-use proc_macro2::TokenStream;
+use proc_macro2::{Punct, Spacing, TokenStream};
 use quote::quote;
 use winnow::{
     ModalResult, Parser,
     ascii::multispace0,
-    combinator::{alt, eof, not, opt, peek, repeat},
+    combinator::{alt, cut_err, eof, not, opt, peek, repeat},
     token::{any, none_of, take_while},
 };
 
@@ -28,30 +28,59 @@ pub fn template<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 }
 
 pub fn template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
-    repeat(
-        0..,
+    repeat(0.., alt((text.label("html text"), block)))
+        .fold(TokenStream::new, |mut acc, ts| {
+            acc.extend(ts);
+            acc
+        })
+        .parse_next(input)
+}
+
+pub fn inner_template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+    (
+        cut_err('{').expected("{"),
+        repeat(0.., alt((inner_text.label("html text"), block))).fold(
+            TokenStream::new,
+            |mut acc, ts| {
+                acc.extend(ts);
+                acc
+            },
+        ),
+        cut_err('}').expected("}"),
+    )
+        .map(|(_, content, _)| {
+            let ts = quote! {{#content}};
+            ts
+        })
+        .parse_next(input)
+}
+
+pub fn block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+    // repeat(
+    // 0..,
+    // alt((
+    // text.label("html text"),
+    (
+        '@',
+        multispace0,
         alt((
-            text.label("html text"),
-            (
-                '@',
-                multispace0,
-                alt((
-                    use_directive.label("use directive"),
-                    rust_block.label("code block"),
-                    child_content_directive.label("child content"),
-                    continue_directive.label("continue"),
-                    break_directive.label("break"),
-                    simple_expr_paren.label("parenthesized expression"),
-                )),
-            )
-                .map(|(_, _, ts)| ts),
+            use_directive.label("use directive"),
+            rust_block.label("code block"),
+            rust_stmt.label("statement"),
+            child_content_directive.label("child content"),
+            continue_directive.label("continue"),
+            break_directive.label("break"),
+            simple_expr_paren.label("parenthesized expression"),
         )),
     )
-    .fold(TokenStream::new, |mut acc, ts| {
-        acc.extend(ts);
-        acc
-    })
-    .parse_next(input)
+        .map(|(_, _, ts)| ts)
+        // )),
+        // )
+        // .fold(TokenStream::new, |mut acc, ts| {
+        //     acc.extend(ts);
+        //     acc
+        // })
+        .parse_next(input)
 }
 
 pub fn rust_identifier<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {

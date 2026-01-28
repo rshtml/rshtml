@@ -11,3 +11,20 @@
 @("Hello, world! <script>alert('hello')</script>")
 
 <p>@child_content()</p>
+
+@if self.x == 5 {
+    <p>x is 5</p>
+} else  if self.x == 7 {
+    <p>x is not 5</p>
+} else {
+    <p>x is not 5</p>
+}
+
+@for user in self.users {
+    <div>
+        <h2>user.name</h2>
+        <p>user.email</p>
+    </div>
+}
+
+<p>user.name</p>

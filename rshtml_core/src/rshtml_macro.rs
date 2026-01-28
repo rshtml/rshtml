@@ -1,6 +1,7 @@
 mod extensions;
 mod inner_text;
 mod rust_block;
+mod rust_stmt;
 mod simple_expr_paren;
 mod template;
 mod template_params;
