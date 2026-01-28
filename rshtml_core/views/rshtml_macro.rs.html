@@ -22,9 +22,22 @@
 
 @for user in self.users {
     <div>
-        <h2>user.name</h2>
-        <p>user.email</p>
+        <h2>@user.name</h2>
+        <p>@user.email</p>
     </div>
 }
 
-<p>user.name</p>
+<p>@user.name</p>
+
+@time("2023-1:30:00Z")
+@time("2023-11-20T10:30:00Z").pretty()
+@time("2023-11-20T10:30:00Z").pretty().format("%b %d, %Y")
+@time("2023-11-20T10:30:00Z").date()
+@time("2023-11-20T10:30:00Z").time()
+
+@inline_function()
+
+<script type="text/javascript">
+  let users = @json(&self.users);
+  @json_let("users_let", &self.users);
+</script>

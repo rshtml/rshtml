@@ -4,10 +4,10 @@ use syn::parse_str;
 use winnow::{
     ModalResult, Parser,
     ascii::{multispace0, multispace1},
-    combinator::{alt, cut_err, repeat},
+    combinator::{alt, repeat},
     error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
     stream::Stream,
-    token::{any, none_of},
+    token::none_of,
 };
 
 pub fn rust_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {

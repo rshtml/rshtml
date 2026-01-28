@@ -1,9 +1,9 @@
 use crate::rshtml_macro::{
     Input, extensions::ParserDiagnostic, inner_text::inner_text, rust_block::rust_block,
-    rust_stmt::rust_stmt, simple_expr_paren::simple_expr_paren, template_params::template_params,
-    text::text, use_directive::use_directive,
+    rust_stmt::rust_stmt, simple_expr::simple_expr, simple_expr_paren::simple_expr_paren,
+    template_params::template_params, text::text, use_directive::use_directive,
 };
-use proc_macro2::{Punct, Spacing, TokenStream};
+use proc_macro2::TokenStream;
 use quote::quote;
 use winnow::{
     ModalResult, Parser,
@@ -71,6 +71,7 @@ pub fn block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
             continue_directive.label("continue"),
             break_directive.label("break"),
             simple_expr_paren.label("parenthesized expression"),
+            simple_expr.label("expression"),
         )),
     )
         .map(|(_, _, ts)| ts)

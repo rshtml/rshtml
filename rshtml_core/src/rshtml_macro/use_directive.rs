@@ -7,8 +7,8 @@ use proc_macro2::TokenStream;
 use std::path::{Path, PathBuf};
 use winnow::{
     ModalResult, Parser,
-    ascii::multispace0,
-    combinator::{cut_err, opt},
+    ascii::{multispace0, multispace1},
+    combinator::{alt, cut_err, opt},
     error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
     stream::Stream,
 };
@@ -18,8 +18,11 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 
     let (name, path) = (
         "use",
-        multispace0,
-        cut_err(string_line).expected("path"),
+        alt((
+            (multispace1, cut_err(string_line).expected("path")),
+            (multispace0, string_line),
+        ))
+        .map(|(_, sl)| sl),
         multispace0,
         opt((
             "as",
@@ -28,7 +31,7 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         )),
         opt(';'),
     )
-        .map(|(_, _, path_str, _, name_opt, _)| {
+        .map(|(_, path_str, _, name_opt, _)| {
             let mut path_str = if path_str.starts_with('\'') {
                 path_str.trim_matches('\'')
             } else {

@@ -24,13 +24,13 @@ pub fn simple_expr_paren<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> 
         .fold(|| (), |_, _| ()),
         ')',
     )
-        .map(|(is_escaped_opt, _, _, _)| is_escaped_opt.is_some())
+        .map(|(is_not_escaped_opt, _, _, _)| is_not_escaped_opt.is_none())
         .parse_next(input)?;
 
     let consumed = start.len() - input.len();
     let raw_expr = &start[..consumed];
 
-    let start_offset = if is_escaped { 2 } else { 1 };
+    let start_offset = if is_escaped { 1 } else { 2 };
     let end_offset = raw_expr.len() - 1;
     let expr = &raw_expr[start_offset..end_offset];
 
