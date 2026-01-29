@@ -5,6 +5,7 @@ use crate::rshtml_macro::{
     read_template,
     template::{generate_fn_name, string_line},
     template_params::template_params,
+    use_directive,
 };
 use proc_macro2::TokenStream;
 use std::{
@@ -74,6 +75,15 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 
     let fn_name = generate_fn_name(&name);
 
+    if input
+        .state
+        .use_directives
+        .iter()
+        .any(|use_directive| use_directive.name == name)
+    {
+        return Ok(TokenStream::new());
+    }
+
     let (_, source) = read_template(&path).map_err(|e| {
         input.reset(&checkpoint);
         let error_msg = Box::leak(format!("Failed to read template: {}", e).into_boxed_str());
@@ -98,7 +108,7 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 
     let path = path.to_path_buf();
 
-    input.state.use_directives.push(UseDirective {
+    input.state.use_directives.insert(UseDirective {
         name,
         path,
         fn_name,

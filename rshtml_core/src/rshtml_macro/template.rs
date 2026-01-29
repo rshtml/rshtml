@@ -4,8 +4,9 @@ use crate::rshtml_macro::{
     simple_expr_paren::simple_expr_paren, template_params::template_params, text::text,
     use_directive::use_directive,
 };
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
+use syn::Ident;
 use winnow::{
     ModalResult, Parser,
     ascii::multispace0,
@@ -152,4 +153,11 @@ pub fn generate_fn_name(name: &str) -> String {
     }
 
     format!("{}_{:x}", name, hash)
+}
+
+pub fn param_names_to_ts(params: &[&str]) -> TokenStream {
+    let args = params
+        .iter()
+        .map(|param| Ident::new(&param, Span::call_site()));
+    quote! {#(#args),*}
 }

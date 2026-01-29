@@ -3,7 +3,7 @@ use crate::rshtml_macro::{
     extensions::ParserDiagnostic,
     simple_expr::simple_expr,
     simple_expr_paren::simple_expr_paren,
-    template::{inner_template_content, string_line, template_content},
+    template::{inner_template_content, param_names_to_ts, string_line, template_content},
 };
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, format_ident, quote};
@@ -74,13 +74,13 @@ pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let use_param_names = use_directive
         .params
         .iter()
-        .map(|(name, _)| name)
+        .map(|(name, _)| name.as_str())
         .collect::<Vec<_>>();
 
     let mut missing_len = 0;
     let missing_params = use_param_names
         .iter()
-        .filter(|param| !attribute_names.contains(param.as_str()))
+        .filter(|param| !attribute_names.contains(*param))
         .fold(String::new(), |mut acc, p| {
             missing_len += 1;
 
@@ -107,12 +107,8 @@ pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         )));
     }
 
-    let use_params_idents: Vec<_> = use_param_names
-        .iter()
-        .map(|name| format_ident!("{}", name))
-        .collect();
+    let args = param_names_to_ts(&use_param_names);
 
-    let args = quote! {#(#use_params_idents),*};
     ts.extend(quote! {self.#fn_name(__f__, child_content, #args)?;});
 
     Ok(quote! {{ #ts }})
