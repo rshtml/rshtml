@@ -6,8 +6,8 @@ use crate::rshtml_macro::{
     template::{inner_template_content, string_line, template_content},
 };
 use proc_macro2::{Span, TokenStream};
-use quote::{ToTokens, quote};
-use std::str::FromStr;
+use quote::{ToTokens, format_ident, quote};
+use std::{collections::HashSet, str::FromStr};
 use syn::{Ident, parse_str};
 use winnow::{
     ModalResult, Parser,
@@ -18,7 +18,6 @@ use winnow::{
     token::{any, take_while},
 };
 
-// TODO: take component names order from use directive from file
 pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
     let mut ts = TokenStream::new();
@@ -45,49 +44,94 @@ pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     )
         .parse_next(input)?;
 
-    let use_directive = input
+    let use_directive_opt = input
         .state
         .use_directives
         .iter()
-        .find(|(name, _, _)| name == tag_name);
+        .find(|use_directive| use_directive.name == tag_name);
 
-    let Some((_, _, fn_name)) = use_directive else {
+    let Some(use_directive) = use_directive_opt else {
         input.reset(&checkpoint);
+        let error_msg = Box::leak(
+            format!(
+                "attempt to use a missing component: component `{tag_name}` is used but not found"
+            )
+            .into_boxed_str(),
+        );
 
         return Err(ErrMode::Cut(ContextError::new().add_context(
             input,
             &checkpoint,
-            StrContext::Expected(StrContextValue::Description(
-                "attempted to use an undeclared component",
-            )),
+            StrContext::Expected(StrContextValue::Description(error_msg)),
         )));
     };
 
-    let fn_name = Ident::new(fn_name, Span::call_site());
+    let fn_name = Ident::new(&use_directive.fn_name, Span::call_site());
 
     ts.extend(attributes);
     ts.extend(quote! {let child_content = |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body  Ok(())};});
 
-    let args = quote! {#(#attribute_names),*};
+    let use_param_names = use_directive
+        .params
+        .iter()
+        .map(|(name, _)| name)
+        .collect::<Vec<_>>();
+
+    let mut missing_len = 0;
+    let missing_params = use_param_names
+        .iter()
+        .filter(|param| !attribute_names.contains(param.as_str()))
+        .fold(String::new(), |mut acc, p| {
+            missing_len += 1;
+
+            if !acc.is_empty() {
+                acc.push_str(", ");
+            }
+            acc.push('`');
+            acc.push_str(p);
+            acc.push('`');
+            acc
+        });
+
+    if !missing_params.is_empty() {
+        input.reset(&checkpoint);
+
+        let s = if missing_len > 1 { "s" } else { "" };
+        let error_msg =
+            Box::leak(format!("missing component parameter{s} {missing_params}").into_boxed_str());
+
+        return Err(ErrMode::Cut(ContextError::new().add_context(
+            input,
+            &checkpoint,
+            StrContext::Expected(StrContextValue::Description(error_msg)),
+        )));
+    }
+
+    let use_params_idents: Vec<_> = use_param_names
+        .iter()
+        .map(|name| format_ident!("{}", name))
+        .collect();
+
+    let args = quote! {#(#use_params_idents),*};
     ts.extend(quote! {self.#fn_name(__f__, child_content, #args)?;});
 
     Ok(quote! {{ #ts }})
 }
 
-fn attributes<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, Vec<Ident>)> {
+fn attributes<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, HashSet<&'a str>)> {
     repeat(0.., (multispace1, attribute))
         .fold(
-            || (TokenStream::new(), Vec::new()),
+            || (TokenStream::new(), HashSet::new()),
             |mut acc, (_, (attr, name))| {
                 acc.0.extend(attr);
-                acc.1.push(name);
+                acc.1.insert(name);
                 acc
             },
         )
         .parse_next(input)
 }
 
-fn attribute<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, Ident)> {
+fn attribute<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, &'a str)> {
     let checkpoint = input.checkpoint();
 
     let (name, value) = (
@@ -108,7 +152,7 @@ fn attribute<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, Ident)> {
 
     let value = value.unwrap_or(true.to_token_stream());
 
-    Ok((quote! {let #name_ts = #value;}, name_ts))
+    Ok((quote! {let #name_ts = #value;}, name))
 }
 
 fn attribute_name<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {

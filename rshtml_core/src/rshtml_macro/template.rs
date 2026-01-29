@@ -15,7 +15,8 @@ use winnow::{
 
 pub fn template<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     (
-        opt("\u{FEFF}").void(),
+        opt("\u{FEFF}"),
+        multispace0,
         opt((
             peek(('@', multispace0, '(')),
             template_params.label("template parameters"),
@@ -24,7 +25,7 @@ pub fn template<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         template_content,
         eof.expected("end of file"),
     )
-        .map(|(_, _, content, _)| content)
+        .map(|(_, _, _, content, _)| content)
         .parse_next(input)
 }
 

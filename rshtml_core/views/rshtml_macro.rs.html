@@ -1,6 +1,6 @@
 @ ( title: impl View, x: i32 )
 
-@use "user.rs.html" as User;
+@use "views/SideBar.rs.html" as SideBar;
 
 <div>
     <h1>hello</h1>
@@ -49,13 +49,13 @@
 
 @self.user
 
-<User/>
+<SideBar content="this is content" count=5 />
 
-<User x="y" y = 5 is_ok>
+<SideBar x="y" y = 5 is_ok content="this is content" count=5 >
     <div>
         <h2>@self.user.name</h2>
         <p>@(self.user.email)</p>
     </div>
-</User>
+</SideBar>
 
-<User user={<p>@self.user</p>} count=5 hi="hello" is_ok=true />
+<SideBar user={<p>@self.user</p>} count=5 hi="hello" is_ok=true content="this is content" />

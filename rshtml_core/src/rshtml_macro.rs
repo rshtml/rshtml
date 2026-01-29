@@ -10,9 +10,14 @@ mod template_params;
 mod text;
 mod use_directive;
 
+use crate::diagnostic::Diagnostic;
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
-use std::{collections::HashMap, env, fs, path::PathBuf};
+use std::{
+    collections::HashMap,
+    env, fs,
+    path::{Path, PathBuf},
+};
 use syn::{LitStr, spanned::Spanned};
 use template::template;
 use winnow::{
@@ -20,7 +25,7 @@ use winnow::{
     error::{StrContext, StrContextValue},
 };
 
-use crate::diagnostic::Diagnostic;
+// TODO: Consider whether the import paths in the `use` statement should start from the location of the file.
 
 pub type Input<'a> = Stateful<&'a str, &'a mut Context>;
 
@@ -28,34 +33,26 @@ pub type Input<'a> = Stateful<&'a str, &'a mut Context>;
 pub struct Context {
     text_size: usize,
     template_params: Vec<(String, String)>,
-    use_directives: Vec<(String, PathBuf, String)>,
+    use_directives: Vec<UseDirective>,
     diagnostic: Diagnostic,
+}
+
+#[derive(Debug, Default)]
+pub struct UseDirective {
+    name: String,
+    path: PathBuf,
+    fn_name: String,
+    params: Vec<(String, String)>,
+    source: String,
 }
 
 pub fn compile(path: LitStr) -> (TokenStream, Context) {
     let path = path.value();
     let span = path.span();
 
-    let base_dir = match env::var("CARGO_MANIFEST_DIR")
-        .map(PathBuf::from)
-        .or_else(|_| env::current_dir())
-    {
-        Ok(base_dir) => base_dir,
-        Err(e) => {
-            let msg = format!("Failed to get current directory: {}", e);
-            return (
-                quote_spanned! { span =>  compile_error!(#msg); },
-                Context::default(),
-            );
-        }
-    };
-
-    let full_path = base_dir.join(path);
-
-    let input = match fs::read_to_string(&full_path) {
-        Ok(content) => content,
-        Err(e) => {
-            let msg = format!("Failed to read '{}': {}", full_path.display(), e);
+    let (full_path, input) = match read_template(&Path::new(&path)) {
+        Ok((full_path, input)) => (full_path, input),
+        Err(msg) => {
             return (
                 quote_spanned! { span => compile_error!(#msg); },
                 Context::default(),
@@ -159,13 +156,29 @@ fn show_error(source: &str, byte_offset: usize, msg: &str) -> String {
     format!("{msg}\n --> line {line}, col {col}\n{line_text}\n{caret}")
 }
 
+pub fn read_template(path: &Path) -> Result<(PathBuf, String), String> {
+    let base_dir = match env::var("CARGO_MANIFEST_DIR")
+        .map(PathBuf::from)
+        .or_else(|_| env::current_dir())
+    {
+        Ok(base_dir) => base_dir,
+        Err(e) => return Err(format!("Failed to get current directory: {}", e)),
+    };
+
+    let full_path = base_dir.join(path);
+
+    let input = match fs::read_to_string(&full_path) {
+        Ok(content) => content,
+        Err(e) => return Err(format!("Failed to read '{}': {}", full_path.display(), e)),
+    };
+
+    Ok((full_path, input))
+}
+
 #[test]
 fn test_rshtml_macro() {
     let path = LitStr::new("views/rshtml_macro.rs.html", Span::call_site());
     let result = compile(path);
 
-    println!(
-        "{0}, {1:?} {2:?}",
-        result.0, result.1.template_params, result.1.use_directives
-    );
+    println!("{0}", result.0);
 }

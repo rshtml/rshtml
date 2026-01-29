@@ -1,11 +1,16 @@
 use crate::rshtml_macro::{
-    Input,
+    Context, Input, UseDirective,
     component::component_tag_identifier,
     extensions::ParserDiagnostic,
+    read_template,
     template::{generate_fn_name, string_line},
+    template_params::template_params,
 };
 use proc_macro2::TokenStream;
-use std::path::{Path, PathBuf};
+use std::{
+    mem,
+    path::{Path, PathBuf},
+};
 use winnow::{
     ModalResult, Parser,
     ascii::{multispace0, multispace1},
@@ -44,13 +49,13 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
                 path_str.push_str(".rs.html");
             }
 
-            let path = Path::new(&path_str);
+            let path = PathBuf::from(path_str);
 
             let name = name_opt
                 .map(|(_, _, name)| name.to_string())
                 .or(extract_component_name(&path));
 
-            (name, PathBuf::from(path))
+            (name, path)
         })
         .parse_next(input)?;
 
@@ -69,7 +74,37 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 
     let fn_name = generate_fn_name(&name);
 
-    input.state.use_directives.push((name, path, fn_name));
+    let (_, source) = read_template(&path).map_err(|e| {
+        input.reset(&checkpoint);
+        let error_msg = Box::leak(format!("Failed to read template: {}", e).into_boxed_str());
+
+        ErrMode::Cut(ContextError::new().add_context(
+            input,
+            &checkpoint,
+            StrContext::Expected(StrContextValue::Description(error_msg)),
+        ))
+    })?;
+
+    let params = {
+        let mut input = Input {
+            input: &source,
+            state: &mut Context::default(),
+        };
+
+        let _ = (opt("\u{FEFF}"), multispace0, template_params).parse_next(&mut input);
+
+        mem::take(&mut input.state.template_params)
+    };
+
+    let path = path.to_path_buf();
+
+    input.state.use_directives.push(UseDirective {
+        name,
+        path,
+        fn_name,
+        params,
+        source,
+    });
 
     Ok(TokenStream::new())
 }
