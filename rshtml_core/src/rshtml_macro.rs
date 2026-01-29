@@ -1,3 +1,4 @@
+mod component;
 mod extensions;
 mod inner_text;
 mod rust_block;
@@ -27,7 +28,7 @@ pub type Input<'a> = Stateful<&'a str, &'a mut Context>;
 pub struct Context {
     text_size: usize,
     template_params: Vec<(String, String)>,
-    use_directives: Vec<(String, PathBuf)>,
+    use_directives: Vec<(String, PathBuf, String)>,
     diagnostic: Diagnostic,
 }
 

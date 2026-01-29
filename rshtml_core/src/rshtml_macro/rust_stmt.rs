@@ -1,11 +1,11 @@
-use crate::rshtml_macro::{Input, template::inner_template_content};
+use crate::rshtml_macro::{Input, extensions::ParserDiagnostic, template::inner_template_content};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse_str;
 use winnow::{
     ModalResult, Parser,
     ascii::{multispace0, multispace1},
-    combinator::{alt, opt, repeat},
+    combinator::{alt, cut_err, opt, peek, repeat},
     error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
     stream::Stream,
     token::none_of,
@@ -23,13 +23,15 @@ pub fn rust_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
                     acc
                 },
             ),
-            opt(
-                (multispace0, "else", multispace0, inner_template_content).map(
-                    |(_, _, _, inner_template_content)| {
-                        quote! {else #inner_template_content}
-                    },
-                ),
-            ),
+            opt((
+                multispace0,
+                "else",
+                multispace0,
+                must_inner_template_content,
+            )
+                .map(|(_, _, _, content)| {
+                    quote! {else #content}
+                })),
         )
             .map(|(if_, if_else_chain_, else_opt)| {
                 let mut ts = TokenStream::new();
@@ -47,7 +49,7 @@ pub fn rust_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 fn if_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
 
-    let (head, body) = (multispace0, "if", stmt_head, inner_template_content)
+    let (head, body) = (multispace0, "if", stmt_head, must_inner_template_content)
         .map(|(_, if_, head, content)| (format!("{if_} {head}"), content))
         .parse_next(input)?;
 
@@ -73,7 +75,7 @@ fn if_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 fn for_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
 
-    let (head, body) = (multispace0, "for", stmt_head, inner_template_content)
+    let (head, body) = (multispace0, "for", stmt_head, must_inner_template_content)
         .map(|(_, for_, head, content)| (format!("{for_} {head}"), content))
         .parse_next(input)?;
 
@@ -111,4 +113,10 @@ fn stmt_head<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
     let head_str = &start[..len];
 
     Ok(head_str)
+}
+
+fn must_inner_template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+    (cut_err(peek('{')).expected("{"), inner_template_content)
+        .map(|(_, content)| content)
+        .parse_next(input)
 }

@@ -1,7 +1,8 @@
 use crate::rshtml_macro::{
-    Input, extensions::ParserDiagnostic, inner_text::inner_text, rust_block::rust_block,
-    rust_stmt::rust_stmt, simple_expr::simple_expr, simple_expr_paren::simple_expr_paren,
-    template_params::template_params, text::text, use_directive::use_directive,
+    Input, component::component, extensions::ParserDiagnostic, inner_text::inner_text,
+    rust_block::rust_block, rust_stmt::rust_stmt, simple_expr::simple_expr,
+    simple_expr_paren::simple_expr_paren, template_params::template_params, text::text,
+    use_directive::use_directive,
 };
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -9,7 +10,7 @@ use winnow::{
     ModalResult, Parser,
     ascii::multispace0,
     combinator::{alt, cut_err, eof, not, opt, peek, repeat},
-    token::{any, none_of, take_while},
+    token::{any, none_of, one_of, take_while},
 };
 
 pub fn template<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
@@ -38,7 +39,7 @@ pub fn template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 
 pub fn inner_template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     (
-        cut_err('{').expected("{"),
+        '{',
         repeat(0.., alt((inner_text.label("html text"), block))).fold(
             TokenStream::new,
             |mut acc, ts| {
@@ -56,51 +57,37 @@ pub fn inner_template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStr
 }
 
 pub fn block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
-    // repeat(
-    // 0..,
-    // alt((
-    // text.label("html text"),
-    (
-        '@',
-        multispace0,
-        alt((
-            use_directive.label("use directive"),
-            rust_block.label("code block"),
-            rust_stmt.label("statement"),
-            child_content_directive.label("child content"),
-            continue_directive.label("continue"),
-            break_directive.label("break"),
-            simple_expr_paren.label("parenthesized expression"),
-            simple_expr.label("expression"),
-        )),
-    )
-        .map(|(_, _, ts)| ts)
-        // )),
-        // )
-        // .fold(TokenStream::new, |mut acc, ts| {
-        //     acc.extend(ts);
-        //     acc
-        // })
-        .parse_next(input)
+    alt((
+        component.label("component"),
+        (
+            '@',
+            multispace0,
+            alt((
+                use_directive.label("use directive"),
+                rust_block.label("code block"),
+                rust_stmt.label("statement"),
+                child_content_directive.label("child content"),
+                continue_directive.label("continue"),
+                break_directive.label("break"),
+                simple_expr_paren.label("parenthesized expression"),
+                simple_expr.label("expression"),
+            )),
+        )
+            .map(|(_, _, ts)| ts),
+    ))
+    .parse_next(input)
 }
 
 pub fn rust_identifier<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
-    take_while(1.., |c: char| c.is_alphanumeric() || c == '_')
-        .verify(|s: &str| syn::parse_str::<syn::Ident>(s).is_ok())
-        .parse_next(input)
-}
-
-pub fn component_tag_identifier<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
     let start = input.input;
 
     (
-        any.verify(|c: &char| c.is_ascii_uppercase()),
-        take_while(0.., |c: char| c.is_ascii_alphanumeric()),
+        one_of(|c: char| c.is_alphabetic() || c == '_'),
+        take_while(0.., |c: char| c.is_alphanumeric() || c == '_'),
     )
         .parse_next(input)?;
 
-    let consumed = start.len() - input.len();
-
+    let consumed = start.len() - input.input.len();
     Ok(&start[..consumed])
 }
 
@@ -155,4 +142,13 @@ pub fn escape_or_raw(expr_ts: TokenStream, is_escaped: bool, message: &str) -> T
     } else {
         quote! { ::rshtml::Expr(&(#expr_ts)).render(__f__, #message)?; }
     }
+}
+
+pub fn generate_fn_name(name: &str) -> String {
+    let mut hash: u64 = 5381;
+    for c in name.bytes() {
+        hash = ((hash << 5).wrapping_add(hash)).wrapping_add(c as u64);
+    }
+
+    format!("{}_{:x}", name, hash)
 }

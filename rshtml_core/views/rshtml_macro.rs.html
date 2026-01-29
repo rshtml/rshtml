@@ -46,3 +46,16 @@
 @fordfs
 @elseif
 @elsef
+
+@self.user
+
+<User/>
+
+<User x="y" y = 5 is_ok>
+    <div>
+        <h2>@self.user.name</h2>
+        <p>@(self.user.email)</p>
+    </div>
+</User>
+
+<User user={<p>@self.user</p>} count=5 hi="hello" is_ok=true />

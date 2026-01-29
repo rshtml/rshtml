@@ -1,7 +1,8 @@
 use crate::rshtml_macro::{
     Input,
+    component::component_tag_identifier,
     extensions::ParserDiagnostic,
-    template::{component_tag_identifier, string_line},
+    template::{generate_fn_name, string_line},
 };
 use proc_macro2::TokenStream;
 use std::path::{Path, PathBuf};
@@ -66,7 +67,9 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         }
     };
 
-    input.state.use_directives.push((name, path));
+    let fn_name = generate_fn_name(&name);
+
+    input.state.use_directives.push((name, path, fn_name));
 
     Ok(TokenStream::new())
 }
