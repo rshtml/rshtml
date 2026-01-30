@@ -1,4 +1,4 @@
-use crate::rshtml_macro::{
+use crate::view_macro::{
     Input,
     extensions::ParserDiagnostic,
     simple_expr::simple_expr,
@@ -6,12 +6,12 @@ use crate::rshtml_macro::{
     template::{inner_template_content, param_names_to_ts, string_line, template_content},
 };
 use proc_macro2::{Span, TokenStream};
-use quote::{ToTokens, format_ident, quote};
-use std::{collections::HashSet, str::FromStr};
+use quote::{ToTokens, quote};
+use std::str::FromStr;
 use syn::{Ident, parse_str};
 use winnow::{
     ModalResult, Parser,
-    ascii::{alpha1, alphanumeric1, multispace0, multispace1},
+    ascii::{alpha1, alphanumeric1, float, multispace0, multispace1},
     combinator::{alt, cut_err, opt, repeat},
     error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
     prelude::*,
@@ -22,7 +22,7 @@ pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
     let mut ts = TokenStream::new();
 
-    let (_, _, tag_name, (attributes, attribute_names), _, body) = (
+    let (_, _, tag_name, (attributes, mut attribute_names), _, body) = (
         "<",
         multispace0,
         component_tag_identifier,
@@ -71,56 +71,56 @@ pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     ts.extend(attributes);
     ts.extend(quote! {let child_content = |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body  Ok(())};});
 
-    let use_param_names = use_directive
-        .params
-        .iter()
-        .map(|(name, _)| name.as_str())
-        .collect::<Vec<_>>();
+    // let mut use_param_names = use_directive
+    //     .params
+    //     .iter()
+    //     .map(|(name, _)| name.as_str())
+    //     .collect::<Vec<_>>();
 
-    let mut missing_len = 0;
-    let missing_params = use_param_names
-        .iter()
-        .filter(|param| !attribute_names.contains(*param))
-        .fold(String::new(), |mut acc, p| {
-            missing_len += 1;
+    // let mut missing_len = 0;
+    // let missing_params = use_param_names
+    //     .iter()
+    //     .filter(|param| !attribute_names.contains(*param))
+    //     .fold(String::new(), |mut acc, p| {
+    //         missing_len += 1;
 
-            if !acc.is_empty() {
-                acc.push_str(", ");
-            }
-            acc.push('`');
-            acc.push_str(p);
-            acc.push('`');
-            acc
-        });
+    //         if !acc.is_empty() {
+    //             acc.push_str(", ");
+    //         }
+    //         acc.push('`');
+    //         acc.push_str(p);
+    //         acc.push('`');
+    //         acc
+    //     });
 
-    if !missing_params.is_empty() {
-        input.reset(&checkpoint);
+    // if !missing_params.is_empty() {
+    //     input.reset(&checkpoint);
 
-        let s = if missing_len > 1 { "s" } else { "" };
-        let error_msg =
-            Box::leak(format!("missing component parameter{s} {missing_params}").into_boxed_str());
+    //     let s = if missing_len > 1 { "s" } else { "" };
+    //     let error_msg =
+    //         Box::leak(format!("missing component parameter{s} {missing_params}").into_boxed_str());
 
-        return Err(ErrMode::Cut(ContextError::new().add_context(
-            input,
-            &checkpoint,
-            StrContext::Expected(StrContextValue::Description(error_msg)),
-        )));
-    }
+    //     return Err(ErrMode::Cut(ContextError::new().add_context(
+    //         input,
+    //         &checkpoint,
+    //         StrContext::Expected(StrContextValue::Description(error_msg)),
+    //     )));
+    // }
 
-    let args = param_names_to_ts(&use_param_names);
+    let args = param_names_to_ts(&mut attribute_names);
 
     ts.extend(quote! {self.#fn_name(__f__, child_content, #args)?;});
 
     Ok(quote! {{ #ts }})
 }
 
-fn attributes<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, HashSet<&'a str>)> {
+fn attributes<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, Vec<&'a str>)> {
     repeat(0.., (multispace1, attribute))
         .fold(
-            || (TokenStream::new(), HashSet::new()),
+            || (TokenStream::new(), Vec::new()),
             |mut acc, (_, (attr, name))| {
                 acc.0.extend(attr);
-                acc.1.insert(name);
+                acc.1.push(name.trim());
                 acc
             },
         )
@@ -169,7 +169,7 @@ fn attribute_value<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 
     let value_result = alt((
         alt(("true", "false")).map(|value| TokenStream::from_str(value)),
-        winnow::ascii::float.map(|value: f64| Ok(value.to_token_stream())),
+        float.map(|value: f64| Ok(value.to_token_stream())),
         string_line.map(|value| TokenStream::from_str(value)),
         ("@", alt((simple_expr_paren, simple_expr))).map(|(_, value)| Ok(value)),
         inner_template_content.map(|value| Ok(quote!{ ::rshtml::Expr(|__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#value Ok(())}) })),

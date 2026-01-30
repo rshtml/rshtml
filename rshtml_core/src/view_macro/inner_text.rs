@@ -1,4 +1,4 @@
-use crate::rshtml_macro::{Input, component::component_tag_identifier};
+use crate::view_macro::{Input, component::component_tag_identifier};
 use proc_macro2::TokenStream;
 use quote::quote;
 use winnow::{

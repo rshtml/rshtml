@@ -1,4 +1,4 @@
-use crate::rshtml_macro::{Input, template::escape_or_raw};
+use crate::view_macro::{Input, template::escape_or_raw};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Expr, parse_str};

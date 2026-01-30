@@ -1,4 +1,4 @@
-use crate::rshtml_macro::{
+use crate::view_macro::{
     Input,
     template::{escape_or_raw, rust_identifier, string_line},
 };

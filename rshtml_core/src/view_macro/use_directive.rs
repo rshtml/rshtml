@@ -1,17 +1,11 @@
-use crate::rshtml_macro::{
-    Context, Input, UseDirective,
+use crate::view_macro::{
+    Input, UseDirective,
     component::component_tag_identifier,
     extensions::ParserDiagnostic,
-    read_template,
-    template::{generate_fn_name, string_line},
-    template_params::template_params,
-    use_directive,
+    template::{extract_component_name, generate_fn_name, string_line},
 };
 use proc_macro2::TokenStream;
-use std::{
-    mem,
-    path::{Path, PathBuf},
-};
+use std::path::PathBuf;
 use winnow::{
     ModalResult, Parser,
     ascii::{multispace0, multispace1},
@@ -73,38 +67,53 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         }
     };
 
-    let fn_name = generate_fn_name(&name);
+    let fn_name = generate_fn_name(&path);
 
-    if input
-        .state
-        .use_directives
-        .iter()
-        .any(|use_directive| use_directive.name == name)
-    {
-        return Ok(TokenStream::new());
-    }
+    // if input
+    //     .state
+    //     .use_directives
+    //     .iter()
+    //     .any(|use_directive| use_directive.name == name)
+    // {
+    //     return Ok(TokenStream::new());
+    // }
 
-    let (_, source) = read_template(&path).map_err(|e| {
-        input.reset(&checkpoint);
-        let error_msg = Box::leak(format!("Failed to read template: {}", e).into_boxed_str());
+    // let (source, newly) = if let Some(source) = input.state.sources.iter().find(|s| s.path == path)
+    // {
+    //     (source, false)
+    // } else {
+    //     let (_, source) = read_template(&path).map_err(|e| {
+    //         input.reset(&checkpoint);
+    //         let error_msg = Box::leak(format!("Failed to read template: {}", e).into_boxed_str());
 
-        ErrMode::Cut(ContextError::new().add_context(
-            input,
-            &checkpoint,
-            StrContext::Expected(StrContextValue::Description(error_msg)),
-        ))
-    })?;
+    //         ErrMode::Cut(ContextError::new().add_context(
+    //             input,
+    //             &checkpoint,
+    //             StrContext::Expected(StrContextValue::Description(error_msg)),
+    //         ))
+    //     })?;
 
-    let params = {
-        let mut input = Input {
-            input: &source,
-            state: &mut Context::default(),
-        };
+    //     let source = Source {
+    //         path: path,
+    //         content: source,
+    //     };
 
-        let _ = (opt("\u{FEFF}"), multispace0, template_params).parse_next(&mut input);
+    //     input.state.sources.insert(source);
 
-        mem::take(&mut input.state.template_params)
-    };
+    //     (&source, true)
+    // };
+
+    // let params = {
+    //     let mut sources = HashSet::new();
+    //     let mut input = Input {
+    //         input: &source.content,
+    //         state: &mut Context::new(&mut sources),
+    //     };
+
+    //     let _ = (opt("\u{FEFF}"), multispace0, template_params).parse_next(&mut input);
+
+    //     mem::take(&mut input.state.template_params)
+    // };
 
     let path = path.to_path_buf();
 
@@ -112,15 +121,7 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         name,
         path,
         fn_name,
-        params,
-        source,
     });
 
     Ok(TokenStream::new())
-}
-
-fn extract_component_name(path: &Path) -> Option<String> {
-    let filename = path.file_name().and_then(|n| n.to_str())?;
-    let component_name = filename.strip_suffix(".rs.html").unwrap_or(filename);
-    Some(component_name.to_owned())
 }

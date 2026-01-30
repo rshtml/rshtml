@@ -1,4 +1,4 @@
-use crate::rshtml_macro::{Input, extensions::ParserDiagnostic, template::inner_template_content};
+use crate::view_macro::{Input, extensions::ParserDiagnostic, template::inner_template_content};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse_str;

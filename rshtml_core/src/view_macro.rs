@@ -12,17 +12,17 @@ mod use_directive;
 
 use crate::{
     diagnostic::Diagnostic,
-    rshtml_macro::template::{generate_fn_name, param_names_to_ts},
+    view_macro::template::{generate_fn_name, params_to_ts},
 };
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashSet, VecDeque},
     env, fs,
-    hash::{Hash, Hasher},
+    hash::Hash,
     path::{Path, PathBuf},
 };
-use syn::{Ident, LitStr, spanned::Spanned};
+use syn::{Ident, LitStr};
 use template::template;
 use winnow::{
     Stateful,
@@ -33,7 +33,7 @@ use winnow::{
 
 pub type Input<'a> = Stateful<&'a str, &'a mut Context>;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct Context {
     text_size: usize,
     fn_name: String,
@@ -42,81 +42,72 @@ pub struct Context {
     diagnostic: Diagnostic,
 }
 
-impl Context {
-    pub fn new(use_directives: HashSet<UseDirective>) -> Self {
-        Self {
-            use_directives,
-            ..Default::default()
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Hash, Eq, PartialEq)]
 pub struct UseDirective {
     name: String,
     path: PathBuf,
     fn_name: String,
-    params: Vec<(String, String)>,
-    source: String,
 }
-
-impl Hash for UseDirective {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.path.hash(state);
-    }
-}
-
-impl PartialEq for UseDirective {
-    fn eq(&self, other: &Self) -> bool {
-        self.path == other.path
-    }
-}
-
-impl Eq for UseDirective {}
 
 pub fn expand(path: LitStr) -> TokenStream {
     let span = path.span();
-    let path = path.value();
+    let path = PathBuf::from(path.value());
 
-    let (ts, ctx) = compile(&path, span, Context::default());
-    let mut use_directives = ctx.use_directives;
+    let (mut tokenstream, ctx) = compile(&path, span);
 
-    let root_fn_name = Ident::new(&ctx.fn_name, Span::call_site());
-    let root_fn_ts = quote! {self.#root_fn_name(__f__, |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {Ok(())})?;};
+    // let root_fn_name = Ident::new(&ctx.fn_name, Span::call_site());
+    // let root_fn_ts = quote! {self.#root_fn_name(__f__, |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {Ok(())})?;};
     // Ok(quote! {#root_fn_ts})
 
-    let mut inner_use_directives = HashSet::new();
+    // TODO: prevent circular dependencies, if it calls itself also
+    let mut stack: Vec<PathBuf> = vec![path.to_owned()];
+    let mut visited_paths: HashSet<PathBuf> = ctx
+        .use_directives
+        .iter()
+        .map(|ud| ud.path.to_owned())
+        .collect::<HashSet<PathBuf>>();
 
-    // TODO: progress logic
-    for use_directive in use_directives {
-        let (ts, inner_ctx) = compile(
-            use_directive.path.to_string_lossy().as_ref(),
-            span,
-            Context::new(use_directives.to_owned()),
-        );
+    let mut queue: VecDeque<PathBuf> = visited_paths.iter().cloned().collect();
 
-        inner_use_directives.extend(inner_ctx.use_directives);
+    visited_paths.insert(path);
+
+    while let Some(p) = queue.pop_front() {
+        let (ts, inner_ctx) = compile(&p, span);
+
+        tokenstream.extend(ts);
+
+        for ud in inner_ctx
+            .use_directives
+            .iter()
+            .map(|ud| ud.path.to_owned())
+            .collect::<HashSet<PathBuf>>()
+        {
+            if visited_paths.insert(ud.to_owned()) {
+                queue.push_back(ud);
+            }
+        }
     }
 
-    todo!()
+    tokenstream
 }
 
-pub fn compile(path: &str, span: Span, mut ctx: Context) -> (TokenStream, Context) {
-    let (full_path, input) = match read_template(&Path::new(&path)) {
+pub fn compile(path: &Path, span: Span) -> (TokenStream, Context) {
+    let mut ctx = Context::default();
+
+    let (full_path, input) = match read_template(path) {
         Ok((full_path, input)) => (full_path, input),
         Err(msg) => {
-            return (
-                quote_spanned! { span => compile_error!(#msg); },
-                Context::default(),
-            );
+            return (quote_spanned! { span => compile_error!(#msg); }, ctx);
         }
     };
 
-    let source = &input;
+    let source = input.as_str();
 
-    ctx.diagnostic = Diagnostic::new(HashMap::from([(full_path.clone(), source.to_string())])); // TODO: remove clones and change the logic
+    // ctx.diagnostic = Diagnostic::new(HashMap::from([(full_path.clone(), source.to_string())])); // TODO: remove clones and change the logic
 
     let body = {
+        ctx.fn_name = generate_fn_name(path);
+
         let mut input = Input {
             input: input.as_str(),
             state: &mut ctx,
@@ -158,20 +149,18 @@ pub fn compile(path: &str, span: Span, mut ctx: Context) -> (TokenStream, Contex
 
     let full_path_str = full_path.to_string_lossy();
 
-    let fn_name = generate_fn_name(&path);
-    ctx.fn_name = fn_name.to_owned();
-
-    let params_names: Vec<&str> = ctx
+    let mut params: Vec<(&str, &str)> = ctx
         .template_params
         .iter()
-        .map(|(name, _)| name.as_str())
+        .map(|(a, b)| (a.as_str(), b.as_str()))
         .collect();
 
-    let args = param_names_to_ts(&params_names);
+    let args = params_to_ts(&mut params);
+    let fn_name = Ident::new(&ctx.fn_name, Span::call_site());
 
     (
         quote! {
-        let _ = include_str!(#full_path_str);
+        // let _ = include_str!(#full_path_str);
         fn #fn_name(&self,
                 __f__: &mut dyn ::std::fmt::Write,
                 child_content: impl Fn(&mut dyn ::std::fmt::Write) -> ::std::fmt::Result,
@@ -241,10 +230,7 @@ pub fn read_template(path: &Path) -> Result<(PathBuf, String), String> {
 
 #[test]
 fn test_rshtml_macro() {
-    let result = compile(
-        "views/rshtml_macro.rs.html",
-        Span::call_site(),
-        Context::default(),
-    );
-    println!("{0}", result.0);
+    let litstr = LitStr::new("views/rshtml_macro.rs.html", Span::call_site());
+    let result = expand(litstr);
+    println!("{0}", result);
 }

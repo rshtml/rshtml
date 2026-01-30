@@ -8,12 +8,12 @@ mod error;
 mod node;
 mod parser;
 mod position;
-pub mod rshtml_macro;
 pub mod str_extensions;
 mod temporary_file;
 #[cfg(test)]
 mod tests;
 pub mod v_macro;
+pub mod view_macro;
 
 use crate::parser::RsHtmlParser;
 use crate::{config::Config, diagnostic::Diagnostic};

@@ -1,11 +1,11 @@
-use crate::rshtml_macro::{Input, extensions::ParserDiagnostic, template::rust_identifier};
+use crate::view_macro::{Input, extensions::ParserDiagnostic, template::rust_identifier};
 use winnow::{
     ModalResult, Parser,
     ascii::multispace0,
     combinator::{alt, cut_err, opt, peek, repeat, separated},
     token::any,
 };
-
+// TODO: validate param name as ident and param type as type syn parse
 pub fn template_params<'a>(input: &mut Input<'a>) -> ModalResult<()> {
     let parsed_params: Vec<(String, String)> = ("@", multispace0, params, opt((multispace0, ';')))
         .map(|(_, _, params, _)| {
