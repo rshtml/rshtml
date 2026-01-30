@@ -61,7 +61,7 @@ pub fn process_template(
         #[allow(unused_imports)]
         use ::std::fmt::{Write, Display};
         #[allow(unused_imports)]
-        use ::rshtml::traits::Render;
+        use ::rshtml::traits::View;
         #[allow(unused_imports)]
         use ::rshtml::Block;
     };
@@ -76,18 +76,16 @@ pub fn process_template(
                 #components
             }
 
-            impl #impl_generics ::rshtml::traits::RsHtml for #struct_name #type_generics #where_clause {
-                fn fmt(&self, __f__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
+            impl #impl_generics ::rshtml::traits::View for #struct_name #type_generics #where_clause {
+                fn render(&self, __out__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
 
                     #compiled_ast_tokens
 
                     Ok(())
                 }
 
-                fn render(&self) -> Result<String, ::std::fmt::Error> {
-                    let mut buf = String::with_capacity(#text_size);
-                    self.fmt(&mut buf)?;
-                    Ok(buf)
+                fn text_size(&self) -> usize {
+                    0
                 }
             }
         };

@@ -22,13 +22,14 @@ use std::{
     hash::Hash,
     path::{Path, PathBuf},
 };
-use syn::{Ident, LitStr};
+use syn::{Generics, Ident, LitStr};
 use template::template;
 use winnow::{
     Stateful,
     error::{StrContext, StrContextValue},
 };
 
+// TODO: process here all analyzer controls
 // TODO: Consider whether the import paths in the `use` statement should start from the location of the file.
 
 pub type Input<'a> = Stateful<&'a str, &'a mut Context>;
@@ -49,15 +50,25 @@ pub struct UseDirective {
     fn_name: String,
 }
 
-pub fn expand(path: LitStr) -> TokenStream {
+pub fn expand(
+    path: LitStr,
+    template_name: &str,
+    struct_name: &Ident,
+    struct_generics: &Generics,
+    struct_fields: Vec<String>,
+) -> Result<TokenStream, TokenStream> {
     let span = path.span();
     let path = PathBuf::from(path.value());
 
-    let (mut tokenstream, ctx) = compile(&path, span);
+    let (mut fn_signs, mut fn_bodies) = (TokenStream::new(), TokenStream::new());
 
-    // let root_fn_name = Ident::new(&ctx.fn_name, Span::call_site());
-    // let root_fn_ts = quote! {self.#root_fn_name(__f__, |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {Ok(())})?;};
-    // Ok(quote! {#root_fn_ts})
+    let (fn_sign, fn_body, ctx) = compile(&path, span)?;
+
+    fn_signs.extend(fn_sign);
+    fn_bodies.extend(fn_body);
+
+    let root_fn_name = Ident::new(&ctx.fn_name, Span::call_site());
+    let root_fn_call = quote! {self.#root_fn_name(__out__, |__out__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {Ok(())})?;};
 
     // TODO: prevent circular dependencies, if it calls itself also
     let mut stack: Vec<PathBuf> = vec![path.to_owned()];
@@ -72,9 +83,10 @@ pub fn expand(path: LitStr) -> TokenStream {
     visited_paths.insert(path);
 
     while let Some(p) = queue.pop_front() {
-        let (ts, inner_ctx) = compile(&p, span);
+        let (inner_fn_sign, inner_fn_body, inner_ctx) = compile(&p, span)?;
 
-        tokenstream.extend(ts);
+        fn_bodies.extend(inner_fn_body);
+        fn_signs.extend(inner_fn_sign);
 
         for ud in inner_ctx
             .use_directives
@@ -88,16 +100,30 @@ pub fn expand(path: LitStr) -> TokenStream {
         }
     }
 
-    tokenstream
+    let (impl_generics, type_generics, where_clause) = struct_generics.split_for_impl();
+
+    Ok(quote! {
+        trait __rshtml__fns {
+            #fn_signs
+        }
+        impl #impl_generics __rshtml__fns for #struct_name #type_generics #where_clause {
+            #fn_bodies
+        }
+
+        #root_fn_call
+    })
 }
 
-pub fn compile(path: &Path, span: Span) -> (TokenStream, Context) {
+pub fn compile(
+    path: &Path,
+    span: Span,
+) -> Result<(TokenStream, TokenStream, Context), TokenStream> {
     let mut ctx = Context::default();
 
     let (full_path, input) = match read_template(path) {
         Ok((full_path, input)) => (full_path, input),
         Err(msg) => {
-            return (quote_spanned! { span => compile_error!(#msg); }, ctx);
+            return Err(quote_spanned! { span => compile_error!(#msg); });
         }
     };
 
@@ -138,9 +164,7 @@ pub fn compile(path: &Path, span: Span) -> (TokenStream, Context) {
 
                 let msg_lit = syn::LitStr::new(&diag, Span::call_site());
 
-                quote::quote_spanned! { span =>
-                    compile_error!(#msg_lit);
-                }
+                return Err(quote::quote_spanned! { span => compile_error!(#msg_lit) });
             }
         };
 
@@ -158,7 +182,13 @@ pub fn compile(path: &Path, span: Span) -> (TokenStream, Context) {
     let args = params_to_ts(&mut params);
     let fn_name = Ident::new(&ctx.fn_name, Span::call_site());
 
-    (
+    Ok((
+        quote! {
+         fn #fn_name(&self,
+                __f__: &mut dyn ::std::fmt::Write,
+                child_content: impl Fn(&mut dyn ::std::fmt::Write) -> ::std::fmt::Result,
+                #args) -> ::std::fmt::Result;
+        },
         quote! {
         // let _ = include_str!(#full_path_str);
         fn #fn_name(&self,
@@ -167,7 +197,7 @@ pub fn compile(path: &Path, span: Span) -> (TokenStream, Context) {
                 #args) -> ::std::fmt::Result {#body Ok(())}
         },
         ctx,
-    )
+    ))
 }
 
 fn line_col(source: &str, byte_offset: usize) -> (usize, usize) {
@@ -231,6 +261,13 @@ pub fn read_template(path: &Path) -> Result<(PathBuf, String), String> {
 #[test]
 fn test_rshtml_macro() {
     let litstr = LitStr::new("views/rshtml_macro.rs.html", Span::call_site());
-    let result = expand(litstr);
-    println!("{0}", result);
+    let ident = Ident::new("RsHtmlMacro", Span::call_site());
+    let result = expand(
+        litstr,
+        "rshtml_macro.rs.html",
+        &ident,
+        &Generics::default(),
+        Vec::new(),
+    );
+    println!("{0}", result.unwrap_or_else(|x| x));
 }
