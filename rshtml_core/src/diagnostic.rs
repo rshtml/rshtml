@@ -1,133 +1,54 @@
 use crate::position::Position;
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::path::Path;
 
 #[derive(Debug, Default, Clone)]
-pub struct Diagnostic {
-    pub sources: HashMap<PathBuf, String>,
-}
+pub struct Diagnostic<'a>(pub &'a str);
 
-impl Diagnostic {
-    pub fn new(sources: HashMap<PathBuf, String>) -> Self {
-        Self { sources }
-    }
-
+impl<'a> Diagnostic<'a> {
     pub fn message(
         &self,
-        file: &Path,
+        path: &Path,
         position: &Position,
         title: &str,
-        lines: &[usize],
         info: &str,
         name_len: usize,
     ) -> String {
-        let (lines, source_snippet, left_pad) = if lines.is_empty() {
-            (
-                &[(position.0).0] as &[usize],
-                self.source_first_line(file, position).unwrap_or_default(),
-                ((position.0).0).to_string().len(),
-            )
-        } else {
-            (
-                lines,
-                self.extract_source_snippet(file, position)
-                    .unwrap_or_default(),
-                ((position.1).0).to_string().len(),
-            )
+        let Some(source_snippet) = self.source_first_line(position) else {
+            return String::new();
         };
+        let line = position.0.0;
+        let left_pad = line.to_string().len();
 
         let lp = " ".repeat(left_pad);
-        let file_info = self.files_to_info(file, position);
+        let file_info = self.files_to_info(path, position);
         let info = if info.is_empty() {
             "".to_string()
         } else {
-            let hyphen = "-".repeat(name_len);
+            let hyphen = "^".repeat(name_len);
             format!("{lp} | {hyphen} {info}\n")
         };
 
-        let mut source = String::new();
-
-        let first_line = (position.0).0;
-
-        for (i, source_line) in source_snippet.lines().enumerate() {
-            let current_line = first_line + i;
-            let lp = left_pad - current_line.to_string().len();
-            let lp = " ".repeat(lp);
-
-            let source_line = source_line
-                .trim_matches(|c| c == ' ' || c == '\t')
-                .to_string();
-
-            if lines.contains(&current_line) {
-                source.push_str(format!("{lp}{current_line} | {source_line}\n").as_str());
-            }
-        }
+        let lp = " ".repeat(left_pad - line.to_string().len());
+        let source_snippet = source_snippet
+            .trim_matches(|c| c == ' ' || c == '\t')
+            .to_string();
+        let source = format!("{lp}{line} | {source_snippet}\n");
 
         let title = if !title.is_empty() {
-            &format!("{title}\n")
+            format!("{title}\n")
         } else {
-            ""
+            String::new()
         };
 
         let lp = " ".repeat(left_pad);
         format!("{title}{lp} --> {file_info}\n{lp} |\n{source}{info}{lp} |",)
     }
 
-    pub fn warning(
-        &self,
-        file: &Path,
-        position: &Position,
-        title: &str,
-        lines: &[usize],
-        info: &str,
-        name_len: usize,
-    ) -> String {
-        let yellow = "\x1b[33m";
-        let reset = "\x1b[0m";
-
-        let warn = self.message(file, position, title, lines, info, name_len);
-
-        format!("{yellow}warning:{reset} {warn}")
+    fn source_first_line(&self, position: &Position) -> Option<&str> {
+        self.0.lines().nth((position.0).0.saturating_sub(1))
     }
 
-    pub fn caution(
-        &self,
-        file: &Path,
-        position: &Position,
-        title: &str,
-        lines: &[usize],
-        info: &str,
-        name_len: usize,
-    ) -> String {
-        let magenta = "\x1b[1;35m";
-        let reset = "\x1b[0m";
-
-        let cau = self.message(file, position, title, lines, info, name_len);
-
-        format!("{magenta}caution:{reset} {cau}")
+    fn files_to_info(&self, path: &Path, position: &Position) -> String {
+        position.as_info(path)
     }
-
-    fn extract_source_snippet(&self, file: &Path, position: &Position) -> Option<&str> {
-        let source = self.sources.get(file)?;
-        let (start, end) = position.byte_positions();
-        Some(&source[start..end])
-    }
-
-    fn source_first_line(&self, file: &Path, position: &Position) -> Option<&str> {
-        self.sources
-            .get(file)?
-            .lines()
-            .nth((position.0).0.saturating_sub(1))
-    }
-
-    fn files_to_info(&self, file: &Path, position: &Position) -> String {
-        position.as_info(file)
-    }
-}
-
-pub enum Level {
-    Warning,
-    Caution,
 }

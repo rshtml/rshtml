@@ -1,10 +1,11 @@
-use crate::view_macro::{
+use super::{
     Input,
-    extensions::ParserDiagnostic,
     simple_expr::simple_expr,
     simple_expr_paren::simple_expr_paren,
-    template::{inner_template_content, param_names_to_ts, string_line, template_content},
+    template::{inner_template_content, string_line, template_content},
+    utils::param_names_to_ts,
 };
+use crate::extensions::ParserDiagnostic;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, quote};
 use std::str::FromStr;
@@ -70,42 +71,6 @@ pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 
     ts.extend(attributes);
     ts.extend(quote! {let child_content = |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body  Ok(())};});
-
-    // let mut use_param_names = use_directive
-    //     .params
-    //     .iter()
-    //     .map(|(name, _)| name.as_str())
-    //     .collect::<Vec<_>>();
-
-    // let mut missing_len = 0;
-    // let missing_params = use_param_names
-    //     .iter()
-    //     .filter(|param| !attribute_names.contains(*param))
-    //     .fold(String::new(), |mut acc, p| {
-    //         missing_len += 1;
-
-    //         if !acc.is_empty() {
-    //             acc.push_str(", ");
-    //         }
-    //         acc.push('`');
-    //         acc.push_str(p);
-    //         acc.push('`');
-    //         acc
-    //     });
-
-    // if !missing_params.is_empty() {
-    //     input.reset(&checkpoint);
-
-    //     let s = if missing_len > 1 { "s" } else { "" };
-    //     let error_msg =
-    //         Box::leak(format!("missing component parameter{s} {missing_params}").into_boxed_str());
-
-    //     return Err(ErrMode::Cut(ContextError::new().add_context(
-    //         input,
-    //         &checkpoint,
-    //         StrContext::Expected(StrContextValue::Description(error_msg)),
-    //     )));
-    // }
 
     let args = param_names_to_ts(&mut attribute_names);
 

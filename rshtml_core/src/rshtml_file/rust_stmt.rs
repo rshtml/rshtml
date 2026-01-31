@@ -1,4 +1,5 @@
-use crate::view_macro::{Input, extensions::ParserDiagnostic, template::inner_template_content};
+use super::{Input, template::inner_template_content};
+use crate::extensions::ParserDiagnostic;
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse_str;

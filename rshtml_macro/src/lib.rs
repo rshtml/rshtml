@@ -1,20 +1,21 @@
 #![doc(hidden)]
 
 use proc_macro::TokenStream;
-use rshtml_core::{process_template, v_macro};
+use rshtml_core::{Compiler, v_macro};
+use std::path::Path;
 use syn::{Data, DeriveInput, Fields, LitStr, parse_macro_input};
 
 #[proc_macro_derive(RsHtml, attributes(rshtml))]
 pub fn rshtml_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
-    let struct_name = &input.ident;
-    let struct_generics = &input.generics;
+    let struct_name = input.ident;
+    let struct_generics = input.generics;
     let struct_fields = get_struct_fields(&input.data);
 
-    let (template_name, no_warn) = match parse_template_path_from_attrs(&input.attrs) {
+    let (template_path, no_warn) = match parse_template_path_from_attrs(&input.attrs) {
         Ok(rshtml_config) => {
-            let template_name = if let Some(path) = rshtml_config.path {
+            let template_path = if let Some(path) = rshtml_config.path {
                 path
             } else {
                 let struct_name_str = struct_name.to_string();
@@ -27,23 +28,20 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
 
                 // template_file.to_lowercase()
                 template_file = to_snake_case(&template_file);
-                template_file
+                format!("views/{template_file}")
             };
 
-            (template_name, rshtml_config.no_warn)
+            (template_path, rshtml_config.no_warn)
         }
         Err(err) => {
             return err.to_compile_error().into();
         }
     };
 
-    TokenStream::from(process_template(
-        template_name,
-        struct_name,
-        struct_generics,
-        struct_fields,
-        no_warn,
-    ))
+    let mut compiler = Compiler::new(struct_name, struct_generics, struct_fields);
+    let path = Path::new(&template_path);
+
+    TokenStream::from(compiler.compile(path))
 }
 
 struct RsHtmlConfig {

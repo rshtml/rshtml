@@ -1,17 +1,21 @@
-use crate::view_macro::{
-    Input, component::component, extensions::ParserDiagnostic, inner_text::inner_text,
-    rust_block::rust_block, rust_stmt::rust_stmt, simple_expr::simple_expr,
-    simple_expr_paren::simple_expr_paren, template_params::template_params, text::text,
-    use_directive::use_directive,
+use super::{
+    Input, component::component, inner_text::inner_text, rust_block::rust_block,
+    rust_stmt::rust_stmt, simple_expr::simple_expr, simple_expr_paren::simple_expr_paren,
+    template_params::template_params, text::text, use_directive::use_directive,
 };
-use proc_macro2::{Span, TokenStream};
+use crate::{
+    extensions::ParserDiagnostic,
+    rshtml_file::{
+        break_directive::break_directive, child_content_directive::child_content_directive,
+        continue_directive::continue_directive,
+    },
+};
+use proc_macro2::TokenStream;
 use quote::quote;
-use std::{path::Path, str::FromStr};
-use syn::Ident;
 use winnow::{
     ModalResult, Parser,
     ascii::multispace0,
-    combinator::{alt, cut_err, eof, not, opt, peek, repeat},
+    combinator::{alt, cut_err, eof, fail, opt, peek, repeat},
     token::{any, none_of, one_of, take_while},
 };
 
@@ -74,9 +78,11 @@ pub fn block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
                 break_directive.label("break"),
                 simple_expr_paren.label("parenthesized expression"),
                 simple_expr.label("expression"),
+                cut_err(fail).expected("valid RsHtml expression"),
             )),
         )
             .map(|(_, _, ts)| ts),
+        fail.expected("valid RsHtml expression"),
     ))
     .parse_next(input)
 }
@@ -116,75 +122,4 @@ pub fn string_line<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
 
     let parsed_len = start.len() - input.input.len();
     Ok(&start[..parsed_len])
-}
-
-pub fn continue_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
-    ("continue", multispace0)
-        .map(|(_, _)| quote! { continue })
-        .parse_next(input)
-}
-
-pub fn break_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
-    ("break", multispace0)
-        .map(|(_, _)| quote! { break })
-        .parse_next(input)
-}
-
-pub fn child_content_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
-    (
-        "child_content",
-        alt(("()".void(), peek(not(rust_identifier)).void())),
-    )
-        .map(|(_, _)| quote! {child_content(__f__)?;})
-        .parse_next(input)
-}
-
-pub fn escape_or_raw(expr_ts: TokenStream, is_escaped: bool, message: &str) -> TokenStream {
-    if is_escaped {
-        quote! { ::rshtml::Expr(&(#expr_ts)).render(&mut ::rshtml::EscapingWriter { inner: __f__ }, #message)?; }
-    } else {
-        quote! { ::rshtml::Expr(&(#expr_ts)).render(__f__, #message)?; }
-    }
-}
-
-pub fn extract_component_name(path: &Path) -> Option<String> {
-    let filename = path.file_name().and_then(|n| n.to_str())?;
-    let component_name = filename.strip_suffix(".rs.html").unwrap_or(filename);
-    Some(component_name.to_owned())
-}
-
-pub fn generate_fn_name(path: &Path) -> String {
-    let component_name = extract_component_name(path).unwrap_or_default();
-    let path_bytes = path.as_os_str().as_encoded_bytes();
-
-    let mut hash: u64 = 5381;
-    for c in path_bytes {
-        hash = ((hash << 5).wrapping_add(hash)).wrapping_add(*c as u64);
-    }
-
-    format!("{}_{:x}", component_name, hash)
-}
-
-pub fn params_to_ts(params: &mut [(&str, &str)]) -> TokenStream {
-    params.sort_by(|a, b| a.0.cmp(b.0));
-
-    let args = params.iter().map(|(param_name, param_type)| {
-        let param_name = Ident::new(param_name, Span::call_site());
-        let param_type = TokenStream::from_str(param_type).unwrap();
-        quote! { #param_name: #param_type }
-    });
-    quote! {#(#args),*}
-}
-
-pub fn param_names_to_ts<S>(param_names: &mut [S]) -> TokenStream
-where
-    S: AsRef<str> + Clone,
-{
-    param_names.sort_by(|a, b| a.as_ref().cmp(b.as_ref()));
-
-    let args = param_names
-        .as_ref()
-        .iter()
-        .map(|param| Ident::new(param.as_ref(), Span::call_site()));
-    quote! {#(#args),*}
 }

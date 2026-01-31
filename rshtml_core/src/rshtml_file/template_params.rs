@@ -1,4 +1,5 @@
-use crate::view_macro::{Input, extensions::ParserDiagnostic, template::rust_identifier};
+use super::{Input, template::rust_identifier};
+use crate::extensions::ParserDiagnostic;
 use winnow::{
     ModalResult, Parser,
     ascii::multispace0,

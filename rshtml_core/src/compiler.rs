@@ -1,178 +1,124 @@
-mod component;
-mod expr;
-mod match_expr;
-mod raw;
-mod rust_block;
-mod rust_expr;
-mod template;
-mod template_params;
-mod text;
-mod use_directive;
-
-use crate::{
-    Node,
-    compiler::{
-        component::ComponentCompiler, expr::ExprCompiler, match_expr::MatchExprCompiler,
-        raw::RawCompiler, rust_block::RustBlockCompiler, rust_expr::RustExprCompiler,
-        template::TemplateCompiler, template_params::TemplateParamsCompiler, text::TextCompiler,
-        use_directive::UseDirectiveCompiler,
-    },
-    diagnostic::Diagnostic,
-    position::Position,
-};
-use anyhow::{Result, anyhow};
+use crate::{context::Context, rshtml_file};
 use proc_macro2::{Span, TokenStream};
-use quote::quote;
-use std::{collections::HashMap, path::PathBuf};
-use syn::{Generics, Ident, Type, parse_str};
+use quote::{quote, quote_spanned};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+};
+use syn::{Generics, Ident};
 
 pub struct Compiler {
     struct_name: Ident,
     struct_generics: Generics,
-    components: HashMap<PathBuf, Component>,
-    pub text_size: usize,
-    pub files: Vec<(PathBuf, Position)>,
-    is_root: bool,
-    component_path: PathBuf,
-    diagnostic: Diagnostic,
+    struct_fields: Vec<String>,
+    path_stack: Vec<PathBuf>,
 }
 
 impl Compiler {
-    pub fn new(struct_name: Ident, struct_generics: Generics, diagnostic: Diagnostic) -> Self {
+    pub fn new(struct_name: Ident, struct_generics: Generics, struct_fields: Vec<String>) -> Self {
         Compiler {
             struct_name,
             struct_generics,
-            components: HashMap::new(),
-            text_size: 0,
-            files: Vec::new(),
-            is_root: false,
-            component_path: PathBuf::new(),
-            diagnostic,
+            struct_fields: struct_fields,
+            path_stack: Vec::new(),
         }
     }
 
-    pub fn compile(&mut self, node: Node) -> Result<TokenStream> {
-        match node {
-            Node::Template(path, name, fns, nodes, position) => {
-                TemplateCompiler::compile(self, path, name, fns, nodes, position)
+    pub fn compile(&mut self, path: &Path) -> TokenStream {
+        let (fn_signs, fn_bodies, include_strs, total_text_size, fn_name) = match self
+            .compile_rshtml_files(&path)
+        {
+            Ok((fn_signs, fn_bodies, include_strs, total_text_size, fn_name)) => {
+                (fn_signs, fn_bodies, include_strs, total_text_size, fn_name)
             }
-            Node::Text(text) => TextCompiler::compile(self, text),
-            Node::TemplateParams(params, position) => {
-                TemplateParamsCompiler::compile(self, params, position)
+            Err(err) => {
+                let error_message = format!(
+                    "Template processing failed for struct `{}` with template `{}`:\n{err}",
+                    self.struct_name,
+                    path.display()
+                );
+
+                return quote_spanned! { self.struct_name.span() => compile_error!(#error_message); };
             }
-            Node::RustBlock(content, position) => {
-                RustBlockCompiler::compile(self, content, position)
-            }
-            Node::Expr(expr, is_escaped, position) => {
-                ExprCompiler::compile(self, expr, is_escaped, position)
-            }
-            Node::MatchExpr(head, arms, position) => {
-                MatchExprCompiler::compile(self, head, arms, position)
-            }
-            Node::RustExpr(exprs, position) => RustExprCompiler::compile(self, exprs, position),
-            Node::Component(name, parameters, body, position) => {
-                ComponentCompiler::compile(self, name, parameters, body, position)
-            }
-            Node::ChildContent => Ok(quote! {child_content(__f__)?;}),
-            Node::Raw(body) => RawCompiler::compile(self, body),
-            Node::UseDirective(name, path, component, position) => {
-                UseDirectiveCompiler::compile(self, name, path, *component, position)
-            }
-            Node::ContinueDirective => Ok(quote! {continue;}),
-            Node::BreakDirective => Ok(quote! {break;}),
-        }
-    }
+        };
 
-    pub fn run(&mut self, node: Node) -> Result<TokenStream> {
-        self.is_root = true;
-        let ts = self.compile(node)?;
+        let root_fn_name = Ident::new(&fn_name, Span::call_site());
+        let root_fn_call = quote! {self.#root_fn_name(__out__, |__out__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {Ok(())})?;};
 
-        Ok(ts)
-    }
+        let (impl_generics, type_generics, where_clause) = self.struct_generics.split_for_impl();
+        let struct_name = self.struct_name.to_owned();
 
-    pub fn component_fns(&self) -> TokenStream {
-        let mut token_stream = TokenStream::new();
-        self.components.values().for_each(|component_data| {
-            token_stream.extend(component_data.token_stream.to_owned());
-        });
+        quote! {
+             const _ : () = {
+                #include_strs
 
-        token_stream
-    }
+                impl #impl_generics ::rshtml::traits::View for #struct_name #type_generics #where_clause {
+                    fn render(&self, __out__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
+                        trait __rshtml__fns {
+                            #fn_signs
+                        }
 
-    fn generate_fn_name(&self, name: &str) -> String {
-        let mut hash: u64 = 5381;
-        for c in name.bytes() {
-            hash = ((hash << 5).wrapping_add(hash)).wrapping_add(c as u64);
-        }
+                        impl #impl_generics __rshtml__fns for #struct_name #type_generics #where_clause {
+                            #fn_bodies
+                        }
 
-        format!("{}_{:x}", name, hash)
-    }
+                        #root_fn_call
 
-    fn with_info(
-        &self,
-        expr_ts: TokenStream,
-        position: Position,
-        infos: Option<(&str, &str, bool)>,
-    ) -> TokenStream {
-        if cfg!(debug_assertions) {
-            let mapping = position.as_info(&self.component_path);
+                        Ok(())
+                    }
 
-            if let Some((start, end, is_scoped)) = infos {
-                if is_scoped {
-                    quote! {{#start;#mapping;#expr_ts #end;}}
-                } else {
-                    quote! {#start;#mapping;#expr_ts #end;}
+                    fn text_size(&self) -> usize {
+                        #total_text_size
+                    }
                 }
-            } else {
-                quote! {{#mapping;#expr_ts}}
-            }
-        } else {
-            expr_ts
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-struct Component {
-    fn_name: Ident,
-    token_stream: TokenStream,
-    params: Vec<(String, String)>,
-    fns: Vec<(TokenStream, TokenStream)>,
-    fn_names: Vec<String>,
-    use_directives: Vec<(PathBuf, String, Position)>,
-}
-
-impl Component {
-    fn new(fn_name: Ident, fn_names: Vec<String>) -> Self {
-        Self {
-            fn_name,
-            token_stream: TokenStream::new(),
-            params: Vec::new(),
-            fns: Vec::new(),
-            fn_names,
-            use_directives: Vec::new(),
+            };
         }
     }
 
-    fn params_to_ts(&self) -> Result<TokenStream> {
-        let mut args = Vec::new();
-
-        for (param_name, param_type) in &self.params {
-            let param_name = Ident::new(param_name, Span::call_site());
-            let param_type = parse_str::<Type>(param_type)
-                .map_err(|e| anyhow!("Invalid param type: {param_type}, {e}"))?;
-
-            args.push(quote! { #param_name: #param_type});
+    fn compile_rshtml_files(
+        &mut self,
+        path: &Path,
+    ) -> Result<(TokenStream, TokenStream, TokenStream, usize, String), String> {
+        let path_buf = path.to_path_buf();
+        if self.path_stack.contains(&path_buf) {
+            return Err(format!("Circular dependency detected: {}", path.display()));
         }
+        self.path_stack.push(path_buf);
 
-        Ok(quote! {#(#args),*})
-    }
+        let mut ctx = Context::default();
+        ctx.struct_fields = self.struct_fields.to_owned();
 
-    fn param_names_to_ts(&self) -> TokenStream {
-        let args = self
-            .params
+        let (mut fn_signs, mut fn_bodies, mut include_strs, ctx) =
+            rshtml_file::compile(&path, ctx)?;
+        let mut total_text_size = ctx.text_size;
+        let fn_name = ctx.fn_name;
+
+        for path in ctx
+            .use_directives
             .iter()
-            .map(|param| Ident::new(&param.0, Span::call_site()));
-        quote! {#(#args),*}
+            .map(|ud| ud.path.to_owned())
+            .collect::<HashSet<PathBuf>>()
+        {
+            let (fn_sign, fn_body, include_str_ts, text_size, _) =
+                self.compile_rshtml_files(&path)?;
+
+            fn_bodies.extend(fn_body);
+            fn_signs.extend(fn_sign);
+            include_strs.extend(include_str_ts);
+            total_text_size += text_size;
+        }
+
+        self.path_stack.pop();
+
+        Ok((fn_signs, fn_bodies, include_strs, total_text_size, fn_name))
     }
+}
+
+#[test]
+fn test_compiler() {
+    let path = Path::new("views/rshtml_macro.rs.html");
+    let ident = Ident::new("RsHtmlMacro", Span::call_site());
+    let mut compiler = Compiler::new(ident, Generics::default(), vec!["user".to_owned()]);
+    let result: TokenStream = compiler.compile(path);
+    println!("{}", result.to_string());
 }

@@ -1,4 +1,7 @@
-use crate::view_macro::{Input, template::escape_or_raw};
+use super::{
+    Input,
+    utils::{escape_or_raw, get_struct_field},
+};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Expr, parse_str};
@@ -43,6 +46,20 @@ pub fn simple_expr_paren<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> 
             StrContext::Expected(StrContextValue::Description("invalid expression")),
         ))
     })?;
+
+    if let Some(field) = get_struct_field(expr)
+        && !input.state.struct_fields.contains(&field)
+    {
+        input.reset(&checkpoint);
+
+        return Err(ErrMode::Cut(ContextError::new().add_context(
+            input,
+            &checkpoint,
+            StrContext::Expected(StrContextValue::Description(
+                "attempt to use undefined struct field",
+            )),
+        )));
+    }
 
     // let message = input.state.diagnostic.caution(
     //     &input.state.diagnostic.sources,

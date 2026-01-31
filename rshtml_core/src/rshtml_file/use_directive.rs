@@ -1,8 +1,8 @@
-use crate::view_macro::{
-    Input, UseDirective,
-    component::component_tag_identifier,
-    extensions::ParserDiagnostic,
-    template::{extract_component_name, generate_fn_name, string_line},
+use super::{
+    Input, component::component_tag_identifier, template::string_line, utils::generate_fn_name,
+};
+use crate::{
+    context::UseDirective, extensions::ParserDiagnostic, rshtml_file::utils::extract_component_name,
 };
 use proc_macro2::TokenStream;
 use std::path::PathBuf;
@@ -68,52 +68,6 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     };
 
     let fn_name = generate_fn_name(&path);
-
-    // if input
-    //     .state
-    //     .use_directives
-    //     .iter()
-    //     .any(|use_directive| use_directive.name == name)
-    // {
-    //     return Ok(TokenStream::new());
-    // }
-
-    // let (source, newly) = if let Some(source) = input.state.sources.iter().find(|s| s.path == path)
-    // {
-    //     (source, false)
-    // } else {
-    //     let (_, source) = read_template(&path).map_err(|e| {
-    //         input.reset(&checkpoint);
-    //         let error_msg = Box::leak(format!("Failed to read template: {}", e).into_boxed_str());
-
-    //         ErrMode::Cut(ContextError::new().add_context(
-    //             input,
-    //             &checkpoint,
-    //             StrContext::Expected(StrContextValue::Description(error_msg)),
-    //         ))
-    //     })?;
-
-    //     let source = Source {
-    //         path: path,
-    //         content: source,
-    //     };
-
-    //     input.state.sources.insert(source);
-
-    //     (&source, true)
-    // };
-
-    // let params = {
-    //     let mut sources = HashSet::new();
-    //     let mut input = Input {
-    //         input: &source.content,
-    //         state: &mut Context::new(&mut sources),
-    //     };
-
-    //     let _ = (opt("\u{FEFF}"), multispace0, template_params).parse_next(&mut input);
-
-    //     mem::take(&mut input.state.template_params)
-    // };
 
     let path = path.to_path_buf();
 
