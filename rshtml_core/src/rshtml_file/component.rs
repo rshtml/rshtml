@@ -36,7 +36,7 @@ pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
                 template_content,
                 cut_err("</").expected("</"),
                 multispace0,
-                cut_err(component_tag_identifier).expected("tag ident"),
+                cut_err(component_tag_identifier).expected("tag identifier"),
                 multispace0,
                 cut_err(">").expected(">"),
             )

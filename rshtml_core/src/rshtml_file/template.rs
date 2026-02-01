@@ -78,11 +78,11 @@ pub fn block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
                 break_directive.label("break"),
                 simple_expr_paren.label("parenthesized expression"),
                 simple_expr.label("expression"),
-                cut_err(fail).expected("valid RsHtml expression"),
+                cut_err(fail).expected("a valid directive or an expression after '@'"),
             )),
         )
             .map(|(_, _, ts)| ts),
-        fail.expected("valid RsHtml expression"),
+        fail.expected("a valid directive or an expression or a component"),
     ))
     .parse_next(input)
 }

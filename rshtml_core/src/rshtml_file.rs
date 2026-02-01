@@ -56,25 +56,34 @@ pub fn compile<'a>(
             Ok(res) => res,
             Err(e) => {
                 let err = e.into_inner().unwrap();
-                let msg = err
-                    .context()
-                    .filter_map(|c| match c {
-                        StrContext::Label(l) => Some(format!("in {l}")),
+
+                let mut labels = Vec::new();
+                let mut expecteds = Vec::new();
+
+                for context in err.context() {
+                    match context {
+                        StrContext::Label(l) => labels.push(l.to_string()),
                         StrContext::Expected(e) => match e {
-                            StrContextValue::Description(desc) => Some(desc.to_string()),
-                            other => Some(format!("expected {}", other)),
+                            StrContextValue::Description(desc) => expecteds.push(desc.to_string()),
+                            other => expecteds.push(format!("expected {}", other)),
                         },
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>()
-                    .into_iter()
-                    .rev()
-                    .collect::<Vec<_>>()
-                    .join(": ");
+                        _ => {}
+                    }
+                }
+
+                let label = if !labels.is_empty() {
+                    labels.reverse();
+                    format!("in {}:", labels.join(" > "))
+                } else {
+                    String::new()
+                };
+
+                expecteds.reverse();
+                let expected = expecteds.join(" or ");
 
                 let offset = source.len().saturating_sub(input.input.len());
                 let position: Position = (source.as_str(), offset).into();
-                let diag = Diagnostic(&source).message(path, &position, "this is title", &msg, 1);
+                let diag = Diagnostic(&source).message(path, &position, &label, &expected, 1);
 
                 return Err(diag);
             }

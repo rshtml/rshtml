@@ -18,14 +18,17 @@ impl<'a> Diagnostic<'a> {
         };
         let line = position.0.0;
         let left_pad = line.to_string().len();
+        let whitespace_len = source_snippet.len() - source_snippet.trim_start().len();
+        let trimmed_col = position.0.1.saturating_sub(whitespace_len);
 
         let lp = " ".repeat(left_pad);
+        let col_padding = " ".repeat(trimmed_col.saturating_sub(1));
         let file_info = self.files_to_info(path, position);
         let info = if info.is_empty() {
             "".to_string()
         } else {
             let hyphen = "^".repeat(name_len);
-            format!("{lp} | {hyphen} {info}\n")
+            format!("{lp} | {col_padding}{hyphen} {info}\n")
         };
 
         let lp = " ".repeat(left_pad - line.to_string().len());
@@ -41,7 +44,7 @@ impl<'a> Diagnostic<'a> {
         };
 
         let lp = " ".repeat(left_pad);
-        format!("{title}{lp} --> {file_info}\n{lp} |\n{source}{info}{lp} |",)
+        format!("{lp} --> {file_info}\n{title}{lp} |\n{source}{info}{lp} |",)
     }
 
     fn source_first_line(&self, position: &Position) -> Option<&str> {
