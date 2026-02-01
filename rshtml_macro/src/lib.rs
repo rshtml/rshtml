@@ -13,7 +13,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
     let struct_generics = input.generics;
     let struct_fields = get_struct_fields(&input.data);
 
-    let (template_path, no_warn) = match parse_template_path_from_attrs(&input.attrs) {
+    let template_path = match parse_template_path_from_attrs(&input.attrs) {
         Ok(rshtml_config) => {
             let template_path = if let Some(path) = rshtml_config.path {
                 path
@@ -31,7 +31,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
                 format!("views/{template_file}")
             };
 
-            (template_path, rshtml_config.no_warn)
+            template_path
         }
         Err(err) => {
             return err.to_compile_error().into();
@@ -46,14 +46,10 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
 
 struct RsHtmlConfig {
     pub path: Option<String>,
-    pub no_warn: bool,
 }
 
 fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<RsHtmlConfig> {
-    let mut config = RsHtmlConfig {
-        path: None,
-        no_warn: false,
-    };
+    let mut config = RsHtmlConfig { path: None };
 
     for attr in attrs {
         if attr.path().is_ident("rshtml") {
@@ -62,11 +58,6 @@ fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<RsHtm
                     let value = meta.value()?;
                     let s: LitStr = value.parse()?;
                     config.path = Some(s.value());
-                    return Ok(());
-                }
-
-                if meta.path.is_ident("no_warn") {
-                    config.no_warn = true;
                     return Ok(());
                 }
 
