@@ -113,12 +113,3 @@ impl Compiler {
         Ok((fn_signs, fn_bodies, include_strs, total_text_size, fn_name))
     }
 }
-
-#[test]
-fn test_compiler() {
-    let path = Path::new("views/rshtml_macro.rs.html");
-    let ident = Ident::new("RsHtmlMacro", Span::call_site());
-    let mut compiler = Compiler::new(ident, Generics::default(), vec!["user".to_owned()]);
-    let result: TokenStream = compiler.compile(path);
-    println!("{}", result.to_string());
-}

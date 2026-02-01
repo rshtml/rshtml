@@ -1,74 +1,48 @@
-// mod ast_viewer;
-// mod viewer;
+use crate::{Compiler, context::Context, rshtml_file};
+use proc_macro2::{Span, TokenStream};
+use std::path::Path;
+use syn::{Generics, Ident};
 
-// use crate::config::Config;
-// use crate::node::Node;
-// use crate::parser::{RsHtmlParser, Rule};
-// use crate::{parse_and_compile, process_template};
-// use pest::Parser;
-// use std::fs;
-// use syn::__private::Span;
-// use syn::Generics;
+#[test]
+fn test_compiler() {
+    let paths = [
+        Path::new("views/rshtml_macro.rs.html"),
+        Path::new("views/home.rs.html"),
+    ];
+    let ident = Ident::new("RsHtmlMacro", Span::call_site());
 
-// #[test]
-// fn test_template_format() {
-//     let views = ["home.rs.html"];
+    let mut compiler = Compiler::new(ident, Generics::default(), vec!["user".to_owned()]);
 
-//     let ast = match RsHtmlParser::new().run(views[0], Config::default()) {
-//         Ok(ast) => ast,
-//         Err(err) => {
-//             println!("{err}");
-//             return;
-//         }
-//     };
+    let result: TokenStream = compiler.compile(paths[0]);
+    let res = result.to_string();
+    println!("{res}");
 
-//     ast_viewer::view_node(&ast, 0);
+    assert_eq!(true, res.contains("compile_error!"));
+}
 
-//     assert!(matches!(ast, Node::Template(_, _, _, _, _)));
-// }
+#[test]
+fn test_rshtml_file() {
+    let paths = [
+        Path::new("views/rshtml_macro.rs.html"),
+        Path::new("views/home.rs.html"),
+    ];
 
-// #[test]
-// fn test_template_format_without_parsing() {
-//     let template = fs::read_to_string("views/home.rs.html").unwrap();
-//     let pairs = match RsHtmlParser::parse(Rule::template, template.as_str()) {
-//         Ok(pairs) => pairs,
-//         Err(err) => {
-//             println!("{err}");
-//             return;
-//         }
-//     };
+    let mut ctx = Context::default();
+    ctx.struct_fields = vec!["user".to_owned()];
 
-//     viewer::execute_pairs(pairs, 0, true);
-// }
+    let result = rshtml_file::compile(paths[0], ctx);
 
-// #[test]
-// pub fn test_process_simple() {
-//     let ident = syn::Ident::new("HomePage", Span::call_site());
-//     process_template(
-//         "home.rs.html".to_string(),
-//         &ident,
-//         &Generics::default(),
-//         Vec::new(),
-//         true,
-//     );
-// }
+    assert!(
+        result.is_ok(),
+        "\nRsHtml file compile failed!\n{}",
+        result.err().map(|e| e.to_string()).unwrap_or_default()
+    );
 
-// #[test]
-// pub fn test_parse_and_compile() {
-//     let ident = syn::Ident::new("HomePage", Span::call_site());
-//     parse_and_compile(
-//         "home.rs.html",
-//         Config::load_from_toml_or_default(),
-//         &ident,
-//         &Generics::default(),
-//         Vec::new(),
-//         false,
-//     )
-//     .unwrap();
-// }
+    let (fn_sign, fn_body, include_str, ctx) = result.unwrap();
 
-// #[test]
-// pub fn test_config() {
-//     let config = Config::default();
-//     assert!(config.base_path.ends_with("views"));
-// }
+    println!("--- FUNCTION SIGNATURE ---\n{}\n", fn_sign);
+    println!("--- FUNCTION BODY ---\n{}\n", fn_body);
+    println!("--- INCLUDE STR ---\n{}\n", include_str);
+    println!("--- CONTEXT (Text Size: {})\n", ctx.text_size);
+    println!("--- CONTEXT (Template Params: {:?})", ctx.template_params);
+}
