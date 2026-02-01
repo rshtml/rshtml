@@ -70,11 +70,11 @@ pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let fn_name = Ident::new(&use_directive.fn_name, Span::call_site());
 
     ts.extend(attributes);
-    ts.extend(quote! {let child_content = |__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body  Ok(())};});
+    ts.extend(quote! {let child_content = |__out__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body  Ok(())};});
 
     let args = param_names_to_ts(&mut attribute_names);
 
-    ts.extend(quote! {self.#fn_name(__f__, child_content, #args)?;});
+    ts.extend(quote! {self.#fn_name(__out__, child_content, #args)?;});
 
     Ok(quote! {{ #ts }})
 }
@@ -137,7 +137,7 @@ fn attribute_value<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         float.map(|value: f64| Ok(value.to_token_stream())),
         string_line.map(|value| TokenStream::from_str(value)),
         ("@", alt((simple_expr_paren, simple_expr))).map(|(_, value)| Ok(value)),
-        inner_template_content.map(|value| Ok(quote!{ ::rshtml::Expr(|__f__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#value Ok(())}) })),
+        inner_template_content.map(|value| Ok(quote!{ ::rshtml::Expr(|__out__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#value Ok(())}) })),
     ))
     .parse_next(input)?;
 

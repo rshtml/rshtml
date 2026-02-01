@@ -11,6 +11,6 @@ pub fn child_content_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenSt
         "child_content",
         alt(("()".void(), peek(not(rust_identifier)).void())),
     )
-        .map(|(_, _)| quote! {child_content(__f__)?;})
+        .map(|(_, _)| quote! {child_content(__out__)?;})
         .parse_next(input)
 }

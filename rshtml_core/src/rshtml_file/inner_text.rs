@@ -38,7 +38,12 @@ pub fn inner_text<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         }
         acc
     })
-    .map(|text| (text.chars().count(), quote! { write!(out, "{}", #text)?; }))
+    .map(|text| {
+        (
+            text.chars().count(),
+            quote! { write!(__out__, "{}", #text)?; },
+        )
+    })
     .parse_next(input)?;
 
     input.state.text_size += text_size;

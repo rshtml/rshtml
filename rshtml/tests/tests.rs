@@ -1,6 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use rshtml::{RsHtml, functions::*, traits::RsHtml};
+    use rshtml::{
+        RsHtml,
+        functions::*,
+        traits::{Render, RsHtml},
+    };
 
     #[test]
     pub fn test_empty() {

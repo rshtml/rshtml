@@ -108,13 +108,13 @@ pub fn compile<'a>(
     Ok((
         quote! {
          fn #fn_name(&self,
-                __f__: &mut dyn ::std::fmt::Write,
+                __out__: &mut dyn ::std::fmt::Write,
                 child_content: impl Fn(&mut dyn ::std::fmt::Write) -> ::std::fmt::Result,
                 #args) -> ::std::fmt::Result;
         },
         quote! {
         fn #fn_name(&self,
-                __f__: &mut dyn ::std::fmt::Write,
+                __out__: &mut dyn ::std::fmt::Write,
                 child_content: impl Fn(&mut dyn ::std::fmt::Write) -> ::std::fmt::Result,
                 #args) -> ::std::fmt::Result {#body Ok(())}
         },

@@ -59,6 +59,8 @@ impl Compiler {
              const _ : () = {
                 #include_strs
 
+                use ::rshtml::traits::Render;
+
                 impl #impl_generics ::rshtml::traits::View for #struct_name #type_generics #where_clause {
                     fn render(&self, __out__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
                         trait __rshtml__fns {
@@ -86,14 +88,27 @@ impl Compiler {
         &mut self,
         path: &Path,
     ) -> Result<(TokenStream, TokenStream, TokenStream, usize, String), String> {
-        let path_buf = path.to_path_buf();
-        if self.path_stack.contains(&path_buf) {
-            return Err(format!("Circular dependency detected: {}", path.display()));
+        if let Some(start_index) = self.path_stack.iter().position(|p| p == path) {
+            let mut chain: Vec<String> = self.path_stack[start_index..]
+                .iter()
+                .map(|p| p.display().to_string())
+                .collect();
+            chain.push(path.display().to_string());
+
+            let chain_str = chain.join(" -> ");
+
+            return Err(format!("Circular dependency detected: {}", chain_str));
         }
-        self.path_stack.push(path_buf);
+
+        // if self.path_stack.iter().any(|p| p == path) {
+        //     return Err(format!("Circular dependency detected: {}", path.display()));
+        // }
+
+        self.path_stack.push(path.to_path_buf());
 
         let mut ctx = Context::default();
         ctx.struct_fields = self.struct_fields.to_owned();
+        ctx.base_dir = self.base_dir.to_owned();
 
         let path_with_base = self.base_dir.join(path);
         let (mut fn_signs, mut fn_bodies, mut include_strs, ctx) =
@@ -101,14 +116,15 @@ impl Compiler {
         let mut total_text_size = ctx.text_size;
         let fn_name = ctx.fn_name;
 
-        for path in ctx
+        for p in ctx
             .use_directives
             .iter()
             .map(|ud| ud.path.to_owned())
             .collect::<HashSet<PathBuf>>()
         {
-            let (fn_sign, fn_body, include_str_ts, text_size, _) =
-                self.compile_rshtml_files(&path)?;
+            let (fn_sign, fn_body, include_str_ts, text_size, _) = self
+                .compile_rshtml_files(&p)
+                .map_err(|e| format!("{}:\n{}", path_with_base.display(), e))?;
 
             fn_bodies.extend(fn_body);
             fn_signs.extend(fn_sign);

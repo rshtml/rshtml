@@ -26,7 +26,6 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
                     format!("{struct_name_str}.rs.html")
                 };
 
-                // template_file.to_lowercase()
                 template_file = to_snake_case(&template_file);
                 format!("views/{template_file}")
             };

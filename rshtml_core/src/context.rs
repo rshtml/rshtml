@@ -7,6 +7,7 @@ pub struct Context {
     pub template_params: Vec<(String, String)>,
     pub use_directives: HashSet<UseDirective>,
     pub struct_fields: Vec<String>,
+    pub base_dir: PathBuf,
 }
 
 #[derive(Debug, Default, Clone, Hash, Eq, PartialEq)]

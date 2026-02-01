@@ -13,7 +13,7 @@ fn test_compiler() {
 
     let mut compiler = Compiler::new(ident, Generics::default(), vec!["user".to_owned()]);
 
-    let result: TokenStream = compiler.compile(paths[1]);
+    let result: TokenStream = compiler.compile(paths[0]);
     let res = result.to_string();
     println!("{res}");
 
