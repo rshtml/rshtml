@@ -11,6 +11,7 @@ pub struct Compiler {
     struct_name: Ident,
     struct_generics: Generics,
     struct_fields: Vec<String>,
+    base_dir: PathBuf,
     path_stack: Vec<PathBuf>,
 }
 
@@ -20,11 +21,17 @@ impl Compiler {
             struct_name,
             struct_generics,
             struct_fields: struct_fields,
+            base_dir: PathBuf::new(),
             path_stack: Vec::new(),
         }
     }
 
     pub fn compile(&mut self, path: &Path) -> TokenStream {
+        self.base_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
+        let Some(path) = path.file_name().map(Path::new) else {
+            return quote_spanned! { self.struct_name.span() => compile_error!("Invalid path: {}", path.display()); };
+        };
+
         let (fn_signs, fn_bodies, include_strs, total_text_size, fn_name) = match self
             .compile_rshtml_files(&path)
         {
@@ -88,8 +95,9 @@ impl Compiler {
         let mut ctx = Context::default();
         ctx.struct_fields = self.struct_fields.to_owned();
 
+        let path_with_base = self.base_dir.join(path);
         let (mut fn_signs, mut fn_bodies, mut include_strs, ctx) =
-            rshtml_file::compile(&path, ctx)?;
+            rshtml_file::compile(&path_with_base, ctx)?;
         let mut total_text_size = ctx.text_size;
         let fn_name = ctx.fn_name;
 

@@ -13,11 +13,11 @@ fn test_compiler() {
 
     let mut compiler = Compiler::new(ident, Generics::default(), vec!["user".to_owned()]);
 
-    let result: TokenStream = compiler.compile(paths[0]);
+    let result: TokenStream = compiler.compile(paths[1]);
     let res = result.to_string();
     println!("{res}");
 
-    assert_eq!(true, res.contains("compile_error!"));
+    assert_eq!(true, !res.contains("compile_error!"));
 }
 
 #[test]
