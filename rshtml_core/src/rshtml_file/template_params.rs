@@ -15,7 +15,9 @@ pub fn template_params<'a>(input: &mut Input<'a>) -> ModalResult<()> {
                 .map(|(p_name, p_type_opt)| {
                     (
                         p_name.to_string(),
-                        p_type_opt.unwrap_or("impl ::std::fmt::Display").to_string(),
+                        p_type_opt
+                            .unwrap_or("impl ::rshtml::traits::View")
+                            .to_string(),
                     )
                 })
                 .collect()
