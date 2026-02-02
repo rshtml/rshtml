@@ -59,8 +59,6 @@ impl Compiler {
              const _ : () = {
                 #include_strs
 
-                use ::rshtml::traits::Render;
-
                 impl #impl_generics ::rshtml::traits::View for #struct_name #type_generics #where_clause {
                     fn render(&self, __out__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
                         trait __rshtml__fns {

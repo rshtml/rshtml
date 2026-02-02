@@ -67,7 +67,7 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         }
     };
 
-    let fn_name = generate_fn_name(&path);
+    let fn_name = generate_fn_name(&input.state.base_dir.join(&path));
 
     let path = path.to_path_buf();
 
