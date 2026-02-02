@@ -72,9 +72,6 @@ pub use rshtml_macro::RsHtml;
 mod track_views_folder;
 pub use track_views_folder::track_views_folder;
 
-mod expr;
-pub use expr::{Block, Expr};
-
 mod exp;
 pub use exp::Exp;
 mod view_fn;

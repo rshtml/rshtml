@@ -10,9 +10,9 @@ pub fn extract_component_name(path: &Path) -> Option<String> {
 
 pub fn escape_or_raw(expr_ts: TokenStream, is_escaped: bool, message: &str) -> TokenStream {
     if is_escaped {
-        quote! { ::rshtml::Expr(&(#expr_ts)).render(&mut ::rshtml::EscapingWriter { inner: __out__ }, #message)?; }
+        quote! { ::rshtml::Exp(&(#expr_ts)).render_e(&mut ::rshtml::EscapingWriter { inner: __out__ }, #message)?; }
     } else {
-        quote! { ::rshtml::Expr(&(#expr_ts)).render(__out__, #message)?; }
+        quote! { ::rshtml::Exp(&(#expr_ts)).render_e(__out__, #message)?; }
     }
 }
 

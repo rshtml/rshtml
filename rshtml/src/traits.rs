@@ -5,13 +5,15 @@ use std::{
     fmt::{self, Write},
 };
 
-pub trait RsHtml {
-    fn fmt(&self, __f__: &mut dyn fmt::Write) -> fmt::Result;
-    fn render(&self) -> Result<String, fmt::Error>;
+pub trait Render {
+    fn render_e(&self, out: &mut dyn fmt::Write, e: &'static str) -> fmt::Result;
 }
 
-pub trait Render {
-    fn render(&self, out: &mut dyn fmt::Write, e: &'static str) -> fmt::Result;
+impl Render for () {
+    fn render_e(&self, _out: &mut dyn fmt::Write, e: &'static str) -> fmt::Result {
+        eprintln!("{e}");
+        Err(fmt::Error)
+    }
 }
 
 pub trait View {

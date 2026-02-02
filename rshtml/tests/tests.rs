@@ -1,10 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use rshtml::{
-        RsHtml,
-        functions::*,
-        traits::{Render, RsHtml},
-    };
+    use rshtml::{RsHtml, functions::*, traits::View};
 
     #[test]
     pub fn test_empty() {
@@ -12,7 +8,10 @@ mod tests {
         struct EmptyPage {}
 
         let page = EmptyPage {};
-        println!("{}", page.render().unwrap());
+
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 
     #[test]
@@ -27,7 +26,10 @@ mod tests {
             is_ok: true,
             count: 10,
         };
-        println!("{}", page.render().unwrap());
+
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 
     #[test]
@@ -40,7 +42,10 @@ mod tests {
         let page = ForPage {
             users: vec!["Alice".to_string(), "Bob".to_string()],
         };
-        println!("{}", page.render().unwrap());
+
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 
     #[test]
@@ -51,22 +56,10 @@ mod tests {
         }
 
         let page = WhilePage { count: 5 };
-        println!("{}", page.render().unwrap());
-    }
 
-    #[test]
-    pub fn test_match() {
-        #[derive(RsHtml)]
-        struct MatchPage {
-            value: i32,
-            data: Option<String>,
-        }
-
-        let page = MatchPage {
-            value: 10,
-            data: Some("Hello".to_string()),
-        };
-        println!("{}", page.render().unwrap());
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 
     #[test]
@@ -75,7 +68,9 @@ mod tests {
         struct CommentPage {}
 
         let page = CommentPage {};
-        println!("{}", page.render().unwrap());
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 
     #[test]
@@ -98,7 +93,10 @@ mod tests {
             data: Some("Hello".to_string()),
             for_escape: "'<script/>'".to_string(),
         };
-        println!("{}", page.render().unwrap());
+
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 
     #[test]
@@ -113,7 +111,10 @@ mod tests {
             value: 10,
             data: "Hello".to_string(),
         };
-        println!("{}", page.render().unwrap());
+
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 
     #[test]
@@ -122,16 +123,10 @@ mod tests {
         struct CodeBlockPage {}
 
         let page = CodeBlockPage {};
-        println!("{}", page.render().unwrap());
-    }
 
-    #[test]
-    pub fn test_raw_block() {
-        #[derive(RsHtml)]
-        struct RawBlockPage {}
-
-        let page = RawBlockPage {};
-        println!("{}", page.render().unwrap());
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 
     #[test]
@@ -141,7 +136,6 @@ mod tests {
         }
 
         #[derive(RsHtml)]
-        #[rshtml(no_warn)]
         struct ComponentPage {
             value: i32,
             title: String,
@@ -167,13 +161,15 @@ mod tests {
 
         page.value = 11;
 
-        println!("{}", page.render().unwrap());
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 
     #[test]
     pub fn test_continue_break() {
         #[derive(RsHtml)]
-        #[rshtml(path = "continue_break.rs.html")]
+        #[rshtml(path = "views/continue_break.rs.html")]
         struct ContinueBreakPage {
             users: Vec<String>,
         }
@@ -181,7 +177,10 @@ mod tests {
         let page = ContinueBreakPage {
             users: vec!["Alice".to_string(), "Bob".to_string(), "John".to_string()],
         };
-        println!("{}", page.render().unwrap());
+
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 
     #[test]
@@ -196,7 +195,10 @@ mod tests {
             date: chrono::Utc::now(),
             users: vec!["Alice".to_string(), "Bob".to_string(), "John".to_string()],
         };
-        println!("{}", page.render().unwrap());
+
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 
     #[test]
@@ -209,6 +211,9 @@ mod tests {
         let page = EscapingPage {
             my_var: "<p>This is <strong>bold</strong> text.</p>".to_string(),
         };
-        println!("{}", page.render().unwrap());
+
+        let mut out = String::with_capacity(page.text_size());
+        page.render(&mut out).unwrap();
+        println!("{out}");
     }
 }

@@ -137,7 +137,7 @@ fn attribute_value<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         float.map(|value: f64| Ok(value.to_token_stream())),
         string_line.map(|value| TokenStream::from_str(value)),
         ("@", alt((simple_expr_paren, simple_expr))).map(|(_, value)| Ok(value.0)),
-        inner_template_content.map(|value| Ok(quote!{ ::rshtml::Expr(|__out__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#value Ok(())}) })),
+        inner_template_content.map(|value| Ok(quote!{ ::rshtml::ViewFn::new((|__out__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#value Ok(())}, 0)) })),
     ))
     .parse_next(input)?;
 

@@ -1,11 +1,21 @@
-use crate::{EscapingWriter, traits::View};
-use std::fmt::{self, Debug, Display, Write};
+use crate::{
+    EscapingWriter,
+    traits::{Render, View},
+};
+use std::{
+    fmt::{self, Debug, Display, Write},
+    ops::Deref,
+};
 
 #[derive(Debug)]
 pub struct Exp<T: ?Sized>(pub T);
 
 impl<T: View> Exp<T> {
     pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+        self.0.render(out)
+    }
+
+    pub fn render_e(&self, out: &mut dyn fmt::Write, _e: &'static str) -> fmt::Result {
         self.0.render(out)
     }
 }
@@ -22,5 +32,19 @@ where
 {
     fn fmt(&self, out: &mut fmt::Formatter<'_>) -> fmt::Result {
         (self.0).render(out)
+    }
+}
+
+impl<T: Display> Render for Exp<T> {
+    fn render_e(&self, out: &mut dyn fmt::Write, _e: &'static str) -> fmt::Result {
+        write!(&mut EscapingWriter { inner: out }, "{}", &self.0)
+    }
+}
+
+impl<T> Deref for Exp<T> {
+    type Target = ();
+
+    fn deref(&self) -> &Self::Target {
+        &()
     }
 }
