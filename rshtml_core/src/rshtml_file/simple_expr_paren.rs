@@ -13,7 +13,7 @@ use winnow::{
     token::any,
 };
 
-pub fn simple_expr_paren<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn simple_expr_paren<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, TokenStream)> {
     let start = input.input;
     let checkpoint = input.checkpoint();
 
@@ -72,7 +72,7 @@ pub fn simple_expr_paren<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> 
 
     let expr_ts = escape_or_raw(quote!(#expression), is_escaped, ""); // TODO: Add Diagnostic Message
 
-    Ok(expr_ts)
+    Ok((quote! {#expression}, expr_ts))
 }
 
 fn nested_expression<'a>(input: &mut Input<'a>) -> ModalResult<()> {

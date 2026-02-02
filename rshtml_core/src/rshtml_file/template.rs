@@ -76,8 +76,10 @@ pub fn block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
                 child_content_directive.label("child content"),
                 continue_directive.label("continue"),
                 break_directive.label("break"),
-                simple_expr_paren.label("parenthesized expression"),
-                simple_expr.label("expression"),
+                simple_expr_paren
+                    .map(|(_, x)| x)
+                    .label("parenthesized expression"),
+                simple_expr.map(|(_, x)| x).label("expression"),
                 cut_err(fail).expected("a valid directive or an expression after '@'"),
             )),
         )
