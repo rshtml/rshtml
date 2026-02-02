@@ -29,9 +29,8 @@ use winnow::{
 };
 
 // TODO: process here all analyzer controls
-// TODO: Consider whether the import paths in the `use` statement should start from the location of the file.
 // TODO: Improve the error message when a file is not found in compiler loops. also curcular dependency error.
-// TODO: The `use directive` should be checked to see if the file exists; otherwise, an error message should be displayed.
+// TODO: In debug mode, extract the files to their original location or a different build point, ensuring that compilation errors are displayed correctly. use include! macro.
 
 pub type Input<'a> = Stateful<&'a str, &'a mut Context>;
 
