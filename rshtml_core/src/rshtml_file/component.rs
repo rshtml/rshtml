@@ -70,7 +70,7 @@ pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let fn_name = Ident::new(&use_directive.fn_name, Span::call_site());
 
     ts.extend(attributes);
-    ts.extend(quote! {let child_content = |__out__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#body  Ok(())};});
+    ts.extend(quote! {let child_content = |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {#body  Ok(())};});
 
     let args = param_names_to_ts(&mut attribute_names);
 
@@ -133,11 +133,11 @@ fn attribute_value<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
 
     let value_result = alt((
-        alt(("true", "false")).map(|value| TokenStream::from_str(value)),
+        alt(("true", "false")).map(TokenStream::from_str),
         float.map(|value: f64| Ok(value.to_token_stream())),
-        string_line.map(|value| TokenStream::from_str(value)),
+        string_line.map(TokenStream::from_str),
         ("@", alt((simple_expr_paren, simple_expr))).map(|(_, value)| Ok(value.0)),
-        inner_template_content.map(|value| Ok(quote!{ ::rshtml::ViewFn::new((|__out__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {#value Ok(())}, 0)) })),
+        inner_template_content.map(|value| Ok(quote!{ ::rshtml::ViewFn::new((|__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {#value Ok(())}, 0)) })),
     ))
     .parse_next(input)?;
 

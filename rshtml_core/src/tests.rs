@@ -1,6 +1,6 @@
 use crate::{Compiler, context::Context, rshtml_file};
 use proc_macro2::{Span, TokenStream};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use syn::{Generics, Ident};
 
 #[test]
@@ -17,7 +17,7 @@ fn test_compiler() {
     let res = result.to_string();
     println!("{res}");
 
-    assert_eq!(true, !res.contains("compile_error!"));
+    assert!(!res.contains("compile_error!"));
 }
 
 #[test]
@@ -27,8 +27,7 @@ fn test_rshtml_file() {
         Path::new("views/home.rs.html"),
     ];
 
-    let mut ctx = Context::default();
-    ctx.struct_fields = vec!["user".to_owned()];
+    let ctx = Context::new(PathBuf::new(), vec!["user".to_owned()]);
 
     let result = rshtml_file::compile(paths[0], ctx);
 

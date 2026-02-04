@@ -1,23 +1,8 @@
-use crate::{EscapingWriter, ViewIter};
-use std::{
-    borrow::Cow,
-    cell::RefCell,
-    fmt::{self, Write},
-};
-
-pub trait Render {
-    fn render_e(&self, out: &mut dyn fmt::Write, e: &'static str) -> fmt::Result;
-}
-
-impl Render for () {
-    fn render_e(&self, _out: &mut dyn fmt::Write, e: &'static str) -> fmt::Result {
-        eprintln!("{e}");
-        Err(fmt::Error)
-    }
-}
+use crate::{ViewIter, Write};
+use std::{borrow::Cow, cell::RefCell, fmt};
 
 pub trait View {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result;
+    fn render(&self, out: &mut dyn Write) -> fmt::Result;
 
     fn text_size(&self) -> usize {
         0
@@ -25,7 +10,7 @@ pub trait View {
 }
 
 impl<T: View + ?Sized> View for &T {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+    fn render(&self, out: &mut dyn Write) -> fmt::Result {
         (*self).render(out)
     }
 
@@ -35,7 +20,7 @@ impl<T: View + ?Sized> View for &T {
 }
 
 impl<T: View> View for [T] {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+    fn render(&self, out: &mut dyn Write) -> fmt::Result {
         for item in self {
             item.render(out)?;
         }
@@ -44,7 +29,7 @@ impl<T: View> View for [T] {
 }
 
 impl<T: View> View for Vec<T> {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+    fn render(&self, out: &mut dyn Write) -> fmt::Result {
         for item in self {
             item.render(out)?;
         }
@@ -53,19 +38,19 @@ impl<T: View> View for Vec<T> {
 }
 
 impl<T: View + ?Sized> View for Box<T> {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+    fn render(&self, out: &mut dyn Write) -> fmt::Result {
         (**self).render(out)
     }
 }
 
 impl View for () {
-    fn render(&self, _out: &mut dyn fmt::Write) -> fmt::Result {
+    fn render(&self, _out: &mut dyn Write) -> fmt::Result {
         Ok(())
     }
 }
 
 impl<'a> View for Cow<'a, str> {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+    fn render(&self, out: &mut dyn Write) -> fmt::Result {
         (**self).render(out)
     }
     fn text_size(&self) -> usize {
@@ -74,8 +59,8 @@ impl<'a> View for Cow<'a, str> {
 }
 
 impl<'a> View for fmt::Arguments<'a> {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-        write!(&mut EscapingWriter { inner: out }, "{}", self)
+    fn render(&self, out: &mut dyn Write) -> fmt::Result {
+        write!(out, "{}", self)
     }
 }
 
@@ -83,8 +68,8 @@ macro_rules! impl_view_for_display {
     ($($t:ty),*) => {
         $(
             impl View for $t {
-                fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-                    write!(&mut EscapingWriter { inner: out }, "{}", self)
+                fn render(&self, out: &mut dyn Write) -> fmt::Result {
+                    write!(out, "{}", self)
                 }
             }
         )*

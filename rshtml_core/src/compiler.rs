@@ -13,6 +13,7 @@ pub struct Compiler {
     struct_fields: Vec<String>,
     base_dir: PathBuf,
     path_stack: Vec<PathBuf>,
+    visited_paths: HashSet<PathBuf>,
 }
 
 impl Compiler {
@@ -20,9 +21,10 @@ impl Compiler {
         Compiler {
             struct_name,
             struct_generics,
-            struct_fields: struct_fields,
+            struct_fields,
             base_dir: PathBuf::new(),
             path_stack: Vec::new(),
+            visited_paths: HashSet::new(),
         }
     }
 
@@ -33,7 +35,7 @@ impl Compiler {
         };
 
         let (fn_signs, fn_bodies, include_strs, total_text_size, fn_name) = match self
-            .compile_rshtml_files(&path)
+            .compile_rshtml_files(path)
         {
             Ok((fn_signs, fn_bodies, include_strs, total_text_size, fn_name)) => {
                 (fn_signs, fn_bodies, include_strs, total_text_size, fn_name)
@@ -50,7 +52,7 @@ impl Compiler {
         };
 
         let root_fn_name = Ident::new(&fn_name, Span::call_site());
-        let root_fn_call = quote! {self.#root_fn_name(__out__, |__out__: &mut dyn ::std::fmt::Write| -> ::std::fmt::Result {Ok(())})?;};
+        let root_fn_call = quote! {self.#root_fn_name(__out__, |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {Ok(())})?;};
 
         let (impl_generics, type_generics, where_clause) = self.struct_generics.split_for_impl();
         let struct_name = self.struct_name.to_owned();
@@ -59,8 +61,13 @@ impl Compiler {
              const _ : () = {
                 #include_strs
 
-                impl #impl_generics ::rshtml::traits::View for #struct_name #type_generics #where_clause {
-                    fn render(&self, __out__: &mut dyn ::std::fmt::Write) -> ::std::fmt::Result {
+                #[allow(unused_imports)]
+                use ::rshtml::{View, Render, Write};
+                #[allow(unused_imports)]
+                use ::std::fmt::Display;
+
+                impl #impl_generics ::rshtml::View for #struct_name #type_generics #where_clause {
+                    fn render(&self, __out__: &mut dyn ::rshtml::Write) -> ::std::fmt::Result {
                         trait __rshtml__fns {
                             #fn_signs
                         }
@@ -98,17 +105,12 @@ impl Compiler {
             return Err(format!("Circular dependency detected: {}", chain_str));
         }
 
-        // if self.path_stack.iter().any(|p| p == path) {
-        //     return Err(format!("Circular dependency detected: {}", path.display()));
-        // }
-
-        self.path_stack.push(path.to_path_buf());
-
-        let mut ctx = Context::default();
-        ctx.struct_fields = self.struct_fields.to_owned();
-        ctx.base_dir = self.base_dir.to_owned();
-
         let path_with_base = self.base_dir.join(path);
+
+        self.visited_paths.insert(path_with_base.to_owned());
+
+        let ctx = Context::new(self.base_dir.to_owned(), self.struct_fields.to_owned());
+
         let (mut fn_signs, mut fn_bodies, mut include_strs, ctx) =
             rshtml_file::compile(&path_with_base, ctx)?;
         let mut total_text_size = ctx.text_size;
@@ -120,6 +122,10 @@ impl Compiler {
             .map(|ud| ud.path.to_owned())
             .collect::<HashSet<PathBuf>>()
         {
+            if self.visited_paths.contains(&self.base_dir.join(&p)) {
+                continue;
+            }
+
             let (fn_sign, fn_body, include_str_ts, text_size, _) = self
                 .compile_rshtml_files(&p)
                 .map_err(|e| format!("{}:\n{}", path_with_base.display(), e))?;

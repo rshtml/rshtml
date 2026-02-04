@@ -1,9 +1,8 @@
+use crate::{View, Write};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
-
-use crate::traits::View;
 
 pub fn time<T: Display + ?Sized>(value: &T) -> RsDateTime {
     let value_str = value.to_string();
@@ -57,7 +56,7 @@ impl RsDateTime {
 }
 
 impl View for RsDateTime {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+    fn render(&self, out: &mut dyn Write) -> fmt::Result {
         write!(out, "{}", self.0.format(self.1.as_str()))
     }
 }

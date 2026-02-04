@@ -1,4 +1,4 @@
-use rshtml::{traits::View, v};
+use rshtml::{View, v};
 
 #[test]
 fn v_macro_try() {

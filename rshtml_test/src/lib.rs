@@ -2,7 +2,7 @@
 
 mod website;
 
-use rshtml::{RsHtml, functions::*, traits::View};
+use rshtml::{RsHtml, View, functions::*};
 use serde::Serialize;
 
 #[derive(RsHtml)]

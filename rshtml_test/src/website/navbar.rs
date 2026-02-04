@@ -1,4 +1,4 @@
-use rshtml::{traits::View, v};
+use rshtml::{View, v};
 
 pub fn navbar(sections: &[(&str, &str)]) -> impl View {
     let mut section_views = Vec::new();

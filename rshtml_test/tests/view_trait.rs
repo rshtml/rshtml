@@ -1,6 +1,6 @@
 use std::fmt;
 
-use rshtml::{traits::View, v};
+use rshtml::{View, v};
 
 struct Home {
     title: String,
@@ -8,7 +8,7 @@ struct Home {
 }
 
 impl View for Home {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+    fn render(&self, out: &mut dyn rshtml::Write) -> fmt::Result {
         v!(<div>Home Page, title:{&self.title}, count:{self.count}</div>)(out)
     }
 }

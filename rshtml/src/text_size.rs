@@ -1,6 +1,5 @@
+use crate::View;
 use std::ops::Deref;
-
-use crate::traits::View;
 
 pub struct TextSize<T>(pub T);
 

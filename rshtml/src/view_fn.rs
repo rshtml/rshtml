@@ -1,4 +1,4 @@
-use crate::traits::View;
+use crate::{View, Write};
 use std::{fmt, ops::Deref};
 
 pub struct ViewFn<T>(pub T, usize);
@@ -11,10 +11,10 @@ impl<T> ViewFn<T> {
 
 impl<T> View for ViewFn<T>
 where
-    T: Fn(&mut dyn fmt::Write) -> fmt::Result,
+    T: Fn(&mut dyn Write) -> fmt::Result,
 {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-        (self.0)(out)
+    fn render(&self, out: &mut dyn Write) -> fmt::Result {
+        (self.0)(out.raw())
     }
 
     fn text_size(&self) -> usize {
@@ -24,7 +24,7 @@ where
 
 impl<'a, T> ViewFn<T>
 where
-    T: Fn(&mut dyn fmt::Write) -> fmt::Result + 'a,
+    T: Fn(&mut dyn Write) -> fmt::Result + 'a,
 {
     pub fn boxed(self) -> Box<dyn View + 'a> {
         Box::new(self)

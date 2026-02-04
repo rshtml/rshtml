@@ -15,7 +15,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
 
     let template_path = match parse_template_path_from_attrs(&input.attrs) {
         Ok(rshtml_config) => {
-            let template_path = if let Some(path) = rshtml_config.path {
+            if let Some(path) = rshtml_config.path {
                 path
             } else {
                 let struct_name_str = struct_name.to_string();
@@ -28,9 +28,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
 
                 template_file = to_snake_case(&template_file);
                 format!("views/{template_file}")
-            };
-
-            template_path
+            }
         }
         Err(err) => {
             return err.to_compile_error().into();

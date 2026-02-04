@@ -1,8 +1,7 @@
-use rshtml::traits::*;
-use rshtml::{ViewFn, v};
+use rshtml::{IntoViewIter, View, ViewFn, v};
 use std::fmt;
 
-fn render_view(view: ViewFn<impl Fn(&mut dyn fmt::Write) -> fmt::Result>) -> String {
+fn render_view(view: ViewFn<impl Fn(&mut dyn rshtml::Write) -> fmt::Result>) -> String {
     let mut buffer = String::with_capacity(view.text_size());
     let _ = (view.0)(&mut buffer);
     buffer

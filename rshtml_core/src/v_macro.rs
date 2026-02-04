@@ -89,7 +89,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
             #expr_defs
 
             (
-                move |out: &mut dyn std::fmt::Write| -> std::fmt::Result {
+                move |out: &mut dyn ::rshtml::Write| -> std::fmt::Result {
                     #body
                     Ok(())
                 },
@@ -135,17 +135,17 @@ fn expr(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, TokenStream)> {
     let output = if let Ok(expr) = parse2::<syn::Expr>(stream.clone()) {
         (
             quote! { let #def_ident = (#expr); _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
-            quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
+            quote! { ::rshtml::Exp(&(#def_ident)).render(&mut ::rshtml::EscapingWriter{ inner: out })?; },
         )
     } else if let Ok(block) = parse2::<syn::Block>(stream.clone()) {
         (
             quote! { let #def_ident = {#block}; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
-            quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
+            quote! { ::rshtml::Exp(&(#def_ident)).render(&mut ::rshtml::EscapingWriter{ inner: out })?; },
         )
     } else {
         (
             quote! { let #def_ident = {#stream}; _text_size += ::rshtml::TextSize(&#def_ident).text_size(); },
-            quote! { ::rshtml::Exp(&(#def_ident)).render(out)?; },
+            quote! { ::rshtml::Exp(&(#def_ident)).render(&mut ::rshtml::EscapingWriter{ inner: out })?; },
         )
     };
 

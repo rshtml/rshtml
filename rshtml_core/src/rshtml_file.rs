@@ -34,7 +34,7 @@ use winnow::{
 
 pub type Input<'a> = Stateful<&'a str, &'a mut Context>;
 
-pub fn compile<'a>(
+pub fn compile(
     path: &Path,
     mut ctx: Context,
 ) -> Result<(TokenStream, TokenStream, TokenStream, Context), String> {
@@ -53,7 +53,7 @@ pub fn compile<'a>(
             state: &mut ctx,
         };
 
-        let body = match template(&mut input) {
+        match template(&mut input) {
             Ok(res) => res,
             Err(e) => {
                 let err = e.into_inner().unwrap();
@@ -88,9 +88,7 @@ pub fn compile<'a>(
 
                 return Err(diag);
             }
-        };
-
-        body
+        }
     };
 
     let full_path_str = full_path.to_string_lossy();
@@ -107,14 +105,14 @@ pub fn compile<'a>(
     Ok((
         quote! {
          fn #fn_name(&self,
-                __out__: &mut dyn ::std::fmt::Write,
-                child_content: impl Fn(&mut dyn ::std::fmt::Write) -> ::std::fmt::Result,
+                __out__: &mut dyn ::rshtml::Write,
+                child_content: impl Fn(&mut dyn ::rshtml::Write) -> ::std::fmt::Result,
                 #args) -> ::std::fmt::Result;
         },
         quote! {
         fn #fn_name(&self,
-                __out__: &mut dyn ::std::fmt::Write,
-                child_content: impl Fn(&mut dyn ::std::fmt::Write) -> ::std::fmt::Result,
+                __out__: &mut dyn ::rshtml::Write,
+                child_content: impl Fn(&mut dyn ::rshtml::Write) -> ::std::fmt::Result,
                 #args) -> ::std::fmt::Result {#body Ok(())}
         },
         quote! { let _ = include_str!(#full_path_str); },

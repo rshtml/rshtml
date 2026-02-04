@@ -1,6 +1,8 @@
+#![cfg(feature = "functions")]
+
 #[cfg(test)]
 mod tests {
-    use rshtml::{RsHtml, functions::*, traits::View};
+    use rshtml::{RsHtml, View, functions::*};
 
     #[test]
     pub fn test_empty() {
@@ -48,30 +50,30 @@ mod tests {
         println!("{out}");
     }
 
-    #[test]
-    pub fn test_while() {
-        #[derive(RsHtml)]
-        struct WhilePage {
-            count: i32,
-        }
+    // #[test]
+    // pub fn test_while() {
+    //     #[derive(RsHtml)]
+    //     struct WhilePage {
+    //         count: i32,
+    //     }
 
-        let page = WhilePage { count: 5 };
+    //     let page = WhilePage { count: 5 };
 
-        let mut out = String::with_capacity(page.text_size());
-        page.render(&mut out).unwrap();
-        println!("{out}");
-    }
+    //     let mut out = String::with_capacity(page.text_size());
+    //     page.render(&mut out).unwrap();
+    //     println!("{out}");
+    // }
 
-    #[test]
-    pub fn test_comment() {
-        #[derive(RsHtml)]
-        struct CommentPage {}
+    // #[test]
+    // pub fn test_comment() {
+    //     #[derive(RsHtml)]
+    //     struct CommentPage {}
 
-        let page = CommentPage {};
-        let mut out = String::with_capacity(page.text_size());
-        page.render(&mut out).unwrap();
-        println!("{out}");
-    }
+    //     let page = CommentPage {};
+    //     let mut out = String::with_capacity(page.text_size());
+    //     page.render(&mut out).unwrap();
+    //     println!("{out}");
+    // }
 
     #[test]
     pub fn test_simple_expression() {

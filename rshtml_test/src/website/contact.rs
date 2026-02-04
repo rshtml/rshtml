@@ -1,4 +1,4 @@
-use rshtml::{traits::View, v};
+use rshtml::{View, v};
 
 pub fn contact(title: &str, email: &str) -> impl View {
     v! {

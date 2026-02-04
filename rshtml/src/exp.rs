@@ -1,9 +1,6 @@
-use crate::{
-    EscapingWriter,
-    traits::{Render, View},
-};
+use crate::{Render, View, Write};
 use std::{
-    fmt::{self, Debug, Display, Write},
+    fmt::{self, Debug, Display},
     ops::Deref,
 };
 
@@ -11,18 +8,18 @@ use std::{
 pub struct Exp<T: ?Sized>(pub T);
 
 impl<T: View> Exp<T> {
-    pub fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+    pub fn render(&self, out: &mut dyn Write) -> fmt::Result {
         self.0.render(out)
     }
 
-    pub fn render_e(&self, out: &mut dyn fmt::Write, _e: &'static str) -> fmt::Result {
+    pub fn render_e(&self, out: &mut dyn Write, _e: &'static str) -> fmt::Result {
         self.0.render(out)
     }
 }
 
 impl<T: Display> View for Exp<T> {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
-        write!(&mut EscapingWriter { inner: out }, "{}", &self.0)
+    fn render(&self, out: &mut dyn Write) -> fmt::Result {
+        write!(out, "{}", &self.0)
     }
 }
 
@@ -36,8 +33,8 @@ where
 }
 
 impl<T: Display> Render for Exp<T> {
-    fn render_e(&self, out: &mut dyn fmt::Write, _e: &'static str) -> fmt::Result {
-        write!(&mut EscapingWriter { inner: out }, "{}", &self.0)
+    fn render_e(&self, out: &mut dyn Write, _e: &'static str) -> fmt::Result {
+        write!(out, "{}", &self.0)
     }
 }
 
