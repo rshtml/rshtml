@@ -3,6 +3,7 @@ use super::{
     template::{rust_identifier, string_line},
     utils::{escape_or_raw, get_struct_field},
 };
+use crate::{diagnostic::Diagnostic, position::Position};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Expr, parse_str};
@@ -15,8 +16,27 @@ use winnow::{
     token::any,
 };
 
-pub fn simple_expr<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, TokenStream)> {
+pub fn simple_expr<'a, 'ctx>(
+    input: &mut Input<'a, 'ctx>,
+) -> ModalResult<(TokenStream, TokenStream)> {
     let checkpoint = input.checkpoint();
+
+    let len = input.state.source.len().saturating_sub(input.input.len());
+    let position: Position = (
+        input.state.source,
+        input.state.source.len().saturating_sub(input.input.len()),
+    )
+        .into();
+
+    let message = Diagnostic(input.state.source).message(
+        input.state.path,
+        &position,
+        &format!(
+            "attempt to use an expression that does not implement the Display trait. {position:?} {len}"
+        ),
+        "this expression does not implement the Display trait.",
+        1,
+    );
 
     not((
         multispace0,
@@ -66,21 +86,12 @@ pub fn simple_expr<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, Token
         )));
     }
 
-    // let message = input.state.diagnostic.caution(
-    //     &input.state.diagnostic.sources,
-    //     &position,
-    //     "attempt to use an expression that does not implement the Display trait.",
-    //     &[],
-    //     "this expression does not implement the Display trait.",
-    //     expr.len(),
-    // );
-
-    let expr_ts = escape_or_raw(quote!(#expression), is_escaped, ""); // TODO: Add Diagnostic Message
+    let expr_ts = escape_or_raw(quote!(#expression), is_escaped, &message);
 
     Ok((quote! {#expression}, expr_ts))
 }
 
-fn chain_segment<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+fn chain_segment<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     alt((
         ("&", rust_identifier).void(),
         (".", rust_identifier).void(),
@@ -92,7 +103,7 @@ fn chain_segment<'a>(input: &mut Input<'a>) -> ModalResult<()> {
     .parse_next(input)
 }
 
-fn nested_content<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+fn nested_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     alt((
         ("(", repeat(0.., nested_content).fold(|| (), |_, _| ()), ")").void(),
         ("[", repeat(0.., nested_content).fold(|| (), |_, _| ()), "]").void(),
@@ -102,7 +113,7 @@ fn nested_content<'a>(input: &mut Input<'a>) -> ModalResult<()> {
     .parse_next(input)
 }
 
-fn expression_boundary<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+fn expression_boundary<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     alt((
         ("<", alt(("/", winnow::ascii::alpha1))).void(),
         "@".void(),

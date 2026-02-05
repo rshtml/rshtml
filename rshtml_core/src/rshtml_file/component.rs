@@ -19,7 +19,7 @@ use winnow::{
     token::{any, take_while},
 };
 
-pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn component<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
     let mut ts = TokenStream::new();
 
@@ -47,6 +47,7 @@ pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 
     let use_directive_opt = input
         .state
+        .info
         .use_directives
         .iter()
         .find(|use_directive| use_directive.name == tag_name);
@@ -79,7 +80,7 @@ pub fn component<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     Ok(quote! {{ #ts }})
 }
 
-fn attributes<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, Vec<&'a str>)> {
+fn attributes<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(TokenStream, Vec<&'a str>)> {
     repeat(0.., (multispace1, attribute))
         .fold(
             || (TokenStream::new(), Vec::new()),
@@ -92,7 +93,7 @@ fn attributes<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, Vec<&'a st
         .parse_next(input)
 }
 
-fn attribute<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, &'a str)> {
+fn attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(TokenStream, &'a str)> {
     let checkpoint = input.checkpoint();
 
     let (name, value) = (
@@ -116,7 +117,7 @@ fn attribute<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, &'a str)> {
     Ok((quote! {let #name_ts = #value;}, name))
 }
 
-fn attribute_name<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
+fn attribute_name<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
     let start = input.input;
 
     (
@@ -129,7 +130,7 @@ fn attribute_name<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
     Ok(&start[..consumed])
 }
 
-fn attribute_value<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+fn attribute_value<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
 
     let value_result = alt((
@@ -155,7 +156,7 @@ fn attribute_value<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     }
 }
 
-pub fn component_tag_identifier<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
+pub fn component_tag_identifier<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
     let start = input.input;
 
     (

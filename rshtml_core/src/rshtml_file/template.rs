@@ -19,7 +19,7 @@ use winnow::{
     token::{any, none_of, one_of, take_while},
 };
 
-pub fn template<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn template<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     (
         opt("\u{FEFF}"),
         multispace0,
@@ -35,7 +35,7 @@ pub fn template<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         .parse_next(input)
 }
 
-pub fn template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     repeat(0.., alt((text.label("html text"), block)))
         .fold(TokenStream::new, |mut acc, ts| {
             acc.extend(ts);
@@ -44,7 +44,7 @@ pub fn template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
         .parse_next(input)
 }
 
-pub fn inner_template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn inner_template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     (
         '{',
         repeat(0.., alt((inner_text.label("html text"), block))).fold(
@@ -63,7 +63,7 @@ pub fn inner_template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStr
         .parse_next(input)
 }
 
-pub fn block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     alt((
         component.label("component"),
         (
@@ -89,7 +89,7 @@ pub fn block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     .parse_next(input)
 }
 
-pub fn rust_identifier<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
+pub fn rust_identifier<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
     let start = input.input;
 
     (
@@ -102,7 +102,7 @@ pub fn rust_identifier<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
     Ok(&start[..consumed])
 }
 
-pub fn string_line<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
+pub fn string_line<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
     let start = input.input;
 
     alt((

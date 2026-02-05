@@ -43,10 +43,10 @@ fn byte_to_line_col(source: &str, byte_offset: usize) -> (usize, usize) {
         if ch == '\n' {
             line += 1;
             col = 1;
-        } else if ch == '\r' {
-            continue;
         } else {
-            col += 1;
+            if ch != '\r' || ch == '\u{FEFF}' {
+                col += 1;
+            }
         }
     }
     (line, col)

@@ -13,7 +13,11 @@ mod text;
 mod use_directive;
 mod utils;
 
-use crate::{context::Context, diagnostic::Diagnostic, position::Position};
+use crate::{
+    context::{Context, Info},
+    diagnostic::Diagnostic,
+    position::Position,
+};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use std::{
@@ -32,75 +36,82 @@ use winnow::{
 // TODO: Improve the error message when a file is not found in compiler loops. also curcular dependency error.
 // TODO: In debug mode, extract the files to their original location or a different build point, ensuring that compilation errors are displayed correctly. use include! macro.
 
-pub type Input<'a> = Stateful<&'a str, &'a mut Context>;
+pub type Input<'a, 'ctx> = Stateful<&'a str, &'a mut Context<'ctx>>;
 
 pub fn compile(
     path: &Path,
-    mut ctx: Context,
-) -> Result<(TokenStream, TokenStream, TokenStream, Context), String> {
+    base_dir: &Path,
+    struct_fields: &[String],
+) -> Result<(TokenStream, TokenStream, TokenStream, Info), String> {
     let (full_path, source) = match read_template(path) {
-        Ok((full_path, source)) => (full_path, source),
+        Ok((full_path, mut source)) => {
+            if source.starts_with('\u{FEFF}') {
+                source.remove(0);
+            }
+            (full_path, source)
+        }
         Err(msg) => {
             return Err(msg);
         }
     };
 
-    let body = {
-        ctx.fn_name = generate_fn_name(path);
+    let mut ctx = Context::new(path, &source, base_dir, struct_fields);
 
-        let mut input = Input {
-            input: source.as_str(),
-            state: &mut ctx,
-        };
+    ctx.info.fn_name = generate_fn_name(path);
 
-        match template(&mut input) {
-            Ok(res) => res,
-            Err(e) => {
-                let err = e.into_inner().unwrap();
+    let mut input = Input {
+        input: source.as_str(),
+        state: &mut ctx,
+    };
 
-                let mut labels = Vec::new();
-                let mut expecteds = Vec::new();
+    let body = match template(&mut input) {
+        Ok(res) => res,
+        Err(e) => {
+            let err = e.into_inner().unwrap();
 
-                for context in err.context() {
-                    match context {
-                        StrContext::Label(l) => labels.push(l.to_string()),
-                        StrContext::Expected(e) => match e {
-                            StrContextValue::Description(desc) => expecteds.push(desc.to_string()),
-                            other => expecteds.push(format!("expected {}", other)),
-                        },
-                        _ => {}
-                    }
+            let mut labels = Vec::new();
+            let mut expecteds = Vec::new();
+
+            for context in err.context() {
+                match context {
+                    StrContext::Label(l) => labels.push(l.to_string()),
+                    StrContext::Expected(e) => match e {
+                        StrContextValue::Description(desc) => expecteds.push(desc.to_string()),
+                        other => expecteds.push(format!("expected {}", other)),
+                    },
+                    _ => {}
                 }
-
-                let label = if !labels.is_empty() {
-                    labels.reverse();
-                    format!("in {}:", labels.join(" > "))
-                } else {
-                    String::new()
-                };
-
-                expecteds.reverse();
-                let expected = expecteds.join(" or ");
-
-                let offset = source.len().saturating_sub(input.input.len());
-                let position: Position = (source.as_str(), offset).into();
-                let diag = Diagnostic(&source).message(path, &position, &label, &expected, 1);
-
-                return Err(diag);
             }
+
+            let label = if !labels.is_empty() {
+                labels.reverse();
+                format!("in {}:", labels.join(" > "))
+            } else {
+                String::new()
+            };
+
+            expecteds.reverse();
+            let expected = expecteds.join(" or ");
+
+            let offset = source.len().saturating_sub(input.input.len());
+            let position: Position = (source.as_str(), offset).into();
+            let diag = Diagnostic(&source).message(path, &position, &label, &expected, 1);
+
+            return Err(diag);
         }
     };
 
     let full_path_str = full_path.to_string_lossy();
 
     let mut params: Vec<(&str, &str)> = ctx
+        .info
         .template_params
         .iter()
         .map(|(a, b)| (a.as_str(), b.as_str()))
         .collect();
 
     let args = params_to_ts(&mut params);
-    let fn_name = Ident::new(&ctx.fn_name, Span::call_site());
+    let fn_name = Ident::new(&ctx.info.fn_name, Span::call_site());
 
     Ok((
         quote! {
@@ -116,7 +127,7 @@ pub fn compile(
                 #args) -> ::std::fmt::Result {#body Ok(())}
         },
         quote! { let _ = include_str!(#full_path_str); },
-        ctx,
+        ctx.info,
     ))
 }
 

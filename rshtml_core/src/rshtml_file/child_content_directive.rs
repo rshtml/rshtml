@@ -6,7 +6,7 @@ use winnow::{
     combinator::{alt, not, peek},
 };
 
-pub fn child_content_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn child_content_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     (
         "child_content",
         alt(("()".void(), peek(not(rust_identifier)).void())),

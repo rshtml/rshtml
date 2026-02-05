@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use winnow::{ModalResult, Parser, ascii::multispace0};
 
-pub fn continue_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn continue_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     ("continue", multispace0)
         .map(|(_, _)| quote! { continue })
         .parse_next(input)

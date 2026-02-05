@@ -12,7 +12,7 @@ use winnow::{
     token::none_of,
 };
 
-pub fn rust_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn rust_stmt<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     alt((
         (
             if_stmt,
@@ -47,7 +47,7 @@ pub fn rust_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     .parse_next(input)
 }
 
-fn if_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+fn if_stmt<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
 
     let (head, body) = (multispace0, "if", stmt_head, must_inner_template_content)
@@ -73,7 +73,7 @@ fn if_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     Ok(ts)
 }
 
-fn for_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+fn for_stmt<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
 
     let (head, body) = (multispace0, "for", stmt_head, must_inner_template_content)
@@ -99,7 +99,7 @@ fn for_stmt<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     Ok(ts)
 }
 
-fn stmt_head<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
+fn stmt_head<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
     let start = input.input;
 
     (
@@ -116,7 +116,7 @@ fn stmt_head<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
     Ok(head_str)
 }
 
-fn must_inner_template_content<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+fn must_inner_template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     (cut_err(peek('{')).expected("{"), inner_template_content)
         .map(|(_, content)| content)
         .parse_next(input)

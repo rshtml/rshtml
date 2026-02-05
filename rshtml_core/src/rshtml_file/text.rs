@@ -8,7 +8,7 @@ use winnow::{
     token::{any, take_while},
 };
 
-pub fn text<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn text<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     enum Chunk<'a> {
         Str(&'a str),
         Char(char),
@@ -45,7 +45,7 @@ pub fn text<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     })
     .parse_next(input)?;
 
-    input.state.text_size += text_size;
+    input.state.info.text_size += text_size;
 
     Ok(text_ts)
 }

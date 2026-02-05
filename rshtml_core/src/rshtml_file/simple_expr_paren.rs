@@ -2,6 +2,7 @@ use super::{
     Input,
     utils::{escape_or_raw, get_struct_field},
 };
+use crate::{diagnostic::Diagnostic, position::Position};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Expr, parse_str};
@@ -13,9 +14,25 @@ use winnow::{
     token::any,
 };
 
-pub fn simple_expr_paren<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream, TokenStream)> {
+pub fn simple_expr_paren<'a, 'ctx>(
+    input: &mut Input<'a, 'ctx>,
+) -> ModalResult<(TokenStream, TokenStream)> {
     let start = input.input;
     let checkpoint = input.checkpoint();
+
+    let position: Position = (
+        input.state.source,
+        input.state.source.len().saturating_sub(input.input.len()),
+    )
+        .into();
+
+    let message = Diagnostic(input.state.source).message(
+        input.state.path,
+        &position,
+        "attempt to use an expression that does not implement the Display trait.",
+        "this expression does not implement the Display trait.",
+        1,
+    );
 
     let is_escaped = (
         opt('#'),
@@ -61,21 +78,12 @@ pub fn simple_expr_paren<'a>(input: &mut Input<'a>) -> ModalResult<(TokenStream,
         )));
     }
 
-    // let message = input.state.diagnostic.caution(
-    //     &input.state.diagnostic.sources,
-    //     &position,
-    //     "attempt to use an expression that does not implement the Display trait.",
-    //     &[],
-    //     "this expression does not implement the Display trait.",
-    //     expr.len(),
-    // );
-
-    let expr_ts = escape_or_raw(quote!(#expression), is_escaped, ""); // TODO: Add Diagnostic Message
+    let expr_ts = escape_or_raw(quote!(#expression), is_escaped, &message);
 
     Ok((quote! {#expression}, expr_ts))
 }
 
-fn nested_expression<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+fn nested_expression<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     alt((
         (
             '(',

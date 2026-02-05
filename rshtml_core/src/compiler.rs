@@ -1,4 +1,4 @@
-use crate::{context::Context, rshtml_file};
+use crate::rshtml_file;
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
 use std::{
@@ -93,7 +93,9 @@ impl Compiler {
         &mut self,
         path: &Path,
     ) -> Result<(TokenStream, TokenStream, TokenStream, usize, String), String> {
-        if let Some(start_index) = self.path_stack.iter().position(|p| p == path) {
+        let path_with_base = self.base_dir.join(path);
+
+        if let Some(start_index) = self.path_stack.iter().position(|p| p == &path_with_base) {
             let mut chain: Vec<String> = self.path_stack[start_index..]
                 .iter()
                 .map(|p| p.display().to_string())
@@ -104,36 +106,35 @@ impl Compiler {
 
             return Err(format!("Circular dependency detected: {}", chain_str));
         }
+        self.path_stack.push(path_with_base.to_path_buf());
 
-        let path_with_base = self.base_dir.join(path);
+        // if let Some(p) = self.visited_paths.get(value) {}
+        if self.visited_paths.insert(path_with_base.to_owned()) {}
 
-        self.visited_paths.insert(path_with_base.to_owned());
+        let (mut fn_signs, mut fn_bodies, mut include_strs, info) =
+            rshtml_file::compile(&path_with_base, &self.base_dir, &self.struct_fields)?;
 
-        let ctx = Context::new(self.base_dir.to_owned(), self.struct_fields.to_owned());
+        let mut total_text_size = info.text_size;
+        let fn_name = info.fn_name;
 
-        let (mut fn_signs, mut fn_bodies, mut include_strs, ctx) =
-            rshtml_file::compile(&path_with_base, ctx)?;
-        let mut total_text_size = ctx.text_size;
-        let fn_name = ctx.fn_name;
-
-        for p in ctx
+        for p in info
             .use_directives
             .iter()
             .map(|ud| ud.path.to_owned())
             .collect::<HashSet<PathBuf>>()
         {
-            if self.visited_paths.contains(&self.base_dir.join(&p)) {
-                continue;
-            }
+            let visited = self.visited_paths.contains(&self.base_dir.join(&p));
 
             let (fn_sign, fn_body, include_str_ts, text_size, _) = self
                 .compile_rshtml_files(&p)
                 .map_err(|e| format!("{}:\n{}", path_with_base.display(), e))?;
 
-            fn_bodies.extend(fn_body);
-            fn_signs.extend(fn_sign);
-            include_strs.extend(include_str_ts);
-            total_text_size += text_size;
+            if !visited {
+                fn_bodies.extend(fn_body);
+                fn_signs.extend(fn_sign);
+                include_strs.extend(include_str_ts);
+                total_text_size += text_size;
+            }
         }
 
         self.path_stack.pop();

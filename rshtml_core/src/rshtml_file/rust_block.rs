@@ -10,7 +10,7 @@ use winnow::{
     token::{any, none_of, take_while},
 };
 
-pub fn rust_block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn rust_block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     let start = input.input;
     let checkpoint = input.checkpoint();
 
@@ -51,7 +51,7 @@ pub fn rust_block<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
     Ok(output)
 }
 
-fn block<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     (
         "{",
         block_content,
@@ -61,7 +61,7 @@ fn block<'a>(input: &mut Input<'a>) -> ModalResult<()> {
         .parse_next(input)
 }
 
-fn block_content<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+fn block_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     repeat(
         0..,
         alt((
@@ -77,13 +77,13 @@ fn block_content<'a>(input: &mut Input<'a>) -> ModalResult<()> {
     .parse_next(input)
 }
 
-fn line_comment<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+fn line_comment<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     ("//", take_while(0.., |c| c != '\n'))
         .void()
         .parse_next(input)
 }
 
-fn block_comment<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+fn block_comment<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     (
         "/*",
         repeat(
@@ -101,7 +101,7 @@ fn block_comment<'a>(input: &mut Input<'a>) -> ModalResult<()> {
         .parse_next(input)
 }
 
-fn string_literal<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+fn string_literal<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     (
         '"',
         repeat(0.., alt((("\\", any).void(), none_of(['"', '\\']).void()))).map(|_: Vec<()>| ()),
@@ -111,7 +111,7 @@ fn string_literal<'a>(input: &mut Input<'a>) -> ModalResult<()> {
         .parse_next(input)
 }
 
-fn char_literal<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+fn char_literal<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     (
         '\'',
         alt((("\\", any).void(), none_of(['"', '\\']).void())),

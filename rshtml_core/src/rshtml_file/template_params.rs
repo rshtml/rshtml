@@ -7,7 +7,7 @@ use winnow::{
     token::any,
 };
 // TODO: validate param name as ident and param type as type syn parse
-pub fn template_params<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+pub fn template_params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     let parsed_params: Vec<(String, String)> = ("@", multispace0, params, opt((multispace0, ';')))
         .map(|(_, _, params, _)| {
             params
@@ -22,12 +22,12 @@ pub fn template_params<'a>(input: &mut Input<'a>) -> ModalResult<()> {
         })
         .parse_next(input)?;
 
-    input.state.template_params = parsed_params;
+    input.state.info.template_params = parsed_params;
 
     Ok(())
 }
 
-fn params<'a>(input: &mut Input<'a>) -> ModalResult<Vec<(&'a str, Option<&'a str>)>> {
+fn params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Vec<(&'a str, Option<&'a str>)>> {
     (
         "(",
         multispace0,
@@ -39,7 +39,7 @@ fn params<'a>(input: &mut Input<'a>) -> ModalResult<Vec<(&'a str, Option<&'a str
         .parse_next(input)
 }
 
-fn param<'a>(input: &mut Input<'a>) -> ModalResult<(&'a str, Option<&'a str>)> {
+fn param<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(&'a str, Option<&'a str>)> {
     (
         multispace0,
         cut_err(rust_identifier).expected("identifier"),
@@ -67,7 +67,7 @@ fn param<'a>(input: &mut Input<'a>) -> ModalResult<(&'a str, Option<&'a str>)> {
         .parse_next(input)
 }
 
-fn param_type<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
+fn param_type<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
     let start = input.input;
 
     repeat(
@@ -84,7 +84,7 @@ fn param_type<'a>(input: &mut Input<'a>) -> ModalResult<&'a str> {
     Ok(&start[..consumed])
 }
 
-fn param_type_nested<'a>(input: &mut Input<'a>) -> ModalResult<()> {
+fn param_type_nested<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     alt((
         (
             "(".void(),

@@ -14,7 +14,7 @@ use winnow::{
     stream::Stream,
 };
 
-pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
+pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
 
     let (name, path) = (
@@ -71,7 +71,7 @@ pub fn use_directive<'a>(input: &mut Input<'a>) -> ModalResult<TokenStream> {
 
     let path = path.to_path_buf();
 
-    input.state.use_directives.insert(UseDirective {
+    input.state.info.use_directives.insert(UseDirective {
         name,
         path,
         fn_name,
