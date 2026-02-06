@@ -33,7 +33,6 @@ use winnow::{
 };
 
 // TODO: process here all analyzer controls
-// TODO: Improve the error message when a file is not found in compiler loops. also curcular dependency error.
 // TODO: In debug mode, extract the files to their original location or a different build point, ensuring that compilation errors are displayed correctly. use include! macro.
 
 pub type Input<'a, 'ctx> = Stateful<&'a str, &'a mut Context<'ctx>>;
@@ -50,7 +49,6 @@ pub fn compile(
         }
     };
 
-    // let source_str = source.strip_prefix('\u{FEFF}').unwrap_or(&source);
     if source.starts_with('\u{FEFF}') {
         source.drain(..3);
     }

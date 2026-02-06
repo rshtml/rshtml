@@ -38,11 +38,12 @@ fn test_rshtml_file() {
         result.err().map(|e| e.to_string()).unwrap_or_default()
     );
 
-    let (fn_sign, fn_body, include_str, ctx) = result.unwrap();
+    let (fn_sign, fn_body, include_str, info, source) = result.unwrap();
 
     println!("--- FUNCTION SIGNATURE ---\n{}\n", fn_sign);
     println!("--- FUNCTION BODY ---\n{}\n", fn_body);
     println!("--- INCLUDE STR ---\n{}\n", include_str);
-    println!("--- CONTEXT (Text Size: {})\n", ctx.text_size);
-    println!("--- CONTEXT (Template Params: {:?})", ctx.template_params);
+    println!("--- CONTEXT (Text Size: {})\n", info.text_size);
+    println!("--- CONTEXT (Template Params: {:?})", info.template_params);
+    println!("--- SOURCE LENGTH: {}", source.len());
 }

@@ -1,4 +1,4 @@
-use crate::rshtml_file;
+use crate::{context::UseDirective, diagnostic::Diagnostic, rshtml_file};
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
 use std::{
@@ -23,7 +23,7 @@ pub struct Compiler {
     struct_fields: Vec<String>,
     base_dir: PathBuf,
     path_stack: Vec<PathBuf>,
-    visited_paths: HashMap<PathBuf, (HashSet<PathBuf>, String)>,
+    visited_paths: HashMap<PathBuf, (HashSet<UseDirective>, String)>,
 }
 
 impl Compiler {
@@ -40,9 +40,6 @@ impl Compiler {
 
     pub fn compile(&mut self, path: &Path) -> TokenStream {
         self.base_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
-        // let Some(path) = path.file_name().map(Path::new) else {
-        //     return quote_spanned! { self.struct_name.span() => compile_error!("Invalid path: {}", path.display()); };
-        // };
 
         let compile_output = match self.compile_rshtml_files(path) {
             Ok(compile_output) => compile_output,
@@ -59,11 +56,6 @@ impl Compiler {
 
                 return quote_spanned! { self.struct_name.span() =>
                     compile_error!(#error_message);
-
-                    // #[allow(unused_imports)]
-                    // use ::rshtml::{Render, Write};
-                    // #[allow(unused_imports)]
-                    // use ::std::fmt::Display;
 
                     impl #impl_generics ::rshtml::View for #struct_name #type_generics #where_clause {
                         fn render(&self, __out__: &mut dyn ::rshtml::Write) -> ::std::fmt::Result {
@@ -93,11 +85,6 @@ impl Compiler {
              const _ : () = {
                 #include_strs
 
-                // #[allow(unused_imports)]
-                // use ::rshtml::{View, Render, Write};
-                // #[allow(unused_imports)]
-                // use ::std::fmt::Display;
-
                 impl #impl_generics ::rshtml::View for #struct_name #type_generics #where_clause {
                     fn render(&self, __out__: &mut dyn ::rshtml::Write) -> ::std::fmt::Result {
                         trait __rshtml__fns {
@@ -122,32 +109,15 @@ impl Compiler {
     }
 
     fn compile_rshtml_files(&mut self, path: &Path) -> Result<CompileOutput, String> {
-        if let Some(start_index) = self.path_stack.iter().position(|p| p == &path) {
-            let mut chain: Vec<String> = self.path_stack[start_index..]
-                .iter()
-                .map(|p| p.display().to_string())
-                .collect();
-            chain.push(path.display().to_string());
-
-            let chain_str = chain.join(" -> ");
-
-            return Err(format!("Circular dependency detected: {}", chain_str));
-        }
         self.path_stack.push(path.to_path_buf());
 
         let mut compile_output = if !self.visited_paths.contains_key(path) {
             let (fn_signs, fn_bodies, include_strs, info, source) =
                 rshtml_file::compile(path, &self.base_dir, &self.struct_fields)?;
 
-            let use_directives = info
-                .use_directives
-                .iter()
-                .map(|ud| ud.path.to_owned())
-                .collect::<HashSet<PathBuf>>();
-
             self.visited_paths
                 .entry(path.to_path_buf())
-                .or_insert((use_directives, source));
+                .or_insert((info.use_directives, source));
 
             CompileOutput {
                 fn_signs,
@@ -160,15 +130,24 @@ impl Compiler {
             CompileOutput::default()
         };
 
-        let use_directives = self
+        let visited = self
             .visited_paths
             .get_mut(path)
             .map(mem::take)
             .unwrap_or_default();
 
-        for p in &use_directives.0 {
-            let output = self.compile_rshtml_files(p)?;
-            // .map_err(|e| format!("{}:\n{}", path.display(), e))?;
+        for use_directive in &visited.0 {
+            if self.path_stack.iter().any(|p| p == &use_directive.path) {
+                return Err(Diagnostic(&visited.1).message(
+                    path,
+                    &use_directive.position,
+                    "in use directive",
+                    "circular dependency detected",
+                    1,
+                ));
+            }
+
+            let output = self.compile_rshtml_files(&use_directive.path)?;
 
             compile_output.fn_bodies.extend(output.fn_bodies);
             compile_output.fn_signs.extend(output.fn_signs);
@@ -177,7 +156,7 @@ impl Compiler {
         }
 
         if let Some(entry) = self.visited_paths.get_mut(path) {
-            *entry = use_directives;
+            *entry = visited;
         }
 
         self.path_stack.pop();

@@ -30,7 +30,7 @@ pub fn simple_expr<'a, 'ctx>(
     let message = Diagnostic(input.state.source).message(
         input.state.path,
         &position,
-        &format!("attempt to use an expression that does not implement the Display trait."),
+        "attempt to use an expression that does not implement the Display trait.",
         "this expression does not implement the Display trait.",
         1,
     );
