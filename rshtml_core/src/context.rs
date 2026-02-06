@@ -1,13 +1,28 @@
+use crate::position::Position;
 use std::{
     collections::HashSet,
+    hash::{Hash, Hasher},
     path::{Path, PathBuf},
 };
 
-#[derive(Debug, Default, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Default, Clone)]
 pub struct UseDirective {
     pub name: String,
     pub path: PathBuf,
     pub fn_name: String,
+    pub position: Position,
+}
+
+impl PartialEq for UseDirective {
+    fn eq(&self, other: &Self) -> bool {
+        self.path == other.path
+    }
+}
+impl Eq for UseDirective {}
+impl Hash for UseDirective {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.path.hash(state);
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -25,6 +40,7 @@ pub struct Context<'a> {
     pub base_dir: &'a Path,
     pub path: &'a Path,
     pub source: &'a str,
+    pub last_use_directive_point: usize,
 }
 
 impl<'a> Context<'a> {
@@ -40,6 +56,7 @@ impl<'a> Context<'a> {
             base_dir,
             path,
             source,
+            last_use_directive_point: 0,
         }
     }
 }

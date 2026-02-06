@@ -2,7 +2,8 @@ use super::{
     Input, component::component_tag_identifier, template::string_line, utils::generate_fn_name,
 };
 use crate::{
-    context::UseDirective, extensions::ParserDiagnostic, rshtml_file::utils::extract_component_name,
+    context::UseDirective, extensions::ParserDiagnostic, position::Position,
+    rshtml_file::utils::extract_component_name,
 };
 use proc_macro2::TokenStream;
 use std::path::PathBuf;
@@ -16,6 +17,12 @@ use winnow::{
 
 pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     let checkpoint = input.checkpoint();
+
+    let position: Position = (
+        input.state.source,
+        input.state.source.len().saturating_sub(input.input.len()),
+    )
+        .into();
 
     let (name, path) = (
         "use",
@@ -67,14 +74,16 @@ pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Token
         }
     };
 
-    let fn_name = generate_fn_name(&input.state.base_dir.join(&path));
+    let path_with_base = input.state.base_dir.join(&path);
+    let fn_name = generate_fn_name(&path_with_base);
 
-    let path = path.to_path_buf();
+    input.state.last_use_directive_point = input.input.len();
 
     input.state.info.use_directives.insert(UseDirective {
         name,
-        path,
+        path: path_with_base,
         fn_name,
+        position,
     });
 
     Ok(TokenStream::new())

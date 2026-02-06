@@ -42,76 +42,83 @@ pub fn compile(
     path: &Path,
     base_dir: &Path,
     struct_fields: &[String],
-) -> Result<(TokenStream, TokenStream, TokenStream, Info), String> {
-    let (full_path, source) = match read_template(path) {
-        Ok((full_path, mut source)) => {
-            if source.starts_with('\u{FEFF}') {
-                source.remove(0);
-            }
-            (full_path, source)
-        }
+) -> Result<(TokenStream, TokenStream, TokenStream, Info, String), String> {
+    let (full_path, mut source) = match read_template(path) {
+        Ok((full_path, source)) => (full_path, source),
         Err(msg) => {
             return Err(msg);
         }
     };
 
-    let mut ctx = Context::new(path, &source, base_dir, struct_fields);
+    // let source_str = source.strip_prefix('\u{FEFF}').unwrap_or(&source);
+    if source.starts_with('\u{FEFF}') {
+        source.drain(..3);
+    }
 
-    ctx.info.fn_name = generate_fn_name(path);
+    let source_len = source.len();
 
-    let mut input = Input {
-        input: source.as_str(),
-        state: &mut ctx,
-    };
+    let (body, info, use_directive_scope_len) = {
+        let mut ctx = Context::new(path, &source, base_dir, struct_fields);
 
-    let body = match template(&mut input) {
-        Ok(res) => res,
-        Err(e) => {
-            let err = e.into_inner().unwrap();
+        ctx.info.fn_name = generate_fn_name(path);
 
-            let mut labels = Vec::new();
-            let mut expecteds = Vec::new();
+        let mut input = Input {
+            input: &source,
+            state: &mut ctx,
+        };
 
-            for context in err.context() {
-                match context {
-                    StrContext::Label(l) => labels.push(l.to_string()),
-                    StrContext::Expected(e) => match e {
-                        StrContextValue::Description(desc) => expecteds.push(desc.to_string()),
-                        other => expecteds.push(format!("expected {}", other)),
-                    },
-                    _ => {}
+        let body = match template(&mut input) {
+            Ok(res) => res,
+            Err(e) => {
+                let err = e.into_inner().unwrap();
+
+                let mut labels = Vec::new();
+                let mut expecteds = Vec::new();
+
+                for context in err.context() {
+                    match context {
+                        StrContext::Label(l) => labels.push(l.to_string()),
+                        StrContext::Expected(e) => match e {
+                            StrContextValue::Description(desc) => expecteds.push(desc.to_string()),
+                            other => expecteds.push(format!("expected {}", other)),
+                        },
+                        _ => {}
+                    }
                 }
+
+                let label = if !labels.is_empty() {
+                    labels.reverse();
+                    format!("in {}:", labels.join(" > "))
+                } else {
+                    String::new()
+                };
+
+                expecteds.reverse();
+                let expected = expecteds.join(" or ");
+
+                let offset = source.len().saturating_sub(input.input.len());
+                let position: Position = (source.as_str(), offset).into();
+                let diag = Diagnostic(&source).message(path, &position, &label, &expected, 1);
+
+                return Err(diag);
             }
+        };
 
-            let label = if !labels.is_empty() {
-                labels.reverse();
-                format!("in {}:", labels.join(" > "))
-            } else {
-                String::new()
-            };
-
-            expecteds.reverse();
-            let expected = expecteds.join(" or ");
-
-            let offset = source.len().saturating_sub(input.input.len());
-            let position: Position = (source.as_str(), offset).into();
-            let diag = Diagnostic(&source).message(path, &position, &label, &expected, 1);
-
-            return Err(diag);
-        }
+        (body, ctx.info, source_len - ctx.last_use_directive_point)
     };
 
     let full_path_str = full_path.to_string_lossy();
 
-    let mut params: Vec<(&str, &str)> = ctx
-        .info
+    let mut params: Vec<(&str, &str)> = info
         .template_params
         .iter()
         .map(|(a, b)| (a.as_str(), b.as_str()))
         .collect();
 
     let args = params_to_ts(&mut params);
-    let fn_name = Ident::new(&ctx.info.fn_name, Span::call_site());
+    let fn_name = Ident::new(&info.fn_name, Span::call_site());
+
+    source.truncate(use_directive_scope_len);
 
     Ok((
         quote! {
@@ -127,7 +134,8 @@ pub fn compile(
                 #args) -> ::std::fmt::Result {#body Ok(())}
         },
         quote! { let _ = include_str!(#full_path_str); },
-        ctx.info,
+        info,
+        source,
     ))
 }
 
