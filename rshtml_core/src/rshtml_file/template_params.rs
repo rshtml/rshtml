@@ -3,7 +3,7 @@ use crate::extensions::ParserDiagnostic;
 use winnow::{
     ModalResult, Parser,
     ascii::multispace0,
-    combinator::{alt, cut_err, opt, peek, repeat, separated},
+    combinator::{alt, cut_err, not, opt, peek, repeat, separated},
     token::any,
 };
 // TODO: validate param name as ident and param type as type syn parse
@@ -31,11 +31,11 @@ fn params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Vec<(&'a str, Op
     (
         "(",
         multispace0,
-        separated(0.., param, ","),
+        opt((peek(not(')')), separated(0.., param, ",")).map(|(_, params)| params)),
         multispace0,
         ")".expected(")"),
     )
-        .map(|(_, _, params, _, _)| params)
+        .map(|(_, _, params, _, _)| params.unwrap_or(Vec::new()))
         .parse_next(input)
 }
 
