@@ -63,6 +63,7 @@ pub fn inner_template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalRes
         .parse_next(input)
 }
 
+#[cfg(not(debug_assertions))]
 pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     alt((
         component.label("component"),
@@ -87,6 +88,67 @@ pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> 
         fail.expected("a valid directive or an expression or a component"),
     ))
     .parse_next(input)
+}
+
+#[cfg(debug_assertions)]
+pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
+    use std::ops::Range;
+
+    use crate::debug::Snippet;
+
+    let extract = |span: Range<usize>| input.state.source[span.start..span.end].to_owned();
+
+    let (ts, snippet) = alt((
+        component
+            .with_span()
+            .map(|(ts, span)| (ts, Snippet::Component(span.to_owned(), extract(span))))
+            .label("component"),
+        (
+            '@',
+            multispace0,
+            alt((
+                use_directive
+                    .map(|ts| (ts, Snippet::None))
+                    .label("use directive"),
+                rust_block
+                    .with_span()
+                    .map(|(ts, span)| (ts, Snippet::Block(span.to_owned(), extract(span))))
+                    .label("code block"),
+                rust_stmt
+                    .with_span()
+                    .map(|(ts, span)| (ts, Snippet::Stmt(span.to_owned(), extract(span))))
+                    .label("statement"),
+                child_content_directive
+                    .with_span()
+                    .map(|(ts, span)| (ts, Snippet::ChildContent(span.to_owned(), extract(span))))
+                    .label("child content"),
+                continue_directive
+                    .with_span()
+                    .map(|(ts, span)| (ts, Snippet::Continue(span.to_owned(), extract(span))))
+                    .label("continue"),
+                break_directive
+                    .with_span()
+                    .map(|(ts, span)| (ts, Snippet::Break(span.to_owned(), extract(span))))
+                    .label("break"),
+                simple_expr_paren
+                    .with_span()
+                    .map(|((_, x), span)| (x, Snippet::ExprParen(span.to_owned(), extract(span))))
+                    .label("parenthesized expression"),
+                simple_expr
+                    .with_span()
+                    .map(|((_, x), span)| (x, Snippet::ExprSimple(span.to_owned(), extract(span))))
+                    .label("expression"),
+                cut_err(fail).expected("a valid directive or an expression after '@'"),
+            )),
+        )
+            .map(|(_, _, ts)| ts),
+        fail.expected("a valid directive or an expression or a component"),
+    ))
+    .parse_next(input)?;
+
+    input.state.info.debug.push(snippet);
+
+    Ok(ts)
 }
 
 pub fn rust_identifier<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {

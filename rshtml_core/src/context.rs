@@ -1,4 +1,4 @@
-use crate::position::Position;
+use crate::{debug, position::Position};
 use std::{
     collections::HashSet,
     hash::{Hash, Hasher},
@@ -31,6 +31,8 @@ pub struct Info {
     pub fn_name: String,
     pub template_params: Vec<(String, String)>,
     pub use_directives: HashSet<UseDirective>,
+
+    pub debug: debug::Debug,
 }
 
 #[derive(Debug)]

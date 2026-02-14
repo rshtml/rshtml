@@ -12,4 +12,7 @@ mod tests;
 
 pub mod v_macro;
 
+mod debug;
+mod extract_file;
+
 pub use compiler::Compiler;

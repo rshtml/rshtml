@@ -1,10 +1,11 @@
-use crate::{context::UseDirective, diagnostic::Diagnostic, rshtml_file};
+use crate::{context::UseDirective, diagnostic::Diagnostic, extract_file, rshtml_file};
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
 use std::{
     collections::{HashMap, HashSet},
     mem,
     path::{Path, PathBuf},
+    str::FromStr,
 };
 use syn::{Generics, Ident};
 
@@ -24,10 +25,18 @@ pub struct Compiler {
     base_dir: PathBuf,
     path_stack: Vec<PathBuf>,
     visited_paths: HashMap<PathBuf, (HashSet<UseDirective>, String)>,
+    extract: bool,
+
+    extract_includes: TokenStream,
 }
 
 impl Compiler {
-    pub fn new(struct_name: Ident, struct_generics: Generics, struct_fields: Vec<String>) -> Self {
+    pub fn new(
+        struct_name: Ident,
+        struct_generics: Generics,
+        struct_fields: Vec<String>,
+        extract: bool,
+    ) -> Self {
         Compiler {
             struct_name,
             struct_generics,
@@ -35,6 +44,9 @@ impl Compiler {
             base_dir: PathBuf::new(),
             path_stack: Vec::new(),
             visited_paths: HashMap::new(),
+            extract,
+
+            extract_includes: TokenStream::new(),
         }
     }
 
@@ -81,9 +93,25 @@ impl Compiler {
         let (impl_generics, type_generics, where_clause) = self.struct_generics.split_for_impl();
         let struct_name = self.struct_name.to_owned();
 
+        let mut extract_files_ts = TokenStream::new();
+        if cfg!(debug_assertions) {
+            let extract_includes = self.extract_includes.to_owned();
+            extract_files_ts = quote! {
+                impl #impl_generics #struct_name #type_generics #where_clause {
+                    #extract_includes
+                }
+            };
+        }
+
         quote! {
-             const _ : () = {
+            #[allow(unused, path_statements, clippy::all)]
+            const _ : () = {
+                use ::rshtml::{Render, View};
+                use ::std::fmt::Display;
+
                 #include_strs
+
+                #extract_files_ts
 
                 impl #impl_generics ::rshtml::View for #struct_name #type_generics #where_clause {
                     fn render(&self, __out__: &mut dyn ::rshtml::Write) -> ::std::fmt::Result {
@@ -113,11 +141,41 @@ impl Compiler {
 
         let mut compile_output = if !self.visited_paths.contains_key(path) {
             let (fn_signs, fn_bodies, include_strs, info, source) =
-                rshtml_file::compile(path, &self.base_dir, &self.struct_fields)?;
+                rshtml_file::compile(path, &self.base_dir, &self.struct_fields, self.extract)?;
 
             self.visited_paths
                 .entry(path.to_path_buf())
                 .or_insert((info.use_directives, source));
+
+            if cfg!(debug_assertions) && self.extract {
+                let extract_file_include = extract_file::create(
+                    &path.to_owned(),
+                    &format!("{{ {} }}", String::from_utf8_lossy(&info.debug.source)),
+                )
+                .map_err(|e| e.to_string())?;
+
+                let fn_name =
+                    TokenStream::from_str(&format!("_rshtml_{0}", info.fn_name.to_owned()))
+                        .unwrap();
+
+                let fn_params = info
+                    .template_params
+                    .iter()
+                    .map(|(n, t)| format!("{n}: {t}"))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                let fn_params_ts = TokenStream::from_str(&fn_params).unwrap();
+
+                let ts = quote! {
+                    fn #fn_name (&self, child_content: impl ::rshtml::View, #fn_params_ts) -> ::std::fmt::Result {
+                        #extract_file_include
+
+                        Ok(())
+                    }
+                };
+
+                self.extract_includes.extend(ts);
+            }
 
             CompileOutput {
                 fn_signs,

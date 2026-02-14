@@ -3,20 +3,20 @@
 use proc_macro::TokenStream;
 use rshtml_core::{Compiler, v_macro};
 use std::path::Path;
-use syn::{Data, DeriveInput, Fields, LitStr, parse_macro_input};
+use syn::{Data, DeriveInput, Fields, LitBool, LitStr, Token, parse_macro_input};
 
-#[proc_macro_derive(RsHtml, attributes(rshtml))]
-pub fn rshtml_derive(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(View, attributes(view))]
+pub fn view_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let struct_name = input.ident;
     let struct_generics = input.generics;
     let struct_fields = get_struct_fields(&input.data);
 
-    let template_path = match parse_template_path_from_attrs(&input.attrs) {
+    let (template_path, extract) = match parse_template_path_from_attrs(&input.attrs) {
         Ok(rshtml_config) => {
             if let Some(path) = rshtml_config.path {
-                path
+                (path, rshtml_config.extract)
             } else {
                 let struct_name_str = struct_name.to_string();
                 let mut template_file = if let Some(stripped) = struct_name_str.strip_suffix("Page")
@@ -27,7 +27,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
                 };
 
                 template_file = to_snake_case(&template_file);
-                format!("views/{template_file}")
+                (format!("views/{template_file}"), rshtml_config.extract)
             }
         }
         Err(err) => {
@@ -35,7 +35,7 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
         }
     };
 
-    let mut compiler = Compiler::new(struct_name, struct_generics, struct_fields);
+    let mut compiler = Compiler::new(struct_name, struct_generics, struct_fields, extract);
     let path = Path::new(&template_path);
 
     TokenStream::from(compiler.compile(path))
@@ -43,18 +43,33 @@ pub fn rshtml_derive(input: TokenStream) -> TokenStream {
 
 struct RsHtmlConfig {
     pub path: Option<String>,
+    pub extract: bool,
 }
 
 fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<RsHtmlConfig> {
-    let mut config = RsHtmlConfig { path: None };
+    let mut config = RsHtmlConfig {
+        path: None,
+        extract: true,
+    };
 
     for attr in attrs {
-        if attr.path().is_ident("rshtml") {
+        if attr.path().is_ident("view") {
             attr.parse_nested_meta(|meta| {
                 if meta.path.is_ident("path") {
                     let value = meta.value()?;
                     let s: LitStr = value.parse()?;
                     config.path = Some(s.value());
+                    return Ok(());
+                }
+
+                if meta.path.is_ident("extract") {
+                    if meta.input.peek(Token![=]) {
+                        let value = meta.value()?;
+                        let lit: LitBool = value.parse()?;
+                        config.extract = lit.value();
+                    } else {
+                        config.extract = true;
+                    }
                     return Ok(());
                 }
 

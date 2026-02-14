@@ -1,12 +1,13 @@
 #![allow(unused_imports, dead_code)]
 
+mod snippets;
 mod website;
 
-use rshtml::{RsHtml, View, functions::*};
+use rshtml::{View, functions::*};
 use serde::Serialize;
 
-#[derive(RsHtml)]
-#[rshtml(path = "views/bar.rs.html")]
+#[derive(View)]
+#[view(path = "views/test/home.rs.html")]
 pub struct HomePage {
     pub title: String,
     pub content: String,

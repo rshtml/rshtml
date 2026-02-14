@@ -61,7 +61,7 @@ pub use escaping_writer::EscapingWriter;
 /// on the struct.
 ///
 /// Once derived, an instance of the struct will have a `render()` method to produce the HTML output.
-pub use rshtml_macro::RsHtml;
+pub use rshtml_macro::View;
 
 /// Instructs Cargo to recompile the crate if any file in the views folder changes.
 ///

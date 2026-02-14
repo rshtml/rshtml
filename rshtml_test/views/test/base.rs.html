@@ -1,0 +1,46 @@
+﻿@(title, header, content: Option<String>, footer)
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RsHtml Template - @title</title>
+</head>
+<body>
+
+@header
+
+@if self.is_ok {
+    @child_content()
+} else if !self.is_ok {
+    <h1>Something went wrong</h1>
+    <p>Please try again later.</p>
+} else {
+    <h1>Something went wrong</h1>
+    <p>Please try again later.</p>
+}
+
+@if content.is_some() {
+    @content.unwrap()
+    <p>section content defined</p>
+} else {
+    <p>section content not defined</p>
+}
+
+@for i in 0..10 {
+    <p>Item @i</p>
+    @(i * i)
+    @continue
+}
+
+@footer
+
+@ {
+    let s = "hello".to_string();
+    let t = "world";
+    let u = s + " " + t;
+    print!("{} {}", u, u);
+}
+
+</body>
+</html>

@@ -15,6 +15,7 @@ mod utils;
 
 use crate::{
     context::{Context, Info},
+    debug,
     diagnostic::Diagnostic,
     position::Position,
 };
@@ -27,20 +28,23 @@ use std::{
 use syn::Ident;
 use template::template;
 use utils::{generate_fn_name, params_to_ts};
+#[cfg(debug_assertions)]
+use winnow::LocatingSlice;
 use winnow::{
     Stateful,
     error::{StrContext, StrContextValue},
 };
 
-// TODO: process here all analyzer controls
-// TODO: In debug mode, extract the files to their original location or a different build point, ensuring that compilation errors are displayed correctly. use include! macro.
-
+#[cfg(not(debug_assertions))]
 pub type Input<'a, 'ctx> = Stateful<&'a str, &'a mut Context<'ctx>>;
+#[cfg(debug_assertions)]
+pub type Input<'a, 'ctx> = Stateful<LocatingSlice<&'a str>, &'a mut Context<'ctx>>;
 
 pub fn compile(
     path: &Path,
     base_dir: &Path,
     struct_fields: &[String],
+    extract: bool,
 ) -> Result<(TokenStream, TokenStream, TokenStream, Info, String), String> {
     let (full_path, mut source) = match read_template(path) {
         Ok((full_path, source)) => (full_path, source),
@@ -60,8 +64,24 @@ pub fn compile(
 
         ctx.info.fn_name = generate_fn_name(path);
 
+        if cfg!(debug_assertions) && extract {
+            ctx.info.debug = debug::Debug::new(
+                source
+                    .as_bytes()
+                    .iter()
+                    .map(|&b| if b == b'\n' { b'\n' } else { b' ' })
+                    .collect::<Vec<u8>>(),
+            );
+        }
+
+        #[cfg(not(debug_assertions))]
         let mut input = Input {
             input: &source,
+            state: &mut ctx,
+        };
+        #[cfg(debug_assertions)]
+        let mut input = Input {
+            input: LocatingSlice::new(&source),
             state: &mut ctx,
         };
 
@@ -101,6 +121,10 @@ pub fn compile(
                 return Err(diag);
             }
         };
+
+        if cfg!(debug_assertions) && extract {
+            ctx.info.debug.extract();
+        }
 
         (body, ctx.info, source_len - ctx.last_use_directive_point)
     };
