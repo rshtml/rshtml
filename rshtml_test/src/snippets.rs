@@ -49,20 +49,20 @@ pub fn test_for() {
     println!("{out}");
 }
 
-// #[test]
-// pub fn test_while() {
-//     #[derive(View)]
-//     #[view(path = "views/snippets/while.rs.html")]
-//     struct WhilePage {
-//         count: i32,
-//     }
+#[test]
+pub fn test_while() {
+    #[derive(View)]
+    #[view(path = "views/snippets/while.rs.html")]
+    struct WhilePage {
+        count: i32,
+    }
 
-//     let page = WhilePage { count: 5 };
+    let page = WhilePage { count: 5 };
 
-//     let mut out = String::with_capacity(page.text_size());
-//     page.render(&mut out).unwrap();
-//     println!("{out}");
-// }
+    let mut out = String::with_capacity(page.text_size());
+    page.render(&mut out).unwrap();
+    println!("{out}");
+}
 
 #[test]
 pub fn test_simple_expression() {

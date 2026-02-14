@@ -31,5 +31,5 @@ pub fn create(path: &Path, generated_code: &str) -> io::Result<TokenStream> {
         "The generated file path is not valid UTF-8",
     ))?;
 
-    Ok(quote! {include!(#include_path_str);})
+    Ok(quote! {{ include!(#include_path_str); }})
 }

@@ -43,6 +43,7 @@ pub fn rust_stmt<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStre
                 ts
             }),
         for_stmt,
+        while_stmt,
     ))
     .parse_next(input)
 }
@@ -78,6 +79,32 @@ fn for_stmt<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
 
     let (head, body) = (multispace0, "for", stmt_head, must_inner_template_content)
         .map(|(_, for_, head, content)| (format!("{for_} {head}"), content))
+        .parse_next(input)?;
+
+    if let Err(e) = parse_str::<syn::Expr>(&format!("{} {{}}", head)) {
+        let error_msg = Box::leak(e.to_string().into_boxed_str());
+        input.reset(&checkpoint);
+        return Err(ErrMode::Cut(ContextError::new().add_context(
+            input,
+            &checkpoint,
+            StrContext::Expected(StrContextValue::Description(error_msg)),
+        )));
+    };
+
+    let head_ts: TokenStream = head.parse().unwrap();
+
+    let mut ts = TokenStream::new();
+    ts.extend(head_ts);
+    ts.extend(body);
+
+    Ok(ts)
+}
+
+fn while_stmt<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
+    let checkpoint = input.checkpoint();
+
+    let (head, body) = (multispace0, "while", stmt_head, must_inner_template_content)
+        .map(|(_, while_, head, content)| (format!("{while_} {head}"), content))
         .parse_next(input)?;
 
     if let Err(e) = parse_str::<syn::Expr>(&format!("{} {{}}", head)) {

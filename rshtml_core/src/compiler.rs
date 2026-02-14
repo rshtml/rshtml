@@ -94,7 +94,7 @@ impl Compiler {
         let struct_name = self.struct_name.to_owned();
 
         let mut extract_files_ts = TokenStream::new();
-        if cfg!(debug_assertions) {
+        if cfg!(debug_assertions) && self.extract {
             let extract_includes = self.extract_includes.to_owned();
             extract_files_ts = quote! {
                 impl #impl_generics #struct_name #type_generics #where_clause {

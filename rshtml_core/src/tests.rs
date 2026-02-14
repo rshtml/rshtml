@@ -11,7 +11,7 @@ fn test_compiler() {
     ];
     let ident = Ident::new("RsHtmlMacro", Span::call_site());
 
-    let mut compiler = Compiler::new(ident, Generics::default(), vec!["user".to_owned()]);
+    let mut compiler = Compiler::new(ident, Generics::default(), vec!["user".to_owned()], false);
 
     let result: TokenStream = compiler.compile(paths[0]);
     let res = result.to_string();
@@ -30,7 +30,7 @@ fn test_rshtml_file() {
     let base_dir = PathBuf::from("views");
     let struct_fields = vec!["user".to_owned()];
 
-    let result = rshtml_file::compile(paths[0], &base_dir, &struct_fields);
+    let result = rshtml_file::compile(paths[0], &base_dir, &struct_fields, false);
 
     assert!(
         result.is_ok(),
