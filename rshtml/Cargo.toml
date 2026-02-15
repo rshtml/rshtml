@@ -8,6 +8,7 @@ readme.workspace = true
 repository.workspace = true
 description.workspace = true
 license.workspace = true
+rust-version.workspace = true
 
 [dependencies]
 rshtml_macro.workspace = true
