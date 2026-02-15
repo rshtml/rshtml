@@ -49,7 +49,7 @@ struct RsHtmlConfig {
 fn parse_template_path_from_attrs(attrs: &[syn::Attribute]) -> syn::Result<RsHtmlConfig> {
     let mut config = RsHtmlConfig {
         path: None,
-        extract: true,
+        extract: false,
     };
 
     for attr in attrs {

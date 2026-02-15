@@ -3,7 +3,7 @@ use rshtml::{View, functions::*};
 #[test]
 pub fn test_empty() {
     #[derive(View)]
-    #[view(path = "views/snippets/empty.rs.html")]
+    #[view(path = "views/snippets/empty.rs.html", extract = false)]
     struct EmptyPage {}
 
     let page = EmptyPage {};

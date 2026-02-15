@@ -54,16 +54,13 @@ impl Debug {
 
     pub fn extract(&mut self) {
         self.snippets
-            .sort_unstable_by(|a, b| b.start().cmp(&a.start()));
+            .sort_unstable_by_key(|b| std::cmp::Reverse(b.start()));
 
         let snippets = mem::take(&mut self.snippets);
 
         for snippet in snippets {
-            match snippet {
-                Snippet::ExprSimple(range, expr) => {
-                    self.source_replace_insert(expr.as_str(), range.start - 1);
-                }
-                _ => {}
+            if let Snippet::ExprSimple(range, expr) = snippet {
+                self.source_replace_insert(expr.as_str(), range.start - 1);
             }
         }
     }
@@ -77,9 +74,9 @@ impl Debug {
             }
             Snippet::ExprParen(range, expr) => {
                 let mut expr = expr.trim();
-                expr = expr.strip_prefix('#').unwrap_or(&expr);
-                expr = expr.strip_prefix('(').unwrap_or(&expr);
-                expr = expr.strip_suffix(')').unwrap_or(&expr);
+                expr = expr.strip_prefix('#').unwrap_or(expr);
+                expr = expr.strip_prefix('(').unwrap_or(expr);
+                expr = expr.strip_suffix(')').unwrap_or(expr);
                 let expr = format!("&{};", expr);
                 self.source_replace(&expr, range.start - 1);
             }
@@ -98,9 +95,9 @@ impl Debug {
                 for range in ranges {
                     let limit = range.end.min(stmt_buf.len());
 
-                    for i in range.start..limit {
-                        if stmt_buf[i] != b'\n' {
-                            stmt_buf[i] = b' ';
+                    for item in stmt_buf.iter_mut().take(limit).skip(range.start) {
+                        if *item != b'\n' {
+                            *item = b' ';
                         }
                     }
                 }
@@ -150,7 +147,7 @@ impl Debug {
         Ok(ranges)
     }
 
-    fn skip_braces<'a>(input: &mut LocatingSlice<&'a str>) -> winnow::Result<Range<usize>> {
+    fn skip_braces(input: &mut LocatingSlice<&str>) -> winnow::Result<Range<usize>> {
         (
             "{".void(),
             repeat(

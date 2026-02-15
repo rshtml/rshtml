@@ -149,7 +149,7 @@ impl Compiler {
 
             if cfg!(debug_assertions) && self.extract {
                 let extract_file_include = extract_file::create(
-                    &path.to_owned(),
+                    path,
                     &format!("{{ {} }}", String::from_utf8_lossy(&info.debug.source)),
                 )
                 .map_err(|e| e.to_string())?;

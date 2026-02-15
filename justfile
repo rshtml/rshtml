@@ -1,6 +1,7 @@
 test:
     echo "tests works.."
     cargo test --all-features --workspace
+    cargo test --all-features --workspace --release
 
 clippy:
     echo "clippy works.."
@@ -16,6 +17,7 @@ fix-fmt:
 
 build:
     echo "build works.."
+    cargo build --workspace
     cargo build --release --workspace
 
 doc:
