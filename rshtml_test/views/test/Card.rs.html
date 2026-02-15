@@ -1,0 +1,21 @@
+﻿@(title: i32, footer, my_prop: impl ::rshtml::View, my_prop2, greetings: Vec<&str>)
+
+<div class="card" style="width: 18rem;">
+    <div class="card-header">
+        @title {{-- Title slot --}}
+    </div>
+    <div class="card-body">
+        @child_content {{-- Default (unnamed) slot --}}
+    </div>
+    <div class="card-footer">
+        @footer {{-- Footer slot --}}
+    </div>
+</div>
+
+@my_prop
+
+@my_prop2
+
+@for g in greetings {
+    g: @g
+}

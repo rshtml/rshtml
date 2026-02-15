@@ -3,7 +3,7 @@ use crate::website::{
     services::services,
 };
 use chrono::Utc;
-use rshtml::{traits::View, v};
+use rshtml::{View, v};
 
 pub fn index() -> impl View {
     let sections = &[

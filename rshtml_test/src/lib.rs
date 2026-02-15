@@ -1,12 +1,13 @@
 #![allow(unused_imports, dead_code)]
 
+mod snippets;
 mod website;
 
-use rshtml::{RsHtml, functions::*, traits::RsHtml};
+use rshtml::{View, functions::*};
 use serde::Serialize;
 
-#[derive(RsHtml)]
-// #[rshtml(path = "bar.rs.html", no_warn)]
+#[derive(View)]
+#[view(path = "views/test/home.rs.html", extract = true)]
 pub struct HomePage {
     pub title: String,
     pub content: String,
@@ -74,8 +75,9 @@ mod tests {
             users,
         };
 
-        let s = homepage.render().unwrap();
+        let mut out = String::with_capacity(homepage.text_size());
+        homepage.render(&mut out).unwrap();
 
-        print!("{s}");
+        print!("{out}");
     }
 }

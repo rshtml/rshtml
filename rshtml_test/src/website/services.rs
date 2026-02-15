@@ -1,4 +1,4 @@
-use rshtml::{traits::View, v};
+use rshtml::{View, v};
 
 pub fn services(title: &str) -> impl View {
     v! {

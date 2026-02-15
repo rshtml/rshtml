@@ -22,7 +22,7 @@
 //! rshtml = "0.5.0" # Use the latest version
 //! ```
 //! ```rust
-//! use rshtml::{traits::View, v};
+//! use rshtml::{View, v};
 //! use std::fmt;
 //!
 //! fn main() -> fmt::Result {
@@ -32,7 +32,7 @@
 //!   let mut out = String::with_capacity(hello.text_size());
 //!
 //!   hello.render(&mut out)?;
-//!  
+//!
 //!   print!("{out}");
 //!
 //!   Ok(())
@@ -44,7 +44,6 @@
 /// Example template usage: `@time(&self.my_date)`, `@json(&self.data)`.
 #[cfg(feature = "functions")]
 pub mod functions;
-pub mod traits;
 
 mod escaping_writer;
 pub use escaping_writer::EscapingWriter;
@@ -62,7 +61,7 @@ pub use escaping_writer::EscapingWriter;
 /// on the struct.
 ///
 /// Once derived, an instance of the struct will have a `render()` method to produce the HTML output.
-pub use rshtml_macro::RsHtml;
+pub use rshtml_macro::View;
 
 /// Instructs Cargo to recompile the crate if any file in the views folder changes.
 ///
@@ -71,9 +70,6 @@ pub use rshtml_macro::RsHtml;
 /// without needing a full manual recompile of the dependent crate.
 mod track_views_folder;
 pub use track_views_folder::track_views_folder;
-
-mod expr;
-pub use expr::{Block, Expr};
 
 mod exp;
 pub use exp::Exp;
@@ -85,3 +81,11 @@ mod view_iter;
 pub use view_iter::ViewIter;
 
 pub use rshtml_macro::v;
+
+mod write;
+pub use write::Write;
+mod view;
+pub use view::IntoViewIter;
+pub use view::View;
+mod render;
+pub use render::Render;

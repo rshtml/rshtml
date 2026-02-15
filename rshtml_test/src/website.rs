@@ -10,7 +10,7 @@ mod services;
 
 use footer::footer;
 use index::index;
-use rshtml::traits::View;
+use rshtml::View;
 
 pub fn website() -> String {
     let index_page = index();

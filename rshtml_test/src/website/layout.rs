@@ -1,5 +1,5 @@
 use crate::website::scripts::scripts;
-use rshtml::{traits::View, v};
+use rshtml::{View, v};
 
 pub fn layout(title: &str, navbar: impl View, footer: impl View, content: impl View) -> impl View {
     v! {

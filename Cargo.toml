@@ -19,6 +19,7 @@ categories = [
   "parser-implementations",
   "compilers",
 ]
+rust-version = "1.88.0"
 
 [workspace.dependencies]
 rshtml = { path = "rshtml", version = "0.5.0", features = ["functions"] }

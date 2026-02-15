@@ -1,5 +1,5 @@
 use chrono::{DateTime, Datelike, Utc};
-use rshtml::{traits::View, v};
+use rshtml::{View, v};
 
 pub fn footer(home_time: DateTime<Utc>) -> impl View {
     let year = match home_time.year() {

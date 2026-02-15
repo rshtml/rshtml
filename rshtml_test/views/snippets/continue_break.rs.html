@@ -1,0 +1,13 @@
+@for user in &self.users {
+  @if *user == "Bob" {
+    @continue
+  }
+  <p>this is user: @user</p>
+}
+
+@for i in 0..10 {
+  @if i == 5 {
+    @break
+  }
+  <p>Item @i</p>
+}

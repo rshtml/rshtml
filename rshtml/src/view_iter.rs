@@ -1,4 +1,4 @@
-use crate::traits::View;
+use crate::{View, Write};
 use std::{cell::RefCell, fmt};
 
 pub struct ViewIter<I>(pub RefCell<Option<I>>);
@@ -8,7 +8,7 @@ where
     I: Iterator<Item = V>,
     V: View,
 {
-    fn render(&self, out: &mut dyn fmt::Write) -> fmt::Result {
+    fn render(&self, out: &mut dyn Write) -> fmt::Result {
         if let Some(iter) = self.0.borrow_mut().take() {
             for item in iter {
                 item.render(out)?;

@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use rshtml::{functions::time, traits::View, v};
+use rshtml::{View, functions::time, v};
 
 pub fn home(title: &str, home_time: DateTime<Utc>) -> impl View {
     v! {
