@@ -3,7 +3,7 @@ use rshtml::{View, functions::*};
 #[test]
 pub fn test_empty() {
     #[derive(View)]
-    #[view(path = "views/snippets/empty.rs.html", extract = false)]
+    #[view(path = "views/snippets/empty.rs.html", extract = true)]
     struct EmptyPage {}
 
     let page = EmptyPage {};
@@ -16,7 +16,7 @@ pub fn test_empty() {
 #[test]
 pub fn test_if_else() {
     #[derive(View)]
-    #[view(path = "views/snippets/if_else.rs.html")]
+    #[view(path = "views/snippets/if_else.rs.html", extract = true)]
     struct IfElsePage {
         is_ok: bool,
         count: i32,
@@ -35,7 +35,7 @@ pub fn test_if_else() {
 #[test]
 pub fn test_for() {
     #[derive(View)]
-    #[view(path = "views/snippets/for.rs.html")]
+    #[view(path = "views/snippets/for.rs.html", extract = true)]
     struct ForPage {
         users: Vec<String>,
     }
@@ -52,7 +52,7 @@ pub fn test_for() {
 #[test]
 pub fn test_while() {
     #[derive(View)]
-    #[view(path = "views/snippets/while.rs.html")]
+    #[view(path = "views/snippets/while.rs.html", extract = true)]
     struct WhilePage {
         count: i32,
     }
@@ -67,7 +67,7 @@ pub fn test_while() {
 #[test]
 pub fn test_simple_expression() {
     #[derive(View)]
-    #[view(path = "views/snippets/simple_expression.rs.html")]
+    #[view(path = "views/snippets/simple_expression.rs.html", extract = true)]
     struct SimpleExpressionPage {
         value: i32,
         data: Option<String>,
@@ -94,7 +94,7 @@ pub fn test_simple_expression() {
 #[test]
 pub fn test_parentheses_expression() {
     #[derive(View)]
-    #[view(path = "views/snippets/parentheses_expression.rs.html")]
+    #[view(path = "views/snippets/parentheses_expression.rs.html", extract = true)]
     struct ParenthesesExpressionPage {
         value: i32,
         data: String,
@@ -113,7 +113,7 @@ pub fn test_parentheses_expression() {
 #[test]
 pub fn test_code_block() {
     #[derive(View)]
-    #[view(path = "views/snippets/code_block.rs.html")]
+    #[view(path = "views/snippets/code_block.rs.html", extract = true)]
     struct CodeBlockPage {}
 
     let page = CodeBlockPage {};
@@ -130,7 +130,7 @@ pub fn test_component() {
     }
 
     #[derive(View)]
-    #[view(path = "views/snippets/component.rs.html")]
+    #[view(path = "views/snippets/component.rs.html", extract = true)]
     struct ComponentPage {
         value: i32,
         title: String,
@@ -164,7 +164,7 @@ pub fn test_component() {
 #[test]
 pub fn test_continue_break() {
     #[derive(View)]
-    #[view(path = "views/snippets/continue_break.rs.html")]
+    #[view(path = "views/snippets/continue_break.rs.html", extract = true)]
     struct ContinueBreakPage {
         users: Vec<String>,
     }
@@ -181,7 +181,7 @@ pub fn test_continue_break() {
 #[test]
 pub fn test_functions() {
     #[derive(View)]
-    #[view(path = "views/snippets/functions.rs.html")]
+    #[view(path = "views/snippets/functions.rs.html", extract = true)]
     struct FunctionsPage {
         date: chrono::DateTime<chrono::Utc>,
         users: Vec<String>,
@@ -200,7 +200,7 @@ pub fn test_functions() {
 #[test]
 pub fn test_escaping() {
     #[derive(View)]
-    #[view(path = "views/snippets/escaping.rs.html")]
+    #[view(path = "views/snippets/escaping.rs.html", extract = true)]
     struct EscapingPage {
         my_var: String,
     }
