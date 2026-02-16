@@ -7,7 +7,7 @@ use rshtml::{View, functions::*};
 use serde::Serialize;
 
 #[derive(View)]
-#[view(path = "views/test/home.rs.html", extract = true)]
+#[view(path = "views/test/home.rs.html", extract)]
 pub struct HomePage {
     pub title: String,
     pub content: String,

@@ -58,7 +58,7 @@ async fn index_rshtml_file() -> Html<String> {
 }
 
 #[derive(View)]
-// #[view(path = "views/index.rs.html")]
+#[view(path = "views/index.rs.html", extract)]
 struct IndexPage {
     pub title: String,
     pub email: String,
