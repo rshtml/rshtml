@@ -94,14 +94,6 @@ pub use escaping_writer::EscapingWriter;
 /// Once derived, an instance of the struct will have a `render(out)` method to produce the HTML output.
 pub use rshtml_macro::View;
 
-mod track_views_folder;
-/// Instructs Cargo to recompile the crate if any file in the views folder changes.
-///
-/// This function should be called from a `build.rs` script.
-/// It helps ensure that template changes are picked up during development
-/// without needing a full manual recompile of the dependent crate.
-pub use track_views_folder::track_views_folder;
-
 mod exp;
 pub use exp::Exp;
 mod view_fn;
