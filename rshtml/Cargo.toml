@@ -12,7 +12,6 @@ rust-version.workspace = true
 
 [dependencies]
 rshtml_macro.workspace = true
-toml = "0.8.22"
 serde = { version = "1.0.219", features = ["derive"], optional = true }
 serde_json = { version = "1.0.140", optional = true }
 chrono = { version = "0.4.41", optional = true }

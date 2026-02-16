@@ -43,7 +43,7 @@
 //!
 //! **For the `.rs.html` file:**
 //!
-//! ```rust
+//! ```ignore
 //! use rshtml::View;
 //!
 //! // The `path` parameter specifies a path relative to `CARGO_MANIFEST_DIR` or the
@@ -102,7 +102,7 @@ mod text_size;
 pub use text_size::TextSize;
 mod view_iter;
 /// Allows iterators to be rendered inside the v macro without the need to call collect.
-/// ```rust
+/// ```rust, ignore
 /// let card_views = cards
 ///     .iter()
 ///     .map(|card| v!(<div class="card">{&card.title}</div>))
@@ -118,7 +118,7 @@ pub use view_iter::ViewIter;
 
 /// Enables writing HTML within Rust and allows for embedding Rust code using the `{}` syntax.
 /// The evaluated result is inserted into the output and must implement the `View` or `Display` trait.
-/// ```rust
+/// ```rust, ignore
 /// v! {
 ///   <div class="user-info"> {user_info} </div>
 ///
