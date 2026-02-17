@@ -48,13 +48,13 @@ RsHtml is a compile-time, type-safe, lightweight, and flexible template engine f
     }
 ```
 
-## RsHtml derive macro
-- Processes `.rs.html` templates from the default `views` directory.
+## View derive macro
+Processes `.rs.html` templates from the `views` directory or the file in the `specified folder` and implements the `View` trait.
+
 - Embeds Rust expressions and blocks directly into HTML templates using the `@` prefix or HTML-like component syntax (e.g., `<Component/>`).
-- Supports conditional rendering (`@if`, `@else`), loops (`@for`), and pattern matching (`@match`).
+- Supports conditional rendering (`@if`, `@else`), loops (`@for`, `@while`).
 - Supports Rust code blocks (`@{}`), various Rust expression syntaxes (e.g., `@expression`, `@(expression)`, and a broad range of other Rust syntax.
 - Provides helper functions (e.g., `@time()`).
-- Supports raw output with `@raw` blocks and server-side comments with `@* ... *@`.
 
 ```razor
 <h1>Welcome to RsHtml</h1>
@@ -82,15 +82,14 @@ RsHtml is a compile-time, type-safe, lightweight, and flexible template engine f
     let y = x * 2;
     println!("Debug: x = {}, y = {}", x, y);
 }
-
-@* This is a comment and will not appear in the output *@
 ```
 
 ```rust
-use rshtml::{RsHtml, traits::RsHtml};
+use rshtml::View;
 
 #[derive(RsHtml)]
-struct HomePage { // Looks for home.rs.html in views folder.
+// #[view(path = "views/home.rs.html", extract)]
+struct HomePage { // Looks for views/home.rs.html in views folder.
     title: String,
 }
 
@@ -99,9 +98,11 @@ fn main() {
         title: "Home Page".to_string()
     };
 
-    let result = homepage.render().unwrap();
+    let mut out = String::with_capacity(homepage.text_size());
 
-    print!("{}", result);
+    homepage.render(&mut out).unwrap();
+
+    print!("{}", out);
 }
 ```
 
@@ -111,12 +112,7 @@ To use RsHtml in your Rust project, run `cargo add rshtml` command or add it as 
 
 ```toml
 [dependencies]
-rshtml = "0.5.0"
-
-# For RsHtml derive macro:
-# The default folder can be changed. This is the default setup:
-[package.metadata.rshtml]
-views = { path = "views", extract_file_on_debug = false }
+rshtml = "0.6.0"
 ```
 
 ## Contributing
