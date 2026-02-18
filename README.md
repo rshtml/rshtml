@@ -89,7 +89,7 @@ use rshtml::View;
 
 #[derive(View)]
 // #[view(path = "views/home.rs.html", extract)]
-struct HomePage { // Looks for views/home.rs.html in views folder.
+struct HomePage { // Looks for views/home.rs.html.
     title: String,
 }
 
