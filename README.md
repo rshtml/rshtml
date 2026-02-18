@@ -87,7 +87,7 @@ Processes `.rs.html` templates from the `views` directory or the file in the `sp
 ```rust
 use rshtml::View;
 
-#[derive(RsHtml)]
+#[derive(View)]
 // #[view(path = "views/home.rs.html", extract)]
 struct HomePage { // Looks for views/home.rs.html in views folder.
     title: String,
