@@ -71,11 +71,11 @@ fn test_control_flow() {
 
 #[test]
 fn test_dynamic_attribute() {
-    let active = "\"active\"";
+    let active = "active";
     let view = v! { <button class={active}>Click</button> };
     let output = render_view(view);
     println!("{output}");
-    assert!(output.contains(r#"class= &quot;active&quot;"#));
+    assert!(output.contains(r#"class= "active""#));
 }
 
 #[test]
@@ -150,4 +150,29 @@ fn cards(title: &str, cards: &[Card]) -> impl View {
             { card_views }
         </div>
     }
+}
+
+#[test]
+fn dynamic_class_attribute() {
+    const COLLAPSE: &str = "collapse collapse-arrow bg-base-100 border border-base-300 mt-1";
+    const COLLAPSE_TITLE: &str = "collapse-title font-bold text-lg";
+    const COLLAPSE_CONTENT: &str = "collapse-content";
+
+    let hello = "Hi";
+
+    let view = v!(
+      <section id="faq" class="prose lg:prose-xl">
+        <h1 class="font-bold text-3xl">Frequently asked questions</h1>
+        <div class={COLLAPSE}>
+          <input type="radio" name="my-accordion-1" />
+          <div class={COLLAPSE_TITLE}>{hello}, I forgot my password. What should I do?</div>
+          <div class={COLLAPSE_CONTENT}>Click on "Forgot Password" on the login page and follow the instructions sent to your email.</div>
+        </div>
+    );
+
+    let mut out = String::with_capacity(view.text_size());
+    view.render(&mut out).unwrap();
+    print!("{out}");
+
+    assert!(out.contains("collapse-title font-bold text-lg"))
 }

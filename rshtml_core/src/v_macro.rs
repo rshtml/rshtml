@@ -345,7 +345,15 @@ fn attribute(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, String, Opti
         opt((
             equal,
             alt((
-                expr.map(|(expr_def, expr)| (expr_def, Node::Expr(expr))),
+                expr.map(|(expr_def, expr)| {
+                    let quoted_expr = quote! {
+                        write!(out, "{}", "\"")?;
+                        #expr
+                        write!(out, "{}", "\"")?;
+                    };
+
+                    (expr_def, Node::Expr(quoted_expr))
+                }),
                 attribute_value.map(|attr_val| (TokenStream::new(), Node::Text(attr_val))),
             )),
         )),
