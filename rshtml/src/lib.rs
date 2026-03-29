@@ -19,7 +19,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! rshtml = "0.6.0" # Use the latest version
+//! rshtml = "0.6.1" # Use the latest version
 //! ```
 //!
 //! **v! macro, to write HTML within Rust:**
