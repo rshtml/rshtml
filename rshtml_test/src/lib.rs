@@ -40,6 +40,8 @@ impl HomePage {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rshtml::IoWriter;
+    use std::io;
 
     #[test]
     fn test_macro() {
@@ -77,6 +79,9 @@ mod tests {
 
         let mut out = String::with_capacity(homepage.text_size());
         homepage.render(&mut out).unwrap();
+
+        let mut io_writer = IoWriter::new(io::stdout());
+        homepage.render(&mut io_writer).unwrap();
 
         print!("{out}");
     }
