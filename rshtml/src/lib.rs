@@ -138,3 +138,6 @@ pub use view::IntoViewIter;
 pub use view::View;
 mod render;
 pub use render::Render;
+mod io_writer;
+/// An adapter that implements `rshtml::Write`, allowing direct writes to any type implementing `std::io::Write` (a file, stdout, a stream, etc.).
+pub use io_writer::IoWriter;
