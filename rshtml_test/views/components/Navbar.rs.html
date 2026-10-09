@@ -1,3 +1,5 @@
+@(navbar_sections: &Vec<(&'static str, &'static str)>)
+
 <div class="row navbar-row">
   <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 navbar-container">
 
@@ -7,7 +9,7 @@
       <div class="collapse navbar-toggleable-md" id="tmNavbar">
 
         <ul class="nav navbar-nav">
-          @for (link, name) in self.navbar_sections.iter() {
+          @for (link, name) in navbar_sections.iter() {
             <li class="nav-item">
               <a class="nav-link" href="@link">@name</a>
             </li>

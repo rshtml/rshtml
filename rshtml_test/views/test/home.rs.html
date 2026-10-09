@@ -1,5 +1,7 @@
-﻿<div>
-  @for user in &self.users {
+﻿@(users: &[User], title: &str)
+
+<div>
+  @for user in users {
     <p>@user.name</p>
   }
 </div>
@@ -36,22 +38,22 @@
 @inline_function()
 
 <script type="text/javascript">
-  let users = @json(&self.users);
-  @json_let("users_let", &self.users);
+  let users = @json(users);
+    @json_let("users_let", users);
 </script>
 
-@self.title
+@title
 @( 3+5)
 @("Hello, world! <script>alert('hello')</script>")
 
-@if self.title == "Hello" {
+@if title == "Hello" {
   <p>myvar is true</p>
 } else {
   <p>myvar is false</p>
 }
 
 <Card title= @x footer =false my_prop={
-  <p>this is my prop @&self.title</p>
+  <p>this is my prop @title</p>
 } my_prop2 = {hey} greetings=@greetings>
   <p>hello</p>
   <p>world</p>
@@ -61,7 +63,7 @@
 
 </Card>
 
-@for user in &self.users {
+@for user in users {
   <p>User @user.name</p>
   <p>User @user.age</p>
   <br/>

@@ -75,7 +75,7 @@ pub fn component<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStre
 
     let args = param_names_to_ts(&mut attribute_names);
 
-    ts.extend(quote! {self.#fn_name(__out__, child_content, #args)?;});
+    ts.extend(quote! {Self::#fn_name(__out__, child_content, #args)?;});
 
     Ok(quote! {{ #ts }})
 }

@@ -2,6 +2,7 @@ use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use std::{path::Path, str::FromStr};
 use syn::{Ident, Member, parse_str};
+
 pub fn extract_component_name(path: &Path) -> Option<String> {
     let filename = path.file_name().and_then(|n| n.to_str())?;
     let component_name = filename.strip_suffix(".rs.html").unwrap_or(filename);
@@ -37,6 +38,43 @@ pub fn params_to_ts(params: &mut [(&str, &str)]) -> TokenStream {
         quote! { #param_name: #param_type }
     });
     quote! {#(#args),*}
+}
+
+pub fn params_to_fn_call_ts(params: &mut [(&str, &str)]) -> TokenStream {
+    params.sort_by(|a, b| a.0.cmp(b.0));
+
+    let is_copy_type = |ty| {
+        matches!(
+            ty,
+            "u8" | "u16"
+                | "u32"
+                | "u64"
+                | "u128"
+                | "usize"
+                | "i8"
+                | "i16"
+                | "i32"
+                | "i64"
+                | "i128"
+                | "isize"
+                | "f32"
+                | "f64"
+                | "bool"
+                | "char"
+        )
+    };
+
+    let args = params.iter().map(|(param_name, param_type)| {
+        let name = Ident::new(param_name, Span::call_site());
+
+        if is_copy_type(param_type.trim()) {
+            quote! { self.#name }
+        } else {
+            quote! { &self.#name }
+        }
+    });
+
+    quote! { #(#args),* }
 }
 
 pub fn param_names_to_ts<S>(param_names: &mut [S]) -> TokenStream

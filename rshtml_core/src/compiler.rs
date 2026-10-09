@@ -1,4 +1,9 @@
-use crate::{context::UseDirective, diagnostic::Diagnostic, extract_file, rshtml_file};
+use crate::{
+    context::UseDirective,
+    diagnostic::Diagnostic,
+    extract_file,
+    rshtml_file::{self, utils::params_to_fn_call_ts},
+};
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
 use std::{
@@ -16,6 +21,7 @@ struct CompileOutput {
     include_strs: TokenStream,
     text_sizes: usize,
     fn_name: String,
+    template_params: Vec<(String, String)>,
 }
 
 pub struct Compiler {
@@ -88,7 +94,14 @@ impl Compiler {
         let text_sizes = compile_output.text_sizes;
 
         let root_fn_name = Ident::new(&compile_output.fn_name, Span::call_site());
-        let root_fn_call = quote! {self.#root_fn_name(__out__, |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {Ok(())})?;};
+        let root_fn_args = params_to_fn_call_ts(
+            &mut compile_output
+                .template_params
+                .iter()
+                .map(|(a, b)| (a.as_str(), b.as_str()))
+                .collect::<Vec<(&str, &str)>>(),
+        );
+        let root_fn_call = quote! {Self::#root_fn_name(__out__, |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {Ok(())}, #root_fn_args)?;};
 
         let (impl_generics, type_generics, where_clause) = self.struct_generics.split_for_impl();
         let struct_name = self.struct_name.to_owned();
@@ -183,6 +196,7 @@ impl Compiler {
                 include_strs,
                 text_sizes: info.text_size,
                 fn_name: info.fn_name,
+                template_params: info.template_params,
             }
         } else {
             CompileOutput::default()

@@ -1,3 +1,5 @@
+@(home_time: &DateTime<Utc>, title, email, footer: bool, navbar_sections: &Vec<(&'static str, &'static str)>)
+
 @use "layout.rs.html" as Layout;
 
 @use "components/Navbar.rs.html"
@@ -6,28 +8,28 @@
 @use "components/Contact.rs.html"
 @use "components/Services.rs.html"
 
-<Layout navbar={<Navbar/>} footer={
-    @if self.footer {
+<Layout navbar={<Navbar navbar_sections=@navbar_sections/>} footer={
+    @if footer {
         <!-- footer -->
         <footer class="row tm-footer">
 
             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
 
-            <p class="text-xs-center tm-footer-text">Copyright &copy; @self.home_time.year() RsHtml</p>
+            <p class="text-xs-center tm-footer-text">Copyright &copy; @home_time.year() RsHtml</p>
 
             </div>
 
         </footer>
     }
-}>
+} title=@&title>
     <div class="tm-page-content">
 
-        <Home title="Introduction"/>
+        <Home title="Introduction" home_time=@home_time/>
 
         <Services title="Our Services"/>
 
         <About title="About our company"/>
 
-        <Contact title="Send a message"/>
+        <Contact title="Send a message" email=@&email/>
     </div>
 </Layout>
