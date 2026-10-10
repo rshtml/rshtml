@@ -1,4 +1,4 @@
-@(content: impl View)
+@(content: impl View, data: &str)
 
 <p>
   this is side bar
@@ -7,5 +7,5 @@
 
   @content
 
-  @&self.data
+  @data
 </p>

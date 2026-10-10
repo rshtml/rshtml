@@ -1,6 +1,8 @@
+@(count: i32)
+
 @{let mut x = 0;}
 
-@while x < self.count {
+@while x < count {
     <p> Counter is: @x </p>
     @{x += 1;}
 }

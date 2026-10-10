@@ -1,4 +1,6 @@
-@for user in &self.users {
+@(users: &[String])
+
+@for user in users {
   @if *user == "Bob" {
     @continue
   }

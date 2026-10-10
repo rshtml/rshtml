@@ -1,7 +1,10 @@
+@(value: i32,
+data: &str)
+
 <div>
     @("this is escaped: '<script>'")
     @#("this is not escaped: '<script>'")
-    @(self.value)
-    this is: @(self.data.to_uppercase())
-    <p>hey: @((self.value * 10).pow(2))</p>
+    @(value)
+    this is: @(data.to_uppercase())
+    <p>hey: @((value * 10).pow(2))</p>
 </div>
