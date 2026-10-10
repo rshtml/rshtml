@@ -3,12 +3,11 @@ use super::{
     simple_expr::simple_expr,
     simple_expr_paren::simple_expr_paren,
     template::{inner_template_content, string_line, template_content},
-    utils::param_names_to_ts,
 };
 use crate::extensions::ParserDiagnostic;
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, quote};
-use std::str::FromStr;
+use std::{collections::BTreeMap, str::FromStr};
 use syn::{Ident, parse_str};
 use winnow::{
     ModalResult, Parser,
@@ -23,7 +22,7 @@ pub fn component<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStre
     let checkpoint = input.checkpoint();
     let mut ts = TokenStream::new();
 
-    let (_, _, tag_name, (attributes, mut attribute_names), _, body) = (
+    let (_, _, tag_name, attributes, _, body) = (
         "<",
         multispace0,
         component_tag_identifier,
@@ -70,30 +69,31 @@ pub fn component<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStre
 
     let fn_name = Ident::new(&use_directive.fn_name, Span::call_site());
 
-    ts.extend(attributes);
     ts.extend(quote! {let child_content = |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {#body  Ok(())};});
 
-    let args = param_names_to_ts(&mut attribute_names);
+    let values = attributes.values();
+    let args = quote! { #(#values),* };
 
     ts.extend(quote! {Self::#fn_name(__out__, child_content, #args)?;});
 
     Ok(quote! {{ #ts }})
 }
 
-fn attributes<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(TokenStream, Vec<&'a str>)> {
+fn attributes<'a, 'ctx>(
+    input: &mut Input<'a, 'ctx>,
+) -> ModalResult<BTreeMap<&'a str, TokenStream>> {
     repeat(0.., (multispace1, attribute))
         .fold(
-            || (TokenStream::new(), Vec::new()),
-            |mut acc, (_, (attr, name))| {
-                acc.0.extend(attr);
-                acc.1.push(name.trim());
+            || BTreeMap::new(),
+            |mut acc, (_, (name, value))| {
+                acc.insert(name, value);
                 acc
             },
         )
         .parse_next(input)
 }
 
-fn attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(TokenStream, &'a str)> {
+fn attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(&'a str, TokenStream)> {
     let checkpoint = input.checkpoint();
 
     let (name, value) = (
@@ -102,7 +102,7 @@ fn attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(TokenStream,
     )
         .parse_next(input)?;
 
-    let name_ts = parse_str::<Ident>(name).map_err(|e| {
+    parse_str::<Ident>(name).map_err(|e| {
         input.reset(&checkpoint);
         let error_msg = Box::leak(e.to_string().into_boxed_str());
         ErrMode::Cut(ContextError::new().add_context(
@@ -114,7 +114,7 @@ fn attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(TokenStream,
 
     let value = value.unwrap_or(true.to_token_stream());
 
-    Ok((quote! {let #name_ts = #value;}, name))
+    Ok((name, value))
 }
 
 fn attribute_name<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {

@@ -77,19 +77,6 @@ pub fn params_to_fn_call_ts(params: &mut [(&str, &str)]) -> TokenStream {
     quote! { #(#args),* }
 }
 
-pub fn param_names_to_ts<S>(param_names: &mut [S]) -> TokenStream
-where
-    S: AsRef<str> + Clone,
-{
-    param_names.sort_by(|a, b| a.as_ref().cmp(b.as_ref()));
-
-    let args = param_names
-        .as_ref()
-        .iter()
-        .map(|param| Ident::new(param.as_ref(), Span::call_site()));
-    quote! {#(#args),*}
-}
-
 pub fn get_struct_field(expr: &str) -> Option<String> {
     let rest = expr
         .trim()
