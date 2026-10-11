@@ -1,4 +1,4 @@
-@(title: &str, footer: i32)
+@(title: &str, footer: i32, data: &str)
 
 <div class="card" style="width: 18rem;">
   <div class="card-header">
@@ -10,9 +10,9 @@
   <div class="card-footer">
     @footer
   </div>
-  <p>@&self.data</p>
+  <p>@data</p>
 </div>
 
 @use "SideBar.rs.html" as SideBar
 
-<SideBar content= {data}>  this is child content </SideBar>
+<SideBar content= {data} data=@data>  this is child content </SideBar>

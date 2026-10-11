@@ -1,3 +1,9 @@
+@(value: i32,
+title: &str,
+data: &str,
+for_escape: &str,
+items: &[Item])
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,20 +14,20 @@
     @use "Item"
 
     <meta charset="UTF-8">
-    <title>@self.title</title>
+    <title>@title</title>
 </head>
 <body>
 
-    @for item in &self.items {
+    @for item in items {
         <Item name=@&item.name/>
     }
 
-    <Navbar for_escape = @&self.for_escape>
+    <Navbar for_escape = @&for_escape>
         heyy
     </Navbar>
 
     this is card:
-    <Card title="hello" footer = @self.value>
+    <Card title="hello" data=@data footer=@value >
         this is card content
     </Card>
 
@@ -31,10 +37,12 @@
 
     <SideBar content = {
              this is content:
-            <p>heyy</p>
-            <p>value: @self.value</p>
+             <p>heyy</p>
+             <p>value: @value</p>
+
              }
-    />
+             data=@data
+             />
 
 </body>
 </html>

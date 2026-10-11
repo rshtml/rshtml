@@ -1,7 +1,10 @@
-@time(&self.date)
+@(date: &chrono::DateTime<chrono::Utc>,
+users: &Vec<String>)
+
+@time(date)
 @time("2025-05-25")
 
 <script>
-    let users = @#json(&self.users)
-    @#json_let("my_users", &self.users)
+    let users = @#json(users)
+    @#json_let("my_users", users)
 </script>

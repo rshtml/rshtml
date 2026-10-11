@@ -1,4 +1,4 @@
-@(title:&str)
+@(title:&str, home_time: &DateTime<Utc>)
 
 <!-- #home -->
 <section id="tm-section-1" class="row tm-section">
@@ -14,7 +14,7 @@
         RsHtml website. Please if you have any question.
       </p>
       <p>
-        This template is last updated on @time(&self.home_time).pretty() for main menu with an external link support. You just
+        This template is last updated on @time(home_time).pretty() for main menu with an external link support. You just
         need
         to put external in link class for external URLs or web pages.
       </p>

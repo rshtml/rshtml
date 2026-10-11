@@ -2,7 +2,7 @@ use super::{Input, template::rust_identifier};
 use crate::extensions::ParserDiagnostic;
 use winnow::{
     ModalResult, Parser,
-    ascii::multispace0,
+    ascii::{multispace0, multispace1},
     combinator::{alt, cut_err, not, opt, peek, repeat, separated},
     token::any,
 };
@@ -42,7 +42,7 @@ fn params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Vec<(&'a str, Op
 fn param<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(&'a str, Option<&'a str>)> {
     (
         multispace0,
-        cut_err(rust_identifier).expected("identifier"),
+        cut_err((opt(("self", multispace1)), rust_identifier).take()).expected("identifier"),
         cut_err(peek(alt((
             ':'.void(),
             ','.void(),

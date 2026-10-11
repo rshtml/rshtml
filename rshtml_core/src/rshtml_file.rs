@@ -11,7 +11,7 @@ mod template;
 mod template_params;
 mod text;
 mod use_directive;
-mod utils;
+pub mod utils;
 
 use crate::{
     context::{Context, Info},
@@ -144,14 +144,12 @@ pub fn compile(
 
     Ok((
         quote! {
-         fn #fn_name(&self,
-                __out__: &mut dyn ::rshtml::Write,
+        fn #fn_name(__out__: &mut dyn ::rshtml::Write,
                 child_content: impl Fn(&mut dyn ::rshtml::Write) -> ::std::fmt::Result,
                 #args) -> ::std::fmt::Result;
         },
         quote! {
-        fn #fn_name(&self,
-                __out__: &mut dyn ::rshtml::Write,
+        fn #fn_name(__out__: &mut dyn ::rshtml::Write,
                 child_content: impl Fn(&mut dyn ::rshtml::Write) -> ::std::fmt::Result,
                 #args) -> ::std::fmt::Result {#body Ok(())}
         },

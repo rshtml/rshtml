@@ -1,4 +1,4 @@
-@(navbar: impl View, footer)
+@(navbar: impl View, footer, title)
 
 @use "scripts.rs.html" as Scripts
 
@@ -9,7 +9,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Index - @&self.title</title>
+    <title>Index - @title</title>
 
     <!-- load stylesheets -->
     <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:300,400">
