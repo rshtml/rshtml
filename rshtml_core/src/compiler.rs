@@ -174,13 +174,13 @@ impl Compiler {
                 let fn_params = info
                     .template_params
                     .iter()
-                    .map(|(n, t)| format!("{n}: {t}"))
+                    .map(|(n, t)| format!("{}: {t}", n.strip_prefix("self ").unwrap_or(n)))
                     .collect::<Vec<String>>()
                     .join(", ");
                 let fn_params_ts = TokenStream::from_str(&fn_params).unwrap();
 
                 let ts = quote! {
-                    fn #fn_name (&self, child_content: impl ::rshtml::View, #fn_params_ts) -> ::std::fmt::Result {
+                    fn #fn_name (child_content: impl ::rshtml::View, #fn_params_ts) -> ::std::fmt::Result {
                         #extract_file_include
 
                         Ok(())

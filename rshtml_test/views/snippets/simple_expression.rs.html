@@ -1,4 +1,4 @@
-@(value: i32, data: &Option<String>, for_escape: &str)
+@(self this: &SimpleExpressionPage, value: i32, data: &Option<String>, for_escape: &str)
 
 <div>
     <p>this is escaped: @for_escape </p>
@@ -8,6 +8,6 @@
     <p>value: @&&value</p>
     <p>data: @data.as_deref().unwrap_or_else(|| "Hii").to_string()</p>
     <p>data: @data.as_deref().unwrap_or_else(|| &"Hii").to_string()</p>
-    <p>my func: this is @@my_func().to_uppercase()</p>
-    <p>my func: this is@@my_func()also it is</p>
+    <p>my func: this is @this.my_func().to_uppercase()</p>
+    <p>my func: this is@this.my_func()also it is</p>
 </div>

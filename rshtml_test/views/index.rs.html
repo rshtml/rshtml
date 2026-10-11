@@ -1,4 +1,4 @@
-@(home_time: &DateTime<Utc>, title, email, footer: bool, navbar_sections: &Vec<(&'static str, &'static str)>)
+@(self state: &IndexPage, title, email, footer: bool, navbar_sections: &Vec<(&'static str, &'static str)>)
 
 @use "layout.rs.html" as Layout;
 
@@ -15,7 +15,7 @@
 
             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
 
-            <p class="text-xs-center tm-footer-text">Copyright &copy; @home_time.year() RsHtml</p>
+            <p class="text-xs-center tm-footer-text">Copyright &copy; @state.home_time.year() RsHtml</p>
 
             </div>
 
@@ -24,7 +24,7 @@
 } title=@&title>
     <div class="tm-page-content">
 
-        <Home title="Introduction" home_time=@home_time/>
+        <Home title="Introduction" home_time=@&state.home_time/>
 
         <Services title="Our Services"/>
 

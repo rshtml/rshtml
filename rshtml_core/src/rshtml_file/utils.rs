@@ -33,6 +33,8 @@ pub fn params_to_ts(params: &mut [(&str, &str)]) -> TokenStream {
     params.sort_by(|a, b| a.0.cmp(b.0));
 
     let args = params.iter().map(|(param_name, param_type)| {
+        let param_name = param_name.strip_prefix("self ").unwrap_or(param_name);
+
         let param_name = Ident::new(param_name, Span::call_site());
         let param_type = TokenStream::from_str(param_type).unwrap();
         quote! { #param_name: #param_type }
@@ -65,6 +67,10 @@ pub fn params_to_fn_call_ts(params: &mut [(&str, &str)]) -> TokenStream {
     };
 
     let args = params.iter().map(|(param_name, param_type)| {
+        if param_name.starts_with("self ") {
+            return quote! { self };
+        }
+
         let name = Ident::new(param_name, Span::call_site());
 
         if is_copy_type(param_type.trim()) {
