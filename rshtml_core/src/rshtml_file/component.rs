@@ -83,13 +83,10 @@ fn attributes<'a, 'ctx>(
     input: &mut Input<'a, 'ctx>,
 ) -> ModalResult<BTreeMap<&'a str, TokenStream>> {
     repeat(0.., (multispace1, attribute))
-        .fold(
-            || BTreeMap::new(),
-            |mut acc, (_, (name, value))| {
-                acc.insert(name, value);
-                acc
-            },
-        )
+        .fold(BTreeMap::new, |mut acc, (_, (name, value))| {
+            acc.insert(name, value);
+            acc
+        })
         .parse_next(input)
 }
 
