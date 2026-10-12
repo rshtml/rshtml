@@ -3,7 +3,7 @@ use rshtml::{View, functions::*};
 #[test]
 pub fn test_empty() {
     #[derive(View)]
-    #[view(path = "views/snippets/empty.rs.html", extract = true)]
+    #[view(path = "views/snippets/empty.rs.html", extract = false)]
     struct EmptyPage {}
 
     let page = EmptyPage {};
@@ -64,22 +64,22 @@ pub fn test_while() {
     println!("{out}");
 }
 
+#[derive(View)]
+#[view(path = "views/snippets/simple_expression.rs.html", extract = true)]
+struct SimpleExpressionPage {
+    value: i32,
+    data: Option<String>,
+    for_escape: String,
+}
+
+impl SimpleExpressionPage {
+    fn my_func(&self) -> String {
+        "my func".to_string()
+    }
+}
+
 #[test]
 pub fn test_simple_expression() {
-    #[derive(View)]
-    #[view(path = "views/snippets/simple_expression.rs.html", extract = true)]
-    struct SimpleExpressionPage {
-        value: i32,
-        data: Option<String>,
-        for_escape: String,
-    }
-
-    impl SimpleExpressionPage {
-        fn my_func(&self) -> String {
-            "my func".to_string()
-        }
-    }
-
     let page = SimpleExpressionPage {
         value: 10,
         data: Some("Hello".to_string()),
@@ -123,22 +123,22 @@ pub fn test_code_block() {
     println!("{out}");
 }
 
+struct Item {
+    name: String,
+}
+
+#[derive(View)]
+#[view(path = "views/snippets/component.rs.html", extract = true)]
+struct ComponentPage {
+    value: i32,
+    title: String,
+    data: String,
+    for_escape: String,
+    items: Vec<Item>,
+}
+
 #[test]
 pub fn test_component() {
-    struct Item {
-        name: String,
-    }
-
-    #[derive(View)]
-    #[view(path = "views/snippets/component.rs.html", extract = true)]
-    struct ComponentPage {
-        value: i32,
-        title: String,
-        data: String,
-        for_escape: String,
-        items: Vec<Item>,
-    }
-
     let mut page = ComponentPage {
         value: 10,
         title: "Component".to_string(),

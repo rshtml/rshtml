@@ -5,12 +5,11 @@ use crate::{
     rshtml_file::{self, utils::params_to_fn_call_ts},
 };
 use proc_macro2::{Span, TokenStream};
-use quote::{quote, quote_spanned};
+use quote::{format_ident, quote, quote_spanned};
 use std::{
     collections::{HashMap, HashSet},
     mem,
     path::{Path, PathBuf},
-    str::FromStr,
 };
 use syn::{Generics, Ident};
 
@@ -32,8 +31,7 @@ pub struct Compiler {
     path_stack: Vec<PathBuf>,
     visited_paths: HashMap<PathBuf, (HashSet<UseDirective>, String)>,
     extract: bool,
-
-    extract_includes: TokenStream,
+    extract_files: Vec<(String, PathBuf)>,
 }
 
 impl Compiler {
@@ -51,8 +49,7 @@ impl Compiler {
             path_stack: Vec::new(),
             visited_paths: HashMap::new(),
             extract,
-
-            extract_includes: TokenStream::new(),
+            extract_files: Vec::new(),
         }
     }
 
@@ -107,24 +104,48 @@ impl Compiler {
         let struct_name = self.struct_name.to_owned();
 
         let mut extract_files_ts = TokenStream::new();
+
         if cfg!(debug_assertions) && self.extract {
-            let extract_includes = self.extract_includes.to_owned();
-            extract_files_ts = quote! {
-                impl #impl_generics #struct_name #type_generics #where_clause {
-                    #extract_includes
-                }
-            };
+            for (fn_name, extract_file_path) in &self.extract_files {
+                let Some(extract_file_path_str) = extract_file_path.to_str() else {
+                    eprintln!("The generated file path is not valid UTF-8: {extract_file_path:?}");
+                    continue;
+                };
+                let mod_name = format_ident!("_rshtml_{0}", fn_name);
+
+                let ts = quote! {
+                        #[cfg(rshtml)]
+                        #[rustfmt::skip]
+                        #[allow(unused, path_statements, clippy::all)]
+                        #[path = #extract_file_path_str]
+                        mod #mod_name;
+
+                        #[cfg(not(rshtml))]
+                        #[rustfmt::skip]
+                        #[allow(unused, path_statements, clippy::all)]
+                        mod #mod_name {
+                            include!(#extract_file_path_str);
+                        }
+                };
+                extract_files_ts.extend(ts);
+            }
         }
 
+        let mod_name = format_ident!("_rshtml_{}", &self.struct_name);
+
         quote! {
+            #[allow(unexpected_cfgs, non_snake_case)]
+            mod #mod_name {
+                use super::*;
+                #extract_files_ts
+            }
+
             #[allow(unused, path_statements, clippy::all)]
             const _ : () = {
                 use ::rshtml::{Render, View};
                 use ::std::fmt::Display;
 
                 #include_strs
-
-                #extract_files_ts
 
                 impl #impl_generics ::rshtml::View for #struct_name #type_generics #where_clause {
                     fn render(&self, __out__: &mut dyn ::rshtml::Write) -> ::std::fmt::Result {
@@ -161,33 +182,30 @@ impl Compiler {
                 .or_insert((info.use_directives, source));
 
             if cfg!(debug_assertions) && self.extract {
-                let extract_file_include = extract_file::create(
-                    path,
-                    &format!("{{ {} }}", String::from_utf8_lossy(&info.debug.source)),
-                )
-                .map_err(|e| e.to_string())?;
-
-                let fn_name =
-                    TokenStream::from_str(&format!("_rshtml_{0}", info.fn_name.to_owned()))
-                        .unwrap();
-
                 let fn_params = info
                     .template_params
                     .iter()
                     .map(|(n, t)| format!("{}: {t}", n.strip_prefix("self ").unwrap_or(n)))
                     .collect::<Vec<String>>()
                     .join(", ");
-                let fn_params_ts = TokenStream::from_str(&fn_params).unwrap();
 
-                let ts = quote! {
-                    fn #fn_name (child_content: impl ::rshtml::View, #fn_params_ts) -> ::std::fmt::Result {
-                        #extract_file_include
+                let extract_source = format!(
+                    "fn render(child_content: impl ::rshtml::View, {}) -> ::std::fmt::Result {{ {}
 
-                        Ok(())
+                        Ok(()) }} use super::*;use ::rshtml::{{Render, View}};use std::fmt::Display;",
+                    fn_params,
+                    String::from_utf8_lossy(&info.debug.source)
+                );
+
+                match extract_file::create(path, &extract_source) {
+                    Ok(extract_file_path) => {
+                        self.extract_files
+                            .push((info.fn_name.to_owned(), extract_file_path));
                     }
-                };
-
-                self.extract_includes.extend(ts);
+                    Err(e) => {
+                        eprintln!("Failed to create extract file:({}) : {}", path.display(), e);
+                    }
+                }
             }
 
             CompileOutput {
