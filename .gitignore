@@ -27,3 +27,5 @@ rustfmt.toml
 # Dependency directories
 /node_modules/
 .cargo/
+
+.rshtml

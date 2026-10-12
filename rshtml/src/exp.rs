@@ -19,7 +19,7 @@ impl<T: View> Exp<T> {
 
 impl<T: Display> View for Exp<T> {
     fn render(&self, out: &mut dyn Write) -> fmt::Result {
-        write!(out, "{}", &self.0)
+        write!(out, "{}", self.0)
     }
 }
 
@@ -34,7 +34,7 @@ where
 
 impl<T: Display> Render for Exp<T> {
     fn render_e(&self, out: &mut dyn Write, _e: &'static str) -> fmt::Result {
-        write!(out, "{}", &self.0)
+        write!(out, "{}", self.0)
     }
 }
 
