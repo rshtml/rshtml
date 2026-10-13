@@ -6,31 +6,40 @@ use std::path::PathBuf;
 
 pub fn create(path: &Path, generated_code: &str) -> io::Result<PathBuf> {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
+    let manifest_dir = fs::canonicalize(&manifest_dir)
+        .map_err(|e| io::Error::new(e.kind(), format!("{manifest_dir:?}: {e}")))?;
 
-    let mut target_path = PathBuf::from(&manifest_dir);
-    target_path.push(".rshtml");
+    let mut target_path = manifest_dir.join(".rshtml");
 
-    for component in path.components() {
-        match component {
-            Component::Normal(c) => {
-                target_path.push(c);
+    let absolute_path = fs::canonicalize(manifest_dir.join(path))
+        .map_err(|e| io::Error::new(e.kind(), format!("{}: {e}", path.display())))?;
+
+    if let Ok(rel_path) = absolute_path.strip_prefix(&manifest_dir) {
+        target_path.push(rel_path);
+    } else {
+        const HEX: &[u8; 16] = b"0123456789abcdef";
+
+        target_path.push("__ext__");
+
+        for component in absolute_path.components() {
+            match component {
+                Component::Normal(c) => {
+                    target_path.push(c);
+                }
+                Component::Prefix(prefix) => {
+                    let bytes = prefix.as_os_str().as_encoded_bytes();
+                    let mut hex = String::with_capacity(bytes.len() * 2 + 4);
+                    hex.push_str("__");
+                    for b in bytes {
+                        hex.push(HEX[(b >> 4) as usize] as char);
+                        hex.push(HEX[(b & 0xf) as usize] as char);
+                    }
+                    hex.push_str("__");
+
+                    target_path.push(hex);
+                }
+                Component::CurDir | Component::ParentDir | Component::RootDir => {}
             }
-            Component::ParentDir => {
-                target_path.push("__up__");
-            }
-            Component::RootDir => {
-                target_path.push("__root__");
-            }
-            Component::Prefix(prefix) => {
-                let hex: String = prefix
-                    .as_os_str()
-                    .to_string_lossy()
-                    .bytes()
-                    .map(|b| format!("{:02x}", b))
-                    .collect();
-                target_path.push(format!("__{}__", hex));
-            }
-            Component::CurDir => {}
         }
     }
 
