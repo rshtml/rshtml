@@ -19,14 +19,14 @@ pub fn escape_or_raw(expr_ts: TokenStream, is_escaped: bool, message: &str) -> T
 
 pub fn generate_fn_name(path: &Path) -> String {
     let component_name = extract_component_name(path).unwrap_or_default();
-    let path_bytes = path.as_os_str().as_encoded_bytes();
 
-    let mut hash: u64 = 5381;
-    for c in path_bytes {
-        hash = ((hash << 5).wrapping_add(hash)).wrapping_add(*c as u64);
-    }
+    let hash = path
+        .as_os_str()
+        .as_encoded_bytes()
+        .iter()
+        .fold(5381u64, |h, &c| h.wrapping_mul(33).wrapping_add(c as u64));
 
-    format!("{}_{:x}", component_name, hash)
+    format!("{component_name}_{hash:016x}")
 }
 
 pub fn params_to_ts(params: &mut [(&str, &str)]) -> TokenStream {
