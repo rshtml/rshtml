@@ -190,9 +190,8 @@ impl Compiler {
                     .join(", ");
 
                 let extract_source = format!(
-                    "fn render(child_content: impl ::rshtml::View, {}) -> ::std::fmt::Result {{ {}
-
-                        Ok(()) }} use super::*;use ::rshtml::{{Render, View}};use std::fmt::Display;",
+                    "fn render(child_content: impl ::rshtml::View, {1}) -> ::std::fmt::Result {{ {2} {0}",
+                    "Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
                     fn_params,
                     String::from_utf8_lossy(&info.debug.source)
                 );
