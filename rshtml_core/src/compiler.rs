@@ -114,31 +114,17 @@ impl Compiler {
                 let mod_name = format_ident!("_rshtml_{0}", fn_name);
 
                 let ts = quote! {
-                        #[cfg(rshtml)]
-                        #[rustfmt::skip]
-                        #[allow(unused, path_statements, clippy::all)]
-                        #[path = #extract_file_path_str]
-                        mod #mod_name;
-
-                        #[cfg(not(rshtml))]
-                        #[rustfmt::skip]
-                        #[allow(unused, path_statements, clippy::all)]
-                        mod #mod_name {
-                            include!(#extract_file_path_str);
-                        }
+                    #[rustfmt::skip]
+                    #[allow(unused, path_statements, clippy::all)]
+                    #[path = #extract_file_path_str]
+                    mod #mod_name;
                 };
                 extract_files_ts.extend(ts);
             }
         }
 
-        let mod_name = format_ident!("_rshtml_{}", &self.struct_name);
-
         quote! {
-            #[allow(unexpected_cfgs, non_snake_case)]
-            mod #mod_name {
-                use super::*;
-                #extract_files_ts
-            }
+            #extract_files_ts
 
             #[allow(unused, path_statements, clippy::all)]
             const _ : () = {
