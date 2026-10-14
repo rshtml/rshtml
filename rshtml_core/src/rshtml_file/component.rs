@@ -134,7 +134,10 @@ fn attribute_value<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenSt
         alt(("true", "false")).map(TokenStream::from_str),
         float.map(|value: f64| Ok(value.to_token_stream())),
         string_line.map(TokenStream::from_str),
+        #[cfg(not(debug_assertions))]
         ("@", alt((simple_expr_paren, simple_expr))).map(|(_, value)| Ok(value.0)),
+        #[cfg(debug_assertions)]
+        exprs_in_attribute.map(Ok),
         inner_template_content.map(|value| Ok(quote!{ ::rshtml::ViewFn::new((|__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {#value Ok(())}, 0)) })),
     ))
     .parse_next(input)?;
@@ -151,6 +154,35 @@ fn attribute_value<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenSt
             )))
         }
     }
+}
+
+#[cfg(debug_assertions)]
+fn exprs_in_attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
+    use crate::debug::Snippet;
+
+    let (_, (value, is_paren, span)) = (
+        "@",
+        alt((
+            simple_expr_paren
+                .with_span()
+                .map(|(value, span)| (value, true, span)),
+            simple_expr
+                .with_span()
+                .map(|(value, span)| (value, false, span)),
+        )),
+    )
+        .parse_next(input)?;
+
+    let text = input.state.source[span.to_owned()].to_owned();
+
+    let snippet = if is_paren {
+        Snippet::ExprParen(span, text)
+    } else {
+        Snippet::ExprSimple(span, text)
+    };
+    input.state.info.debug.push(snippet);
+
+    Ok(value.0)
 }
 
 pub fn component_tag_identifier<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
