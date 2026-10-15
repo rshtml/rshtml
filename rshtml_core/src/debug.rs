@@ -80,7 +80,7 @@ impl Debug {
                 expr = expr.strip_prefix('(').unwrap_or(expr);
                 expr = expr.strip_suffix(')').unwrap_or(expr);
                 let expr = format!("&{};", expr);
-                self.source_replace(&expr, range.start - 1);
+                self.source_replace(&expr, range.start);
             }
             Snippet::Block(range, mut block) => {
                 block.replace_range(0..1, " ");
@@ -106,7 +106,7 @@ impl Debug {
 
                 let cleaned_stmt = String::from_utf8(stmt_buf).unwrap();
 
-                self.source_replace(&cleaned_stmt, range.start);
+                self.source_replace_transparent(&cleaned_stmt, range.start);
             }
             Snippet::Component(_range, _component) => {}
             Snippet::ChildContent(range, child_content) => {
@@ -178,6 +178,21 @@ impl Debug {
                 Some(b'\n') => self.source.insert(buf_idx, byte),
                 Some(_) => self.source[buf_idx] = byte,
                 None => self.source.push(byte),
+            }
+        }
+    }
+
+    pub fn source_replace_transparent(&mut self, content: &str, start: usize) {
+        let bytes = content.as_bytes();
+        let end = (start + bytes.len()).min(self.source.len());
+
+        if start < end {
+            let target_slice = &mut self.source[start..end];
+
+            for (target_byte, &source_byte) in target_slice.iter_mut().zip(bytes) {
+                if source_byte != b' ' {
+                    *target_byte = source_byte;
+                }
             }
         }
     }
