@@ -11,6 +11,8 @@
 
 <Bar hey="hey"/>
 
+  şŞiİıIüÜğĞçÇöÖoO @title.to_lowercase()
+
 @{
 
   struct MyStruct {
@@ -69,9 +71,26 @@
   <br/>
 }
 
+@if title == "Hello" {
+  <p>hello</p>
+} else if title == "Hi"  {
+  <p>hi @title</p>
+} else {
+  <p>@(title.to_uppercase()) nothing</p>
+}
+
 <div>
   <h1>Home Page</h1>
   <p>Welcome to the home page.</p>
   <hr>
 
 </div>
+
+@{
+  let mut count = 0;
+}
+
+@while count < 10 {
+  <p>count: @count</p>
+  @{ count+=1; }
+}
