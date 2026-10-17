@@ -168,17 +168,9 @@ impl Compiler {
                 .or_insert((info.use_directives, source));
 
             if cfg!(debug_assertions) && self.extract {
-                let fn_params = info
-                    .template_params
-                    .iter()
-                    .map(|(n, t)| format!("{}: {t}", n.strip_prefix("self ").unwrap_or(n)))
-                    .collect::<Vec<String>>()
-                    .join(", ");
-
                 let extract_source = format!(
-                    "fn render(child_content: impl ::rshtml::View, {1}) -> ::std::fmt::Result {{ {2} {0}",
-                    "Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
-                    fn_params,
+                    "{1} {0}",
+                    " Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
                     String::from_utf8_lossy(&info.debug.source)
                 );
 

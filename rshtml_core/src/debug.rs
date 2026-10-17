@@ -1,12 +1,6 @@
 #![cfg_attr(not(debug_assertions), allow(unused))]
 
 use std::{mem, ops::Range};
-use winnow::{
-    LocatingSlice, Parser,
-    ascii::multispace0,
-    combinator::{alt, peek, repeat},
-    token::{none_of, take_till},
-};
 
 #[derive(Debug, Clone)]
 pub enum Snippet {
@@ -14,10 +8,11 @@ pub enum Snippet {
     ExprParen(Range<usize>, String),
     Block(Range<usize>, String),
     Stmt(Range<usize>, String),
-    Component(Range<usize>, String),
     ChildContent(Range<usize>, String),
     Continue(Range<usize>, String),
     Break(Range<usize>, String),
+    Params(Range<usize>, String),
+    Html(Range<usize>, usize),
     None,
 }
 
@@ -28,10 +23,11 @@ impl Snippet {
             | Snippet::ExprParen(r, _)
             | Snippet::Block(r, _)
             | Snippet::Stmt(r, _)
-            | Snippet::Component(r, _)
             | Snippet::ChildContent(r, _)
             | Snippet::Continue(r, _)
-            | Snippet::Break(r, _) => r.start,
+            | Snippet::Break(r, _)
+            | Snippet::Params(r, _)
+            | Snippet::Html(r, _) => r.start,
 
             Snippet::None => 0,
         }
@@ -52,116 +48,104 @@ impl Debug {
         }
     }
 
-    pub fn extract(&mut self, original_source: &str) {
+    pub fn extract(&mut self) {
         self.snippets
             .sort_unstable_by_key(|b| std::cmp::Reverse(b.start()));
 
+        self.process();
+    }
+
+    pub fn push(&mut self, snippet: Snippet) -> &mut Self {
+        self.snippets.push(snippet);
+        self
+    }
+
+    fn process(&mut self) {
         let snippets = mem::take(&mut self.snippets);
+        let mut params_range = None;
 
         for snippet in snippets {
-            if let Snippet::ExprSimple(range, expr) = snippet {
-                self.source_replace_insert(expr.as_str(), range.start - 1);
-            }
-        }
+            match snippet {
+                Snippet::ExprSimple(range, expr) => {
+                    let expr = expr.strip_prefix('#').unwrap_or(&expr);
+                    let expr = format!("&{};", expr);
+                    self.source_replace_insert(expr.as_str(), range.start - 1);
+                }
+                Snippet::ExprParen(range, expr) => {
+                    let mut expr = expr.trim();
+                    expr = expr.strip_prefix('#').unwrap_or(expr);
+                    expr = expr.strip_prefix('(').unwrap_or(expr);
+                    expr = expr.strip_suffix(')').unwrap_or(expr);
+                    let expr = format!("&{};", expr);
+                    self.source_replace(&expr, range.start);
+                }
+                Snippet::Block(range, mut block) => {
+                    block.replace_range(0..1, " ");
+                    let len = block.len();
+                    block.replace_range(len - 1..len, " ");
+                    self.source_replace(&block, range.start);
+                }
+                Snippet::Stmt(range, stmt) => {
+                    self.source_replace(&stmt, range.start);
+                }
+                Snippet::ChildContent(range, child_content) => {
+                    let child_content = format!("{};", child_content.trim());
+                    self.source_replace(&child_content, range.start - 1);
+                }
+                Snippet::Continue(range, continue_) => {
+                    let continue_ = format!("{};", continue_.trim());
+                    self.source_replace(&continue_, range.start - 1);
+                }
+                Snippet::Break(range, break_) => {
+                    let break_ = format!("{};", break_.trim());
+                    self.source_replace(&break_, range.start - 1);
+                }
+                Snippet::Params(range, params) => {
+                    self.source_replace(&params, range.start);
+                    params_range = Some(range);
+                }
+                Snippet::Html(range, mut bytes_to_delete) => {
+                    if bytes_to_delete > 0 {
+                        let mut r = range.end;
+                        let mut w = range.end;
 
-        self.fix_utf8_column_shifts(original_source);
-    }
-
-    pub fn push(&mut self, snippet: Snippet) {
-        match snippet {
-            Snippet::ExprSimple(range, expr) => {
-                let expr = expr.strip_prefix('#').unwrap_or(&expr);
-                let expr = format!("&{};", expr);
-                self.snippets.push(Snippet::ExprSimple(range, expr));
-            }
-            Snippet::ExprParen(range, expr) => {
-                let mut expr = expr.trim();
-                expr = expr.strip_prefix('#').unwrap_or(expr);
-                expr = expr.strip_prefix('(').unwrap_or(expr);
-                expr = expr.strip_suffix(')').unwrap_or(expr);
-                let expr = format!("&{};", expr);
-                self.source_replace(&expr, range.start);
-            }
-            Snippet::Block(range, mut block) => {
-                block.replace_range(0..1, " ");
-                let len = block.len();
-                block.replace_range(len - 1..len, " ");
-                self.source_replace(&block, range.start);
-            }
-            Snippet::Stmt(range, stmt) => {
-                let ranges =
-                    Self::stmt(&mut LocatingSlice::new(stmt.as_str())).unwrap_or(Vec::new());
-
-                let mut stmt_buf = stmt.as_bytes().to_vec();
-
-                for range in ranges {
-                    let limit = range.end.min(stmt_buf.len());
-
-                    for item in stmt_buf.iter_mut().take(limit).skip(range.start) {
-                        if *item != b'\n' {
-                            *item = b' ';
+                        while r > range.start {
+                            r -= 1;
+                            let b = self.source[r];
+                            if bytes_to_delete > 0 && b == b' ' {
+                                bytes_to_delete -= 1;
+                                continue;
+                            }
+                            w -= 1;
+                            self.source[w] = b;
                         }
+
+                        self.source.drain(range.start..w);
                     }
                 }
-
-                let cleaned_stmt = String::from_utf8(stmt_buf).unwrap();
-
-                self.source_replace_transparent(&cleaned_stmt, range.start);
+                Snippet::None => {}
             }
-            Snippet::Component(_range, _component) => {}
-            Snippet::ChildContent(range, child_content) => {
-                let child_content = format!("{};", child_content.trim());
-                self.source_replace(&child_content, range.start - 1);
-            }
-            Snippet::Continue(range, continue_) => {
-                let continue_ = format!("{};", continue_.trim());
-                self.source_replace(&continue_, range.start - 1);
-            }
-            Snippet::Break(range, break_) => {
-                let break_ = format!("{};", break_.trim());
-                self.source_replace(&break_, range.start - 1);
-            }
-            Snippet::None => {}
         }
-    }
 
-    fn stmt(input: &mut LocatingSlice<&str>) -> winnow::Result<Vec<Range<usize>>> {
-        take_till(1.., '{').parse_next(input)?;
-        let range = Self::skip_braces.parse_next(input)?;
+        if let Some(range) = params_range {
+            let mut out = Vec::with_capacity(self.source.len() + 96);
 
-        let mut ranges = repeat(
-            0..,
-            (
-                peek((multispace0, "else")).void(),
-                take_till(1.., '{').void(),
-                Self::skip_braces,
-            )
-                .map(|(_, _, r)| r),
-        )
-        .fold(Vec::new, |mut acc, item| {
-            acc.push(item);
-            acc
-        })
-        .parse_next(input)?;
+            out.extend_from_slice(b"fn render(child_content: impl ::rshtml::View,");
+            out.extend_from_slice(&self.source[..range.start]);
+            out.push(b' ');
+            out.extend_from_slice(&self.source[range.start + 1..range.end]);
+            out.extend_from_slice(b"->::std::fmt::Result{");
+            out.extend_from_slice(&self.source[range.end..]);
 
-        ranges.insert(0, range);
-
-        Ok(ranges)
-    }
-
-    fn skip_braces(input: &mut LocatingSlice<&str>) -> winnow::Result<Range<usize>> {
-        (
-            "{".void(),
-            repeat(
-                0..,
-                alt((Self::skip_braces.void(), none_of(['{', '}']).void())),
-            )
-            .fold(|| (), |_, _| ())
-            .span(),
-            "}".void(),
-        )
-            .map(|(_, range, _)| range)
-            .parse_next(input)
+            self.source = out;
+        } else {
+            let mut out = Vec::with_capacity(self.source.len() + 64);
+            out.extend_from_slice(
+                b"fn render(child_content: impl ::rshtml::View)->::std::fmt::Result{",
+            );
+            out.extend_from_slice(&self.source);
+            self.source = out;
+        }
     }
 
     pub fn source_replace(&mut self, content: &str, start: usize) {
@@ -178,38 +162,6 @@ impl Debug {
                 Some(b'\n') => self.source.insert(buf_idx, byte),
                 Some(_) => self.source[buf_idx] = byte,
                 None => self.source.push(byte),
-            }
-        }
-    }
-
-    pub fn source_replace_transparent(&mut self, content: &str, start: usize) {
-        let bytes = content.as_bytes();
-        let end = (start + bytes.len()).min(self.source.len());
-
-        if start < end {
-            let target_slice = &mut self.source[start..end];
-
-            for (target_byte, &source_byte) in target_slice.iter_mut().zip(bytes) {
-                if source_byte != b' ' {
-                    *target_byte = source_byte;
-                }
-            }
-        }
-    }
-
-    // Characters that occupy more than 1 byte of space are reduced to a single space (e.g., ş, ç).
-    fn fix_utf8_column_shifts(&mut self, original_source: &str) {
-        for (byte_idx, ch) in original_source.char_indices().rev() {
-            let char_len = ch.len_utf8();
-            if char_len > 1 {
-                let extra_bytes = char_len - 1;
-                if byte_idx + char_len <= self.source.len()
-                    && self.source[byte_idx..byte_idx + char_len]
-                        .iter()
-                        .all(|&b| b == b' ')
-                {
-                    self.source.drain(byte_idx + 1..byte_idx + 1 + extra_bytes);
-                }
             }
         }
     }
