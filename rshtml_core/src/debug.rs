@@ -67,17 +67,25 @@ impl Debug {
         for snippet in snippets {
             match snippet {
                 Snippet::ExprSimple(range, expr) => {
+                    let hashed = expr.starts_with('#');
                     let expr = expr.strip_prefix('#').unwrap_or(&expr);
                     let expr = format!("&{};", expr);
-                    self.source_replace_insert(expr.as_str(), range.start - 1);
+                    let start = if hashed { range.start } else { range.start - 1 };
+                    self.source_replace_insert(expr.as_str(), start);
                 }
                 Snippet::ExprParen(range, expr) => {
+                    let trimmed = expr.trim_start();
+                    let lead = expr.len() - trimmed.len();
+                    let hashed = trimmed.starts_with('#');
+
                     let mut expr = expr.trim();
                     expr = expr.strip_prefix('#').unwrap_or(expr);
                     expr = expr.strip_prefix('(').unwrap_or(expr);
                     expr = expr.strip_suffix(')').unwrap_or(expr);
                     let expr = format!("&{};", expr);
-                    self.source_replace(&expr, range.start);
+
+                    let start = range.start + lead + usize::from(hashed);
+                    self.source_replace(&expr, start);
                 }
                 Snippet::Block(range, mut block) => {
                     block.replace_range(0..1, " ");
