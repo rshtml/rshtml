@@ -6,18 +6,14 @@ use winnow::{
     combinator::{alt, cut_err, not, opt, peek, repeat, separated},
     token::any,
 };
-// TODO: validate param name as ident and param type as type syn parse
+
+#[cfg(not(debug_assertions))]
 pub fn template_params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     let parsed_params: Vec<(String, String)> = ("@", multispace0, params, opt((multispace0, ';')))
         .map(|(_, _, params, _)| {
             params
-                .iter()
-                .map(|(p_name, p_type_opt)| {
-                    (
-                        p_name.to_string(),
-                        p_type_opt.unwrap_or("impl ::rshtml::View").to_string(),
-                    )
-                })
+                .into_iter()
+                .map(|(name, ty)| (name.to_string(), ty.to_string()))
                 .collect()
         })
         .parse_next(input)?;
@@ -27,7 +23,42 @@ pub fn template_params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()>
     Ok(())
 }
 
-fn params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Vec<(&'a str, Option<&'a str>)>> {
+#[cfg(debug_assertions)]
+pub fn template_params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
+    use crate::debug::Snippet;
+
+    let (parsed_params, params_str, span) = (
+        "@",
+        multispace0,
+        params.with_taken().with_span(),
+        opt((multispace0, ';')),
+    )
+        .map(|(_, _, ((params, params_str), span), _)| (params, params_str, span))
+        .parse_next(input)?;
+
+    let mut params_text = params_str.to_string();
+    let mut params = Vec::with_capacity(parsed_params.len());
+
+    for (name, ty) in parsed_params {
+        if name.starts_with("self") && name[4..].starts_with(|c: char| c.is_whitespace()) {
+            let offset = (name.as_ptr() as usize) - (params_str.as_ptr() as usize);
+            params_text.replace_range(offset..offset + 4, "    ");
+        }
+
+        params.push((name.to_string(), ty.to_string()));
+    }
+
+    input.state.info.template_params = params;
+    input
+        .state
+        .info
+        .debug
+        .push(Snippet::Params(span, params_text));
+
+    Ok(())
+}
+
+fn params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Vec<(&'a str, &'a str)>> {
     (
         "(",
         multispace0,
@@ -39,7 +70,7 @@ fn params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Vec<(&'a str, Op
         .parse_next(input)
 }
 
-fn param<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(&'a str, Option<&'a str>)> {
+fn param<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(&'a str, &'a str)> {
     (
         multispace0,
         cut_err((opt(("self", multispace1)), rust_identifier).take()).expected("identifier"),
@@ -52,24 +83,19 @@ fn param<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(&'a str, Option<
         .void()
         .expected("identifier"),
         multispace0,
-        opt((
+        (
             ':',
             multispace0,
             cut_err(param_type.verify(|pt| syn::parse_str::<syn::Type>(pt).is_ok()))
                 .expected("type"),
             multispace0,
-        )),
+        ),
     )
-        .map(|(_, name, _, _, type_opt)| {
-            let type_str = type_opt.map(|(_, _, ty, _)| ty);
-            (name, type_str)
-        })
+        .map(|(_, name, _, _, (_, _, ty, _))| (name, ty))
         .parse_next(input)
 }
 
 fn param_type<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
-    let start = input.input;
-
     repeat(
         1..,
         alt((
@@ -78,10 +104,8 @@ fn param_type<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
         )),
     )
     .fold(|| (), |_, _| ())
-    .parse_next(input)?;
-
-    let consumed = start.len() - input.len();
-    Ok(&start[..consumed])
+    .take()
+    .parse_next(input)
 }
 
 fn param_type_nested<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {

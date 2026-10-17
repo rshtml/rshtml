@@ -123,7 +123,7 @@ pub fn compile(
         };
 
         if cfg!(debug_assertions) && extract {
-            ctx.info.debug.extract(&source);
+            ctx.info.debug.extract();
         }
 
         (body, ctx.info, source_len - ctx.last_use_directive_point)

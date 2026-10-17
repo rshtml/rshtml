@@ -44,6 +44,7 @@ pub fn template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<To
         .parse_next(input)
 }
 
+#[cfg(not(debug_assertions))]
 pub fn inner_template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
     (
         '{',
@@ -61,6 +62,37 @@ pub fn inner_template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalRes
             ts
         })
         .parse_next(input)
+}
+
+#[cfg(debug_assertions)]
+pub fn inner_template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
+    use crate::debug::Snippet;
+
+    let (open_brace_span, close_brace_span, ts) = (
+        '{'.with_span(),
+        repeat(0.., alt((inner_text.label("html text"), block))).fold(
+            TokenStream::new,
+            |mut acc, ts| {
+                acc.extend(ts);
+                acc
+            },
+        ),
+        cut_err('}').with_span().expected("}"),
+    )
+        .map(|((_, open_brace_span), content, (_, close_brace_span))| {
+            let ts = quote! {{#content}};
+            (open_brace_span, close_brace_span, ts)
+        })
+        .parse_next(input)?;
+
+    input
+        .state
+        .info
+        .debug
+        .push(Snippet::Stmt(open_brace_span, "{".to_string()))
+        .push(Snippet::Stmt(close_brace_span, "}".to_string()));
+
+    Ok(ts)
 }
 
 #[cfg(not(debug_assertions))]
@@ -92,17 +124,13 @@ pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> 
 
 #[cfg(debug_assertions)]
 pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
-    use std::ops::Range;
-
     use crate::debug::Snippet;
+    use std::ops::Range;
 
     let extract = |span: Range<usize>| input.state.source[span.start..span.end].to_owned();
 
     let (ts, snippet) = alt((
-        component
-            .with_span()
-            .map(|(ts, span)| (ts, Snippet::Component(span.to_owned(), extract(span))))
-            .label("component"),
+        component.map(|ts| (ts, Snippet::None)).label("component"),
         (
             '@',
             multispace0,
@@ -114,10 +142,7 @@ pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> 
                     .with_span()
                     .map(|(ts, span)| (ts, Snippet::Block(span.to_owned(), extract(span))))
                     .label("code block"),
-                rust_stmt
-                    .with_span()
-                    .map(|(ts, span)| (ts, Snippet::Stmt(span.to_owned(), extract(span))))
-                    .label("statement"),
+                rust_stmt.map(|ts| (ts, Snippet::None)).label("statement"),
                 child_content_directive
                     .with_span()
                     .map(|(ts, span)| (ts, Snippet::ChildContent(span.to_owned(), extract(span))))
