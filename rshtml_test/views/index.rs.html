@@ -1,4 +1,5 @@
-@(self state: &IndexPage, title, email, footer: bool, navbar_sections: &Vec<(&'static str, &'static str)>)
+@(self state: &IndexPage, title: &str, email: &String, footer: bool,
+navbar_sections: &Vec<(&'static str, &'static str)>)
 
 @use "layout.rs.html" as Layout;
 
