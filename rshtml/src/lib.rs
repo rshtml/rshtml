@@ -19,7 +19,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! rshtml = "0.6.1" # Use the latest version
+//! rshtml = "0.7.0" # Use the latest version
 //! ```
 //!
 //! **v! macro, to write HTML within Rust:**
@@ -50,7 +50,7 @@
 //! // current working directory. The `extract` parameter extracts the Rust segments from
 //! // the `.rs.html` file into a separate file and includes it, thereby simplifying error handling.
 //! #[derive(View)]
-//! // #[view(path = "views/home.rs.html", extract)] // These are optional.
+//! // #[view(path = "views/home.rs.html", extract=false)] // These are optional.
 //! struct HomePage { // Looks for views/home.rs.html in views folder.
 //!     title: String,
 //! }
@@ -69,10 +69,31 @@
 //! ```
 //!
 //! The `View` macro implements the `View` trait for the struct, making it usable with the `v!` macro.
+//!
+//! **`views/home.rs.html`:**
+//!
+//! ```ignore
+//! @(title: &str, items: &[User])
+//!
+//! <div>
+//!     <h1>@(title)</h1>
+//!
+//!     @if items.is_empty() {
+//!         <p>You have no items.</p>
+//!     } else {
+//!         <p>Here are your items:</p>
+//!
+//!         @for item in items {
+//!             <li>@item</li>
+//!         }
+//!     }
+//!
+//! </div>
+//! ```
 
 /// Utility functions for use directly in RsHtml templates.
 ///
-/// Example template usage: `@time(&self.my_date)`, `@json(&self.data)`.
+/// Example template usage: `@time(&my_date)`, `@json(&data)`.
 #[cfg(feature = "functions")]
 pub mod functions;
 

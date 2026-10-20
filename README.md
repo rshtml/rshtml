@@ -6,7 +6,7 @@
 
 RsHtml is a compile-time, type-safe, lightweight, and flexible template engine for Rust. It aims to seamlessly integrate Rust code with HTML content. It allows developers to write dynamic templates that embed Rust expressions and makes it easier to generate HTML content programmatically. It generates efficient Rust code for template rendering at compile time.
 
-![Demo](v_macro.gif)
+![RsHtml](v_macro.gif)
 
 #### Documentation and Editor Support
 
@@ -57,22 +57,24 @@ Processes `.rs.html` templates from the `views` directory or the file in the `sp
 - Provides helper functions (e.g., `@time()`).
 
 ```razor
+@(is_logged_in: bool, username: &str, items: &[Item], title: &str)
+
 <h1>Welcome to RsHtml</h1>
 
 @use "Component.rs.html" as Component
 
-<Component title="home" is_ok=true>
+<Component name="home" is_ok=true title=@title>
     <p>child content</p>
 </Component>
 
-@if self.is_logged_in {
-    <p>Hello, @self.username!</p>
+@if is_logged_in {
+    <p>Hello, @username!</p>
 } else {
     <p>Please log in to continue.</p>
 }
 
 <ul>
-    @for item in self.items {
+    @for item in items {
         <li>@item</li>
     }
 </ul>
@@ -88,7 +90,7 @@ Processes `.rs.html` templates from the `views` directory or the file in the `sp
 use rshtml::View;
 
 #[derive(View)]
-// #[view(path = "views/home.rs.html", extract)]
+// #[view(path = "views/home.rs.html")]
 struct HomePage { // Looks for views/home.rs.html.
     title: String,
 }
@@ -112,7 +114,7 @@ To use RsHtml in your Rust project, run `cargo add rshtml` command or add it as 
 
 ```toml
 [dependencies]
-rshtml = "0.6.1"
+rshtml = "0.7.0"
 ```
 
 ## Contributing
