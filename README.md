@@ -12,52 +12,28 @@ RsHtml is a compile-time, type-safe, lightweight, and flexible template engine f
 
 - See the [Documentation](https://rshtml.github.io/) for a full list of features and the [Editor Support](https://rshtml.github.io/#-editor-support) section for editor integration details. A minimal working website example is also available in the [`rshtml_test` crate](https://github.com/rshtml/rshtml/blob/master/rshtml_test/src/main.rs).
 
+## Usage
 
-## v! macro
-- Allows writing Rust blocks inside HTML (`<div>{ code() }</div>`) and embedding the resulting expressions into the template.
-- Generates a type that implements the View trait and can render types that implement either the View or Display trait.
+RsHtml supports both external `.rs.html` template files via the `#[derive(View)]` macro and inline HTML templates inside Rust code via the `v!` macro.
 
-```rust
-    let user_info = v!(<p>name: {user.name}</p>);
-
-    v! {
-         <div class="user-info"> {user_info} </div>
-    }
-```
-
-```rust
-    fn cards(cards: &[Card]) -> impl View {
-        let mut card_views = Vec::new();
-        for card in cards {
-            card_views.push(v!(<div class="card">{&card.title}</div>));
-        }
-
-        v! {
-            <div>
-                { card_views }
-            </div>
-        }
-    }
-```
-
-```rust
-    impl View for Home {
-        fn render(&self, out: &mut dyn Write) -> Result {
-            v!(<p>Home Page {&self.title}</p>).render(out)
-        }
-    }
-```
-
-## View derive macro
+### View derive macro
 Processes `.rs.html` templates from the `views` directory or the file in the `specified folder` and implements the `View` trait.
 
 - Embeds Rust expressions and blocks directly into HTML templates using the `@` prefix or HTML-like component syntax (e.g., `<Component/>`).
 - Supports conditional rendering (`@if`, `@else`), loops (`@for`, `@while`).
-- Supports Rust code blocks (`@{}`), various Rust expression syntaxes (e.g., `@expression`, `@(expression)`, and a broad range of other Rust syntax.
+- Supports Rust code blocks (`@{}`), various Rust expression syntaxes (e.g., `@expression`, `@(expression)`), and a broad range of other Rust syntax.
 - Provides helper functions (e.g., `@time()`).
 
+### v! macro
+- Allows writing Rust blocks inside HTML (`<div>{ code() }</div>`) and embedding the resulting expressions into the template.
+- Generates a type that implements the View trait and can render types that implement either the View or Display trait.
+
+---
+
+**`views/home.rs.html`:**
 ```razor
-@(is_logged_in: bool, username: &str, items: &[Item], title: &str)
+@(is_logged_in: bool, username: &str, items: &[Item], title: &str,
+content: &Content, info: impl View)
 
 <h1>Welcome to RsHtml</h1>
 
@@ -73,11 +49,15 @@ Processes `.rs.html` templates from the `views` directory or the file in the `sp
     <p>Please log in to continue.</p>
 }
 
+@(content)
+
 <ul>
     @for item in items {
-        <li>@item</li>
+        <li>@item.name</li>
     }
 </ul>
+
+@(info)
 
 @{
     let x = 42;
@@ -86,18 +66,61 @@ Processes `.rs.html` templates from the `views` directory or the file in the `sp
 }
 ```
 
+**`main.rs`:**
 ```rust
-use rshtml::View;
+use rshtml::{v, View, Write};
+
+fn info(user: &User) -> impl View {
+    let user_info = v!(<p>name: {user.name}</p>);
+
+    v! {
+         <div class="user-info"> {user_info} </div>
+    }
+}
+
+fn cards(cards: &[Card]) -> impl View {
+    let mut card_views = Vec::new();
+    for card in cards {
+        card_views.push(v!(<div class="card">title: {&card.title}</div>));
+    }
+
+    v! {
+        <div>
+            { card_views }
+        </div>
+    }
+}
 
 #[derive(View)]
 // #[view(path = "views/home.rs.html")]
-struct HomePage { // Looks for views/home.rs.html.
+struct HomePage<T: View> { // Looks for views/home.rs.html.
     title: String,
+    is_logged_in: bool,
+    username: String,
+    items: Vec<Item>,
+    content: Content,
+    info: T,
 }
 
 fn main() {
+    let user = User {
+        name: "hi".to_string(),
+    };
+
     let homepage = HomePage {
-        title: "Home Page".to_string()
+        is_logged_in: false,
+        username: String::from("rshtml"),
+        items: vec![
+            Item {
+                name: "item 1".to_string(),
+            },
+            Item {
+                name: "item 2".to_string(),
+            },
+        ],
+        title: "Home Page".to_string(),
+        content: Content::new(),
+        info: info(&user),
     };
 
     let mut out = String::with_capacity(homepage.text_size());
@@ -105,6 +128,16 @@ fn main() {
     homepage.render(&mut out).unwrap();
 
     print!("{}", out);
+}
+
+struct Content {
+    title: String,
+}
+
+impl View for Content {
+    fn render(&self, out: &mut dyn Write) -> fmt::Result {
+        v!(<p>Home Page {&self.title}</p>).render(out)
+    }
 }
 ```
 
