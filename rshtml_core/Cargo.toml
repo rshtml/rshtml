@@ -7,7 +7,7 @@ description.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-quote = "1.0.40"
-proc-macro2 = { version = "1.0.95", features = ["span-locations"] }
-syn = { version = "2.0.101", features = ["full", "visit", "visit-mut"] }
-winnow = "0.7.14"
+quote = "1.0.47"
+proc-macro2 = { version = "1.0.107", features = ["span-locations"] }
+syn = { version = "3.0.9", features = ["full", "visit", "visit-mut"] }
+winnow = "1.0.4"

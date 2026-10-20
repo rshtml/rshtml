@@ -12,9 +12,9 @@ rust-version.workspace = true
 
 [dependencies]
 rshtml_macro.workspace = true
-serde = { version = "1.0.219", features = ["derive"], optional = true }
-serde_json = { version = "1.0.140", optional = true }
-chrono = { version = "0.4.41", optional = true }
+serde = { version = "1.0.229", features = ["derive"], optional = true }
+serde_json = { version = "1.0.154", optional = true }
+chrono = { version = "0.4.45", optional = true }
 
 [features]
 functions = ["dep:serde", "dep:serde_json", "dep:chrono"]
