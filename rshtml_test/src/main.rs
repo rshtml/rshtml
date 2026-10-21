@@ -1,20 +1,34 @@
+#![allow(dead_code)]
+
 mod website;
 
-use crate::website::website;
-use axum::Router;
-use axum::response::Html;
+use actix_web::Responder;
 use axum::routing::get;
+use axum::{Router, response::IntoResponse};
 use chrono::{DateTime, Datelike, Utc};
-use rshtml::{View, functions::*};
+use rshtml::{View, functions::*, v};
 use tower_http::services::ServeDir;
 
-#[tokio::main]
-async fn main() {
-    // tracing_subscriber::fmt::init();
+#[derive(View)]
+#[view(path = "views/index.rs.html")]
+struct IndexPage {
+    pub title: String,
+    pub email: String,
+    pub footer: bool,
+    pub navbar_sections: Vec<(&'static str, &'static str)>,
+    pub home_time: DateTime<Utc>,
+}
 
+fn main() {
+    axum_server();
+    // actix_server();
+}
+
+#[tokio::main]
+async fn axum_server() {
     let app = Router::new()
-        .route("/", get(index))
-        .route("/rshtml_file", get(index_rshtml_file))
+        .route("/", get(axum_index))
+        .route("/rshtml_file", get(axum_index_rshtml_file))
         .nest_service("/css", ServeDir::new("views/css"))
         .nest_service("/img", ServeDir::new("views/img"))
         .nest_service("/js", ServeDir::new("views/js"));
@@ -29,15 +43,13 @@ async fn main() {
 }
 
 /// This method works with the `v` macro.
-async fn index() -> Html<String> {
-    let page = website();
-
-    Html(page)
+async fn axum_index() -> impl IntoResponse {
+    v!({ website::index::index() })
 }
 
 /// This method works with `View` macro and `.rs.html` files.
-async fn index_rshtml_file() -> Html<String> {
-    let index_page = IndexPage {
+async fn axum_index_rshtml_file() -> impl IntoResponse {
+    IndexPage {
         title: "RsHtml Web Page".to_string(),
         email: "contact@rshtml.com".to_string(),
         footer: true,
@@ -48,21 +60,47 @@ async fn index_rshtml_file() -> Html<String> {
             ("#tm-section-4", "Contact"),
         ],
         home_time: Utc::now(),
-    };
-
-    let mut out = String::with_capacity(index_page.text_size());
-
-    index_page.render(&mut out).unwrap();
-
-    Html(out)
+    }
 }
 
-#[derive(View)]
-#[view(path = "views/index.rs.html")]
-struct IndexPage {
-    pub title: String,
-    pub email: String,
-    pub footer: bool,
-    pub navbar_sections: Vec<(&'static str, &'static str)>,
-    pub home_time: DateTime<Utc>,
+#[actix_web::main]
+async fn actix_server() {
+    use actix_files::Files;
+    use actix_web::{App, HttpServer, web};
+
+    let server = HttpServer::new(|| {
+        App::new()
+            .route("/", web::get().to(actix_index))
+            .route("/rshtml_file", web::get().to(actix_index_rshtml_file))
+            .service(Files::new("/css", "views/css"))
+            .service(Files::new("/img", "views/img"))
+            .service(Files::new("/js", "views/js"))
+    })
+    .bind("0.0.0.0:8080")
+    .unwrap();
+
+    println!("✅ Server started at http://0.0.0.0:8080");
+
+    server.run().await.unwrap();
+}
+
+/// This method works with the `v` macro.
+async fn actix_index() -> impl Responder {
+    v!({ website::index::index() })
+}
+
+/// This method works with `View` macro and `.rs.html` files.
+async fn actix_index_rshtml_file() -> impl Responder {
+    IndexPage {
+        title: "RsHtml Web Page".to_string(),
+        email: "contact@rshtml.com".to_string(),
+        footer: true,
+        navbar_sections: vec![
+            ("#tm-section-1", "Home"),
+            ("#tm-section-2", "Services"),
+            ("#tm-section-3", "About"),
+            ("#tm-section-4", "Contact"),
+        ],
+        home_time: Utc::now(),
+    }
 }

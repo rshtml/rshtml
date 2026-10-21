@@ -152,6 +152,9 @@ impl Compiler {
                         #text_sizes
                     }
                 }
+
+                ::rshtml::__impl_axum!((#impl_generics) (#struct_name) (#type_generics) (#where_clause));
+                ::rshtml::__impl_actix!((#impl_generics) (#struct_name) (#type_generics) (#where_clause));
             };
         }
     }

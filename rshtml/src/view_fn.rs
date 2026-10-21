@@ -38,3 +38,8 @@ impl<T> Deref for ViewFn<T> {
         &self.0
     }
 }
+
+#[cfg(feature = "axum")]
+crate::__impl_axum!((<T>) (ViewFn) (<T>) (where T: Fn(&mut dyn Write) -> fmt::Result));
+#[cfg(feature = "actix-web")]
+crate::__impl_actix!((<T>) (ViewFn) (<T>) (where T: Fn(&mut dyn Write) -> fmt::Result));
