@@ -3,6 +3,7 @@ use crate::website::{
     services::services,
 };
 use chrono::Utc;
+use footer::footer;
 use rshtml::{View, v};
 
 pub fn index() -> impl View {

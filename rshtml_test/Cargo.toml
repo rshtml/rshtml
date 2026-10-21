@@ -8,12 +8,11 @@ publish = false
 rshtml.workspace = true
 chrono = "0.4.45"
 serde = { version = "1.0.229", features = ["derive"] }
-axum = "0.8.9"
+axum = "0.8"
+actix-web = "4"
+actix-files = "0.7.2"
 tokio = { version = "1.54.0", features = ["full"] }
 tower-http = { version = "0.7.1", features = ["fs"] }
-
-[package.metadata.rshtml]
-views = { path = "views", extract_file_on_debug = false }
 
 [build-dependencies]
 rshtml.workspace = true
