@@ -1,6 +1,5 @@
-use std::fmt;
-
 use rshtml::{View, v};
+use std::fmt;
 
 struct Home {
     title: String,
@@ -9,7 +8,7 @@ struct Home {
 
 impl View for Home {
     fn render(&self, out: &mut dyn rshtml::Write) -> fmt::Result {
-        v!(<div>Home Page, title:{&self.title}, count:{self.count}</div>)(out)
+        v!(<div>"Home Page, title: " {&self.title} ", count: " {self.count}</div>)(out)
     }
 }
 
@@ -24,10 +23,7 @@ fn view_trait() {
 
     home.render(&mut out).unwrap();
 
-    assert_eq!(
-        out,
-        "<div> Home Page , title : home title , count : 7 </div>"
-    )
+    assert_eq!(out, "<div>Home Page, title: home title, count: 7</div>")
 }
 
 #[test]
@@ -41,13 +37,13 @@ fn view_trait_with_v() {
     let greetings = v!(<p>{hello}</p>);
 
     let res = v! {
-        <h1>RsHtml Title</h1>
+        <h1>"RsHtml Title"</h1>
 
         {home}
 
         {greetings}
 
-        <footer>copyright &copy;</footer>
+        <footer>"copyright &copy;"</footer>
     };
 
     println!("text size: {}", res.text_size());

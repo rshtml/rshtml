@@ -13,7 +13,7 @@ pub fn footer(home_time: DateTime<Utc>) -> impl View {
     v! {
         <footer class="row tm-footer">
             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
-                <p class="text-xs-center tm-footer-text">Copyright &copy; { year } RsHtml</p>
+                <p class="text-xs-center tm-footer-text">"Copyright &copy; " { year } " RsHtml"</p>
             </div>
         </footer>
     }

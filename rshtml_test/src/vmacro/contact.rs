@@ -27,7 +27,7 @@ pub fn contact(title: &str, email: &str) -> impl View {
                                               placeholder="Message" required></textarea>
                 </div>
 
-                <button type="submit" class="btn submit-btn">Send It Now</button>
+                <button type="submit" class="btn submit-btn">"Send It Now"</button>
               </div>
 
             </form>
@@ -40,20 +40,20 @@ pub fn contact(title: &str, email: &str) -> impl View {
 
             <div class="tm-white-curve-text">
 
-              <h2 class="tm-section-header green-text">Contact Us</h2>
-              <p>if you need a working contact form script, please follow our contact page.
-                Thank you for visiting our website.<br/>&nbsp;</p>
+              <h2 class="tm-section-header green-text">"Contact Us"</h2>
+              <p>"if you need a working contact form script, please follow our contact page.
+                Thank you for visiting our website."<br/>"&nbsp;"</p>
 
-              <h3 class="tm-section-subheader green-text">Our Address</h3>
+              <h3 class="tm-section-subheader green-text">"Our Address"</h3>
               <address>
-                160-420 Praesent consectetur, Dictum massa 10620
+                "160-420 Praesent consectetur, Dictum massa 10620"
               </address>
 
               <div class="contact-info-links-container">
                                 <span class="green-text contact-info">
-                                    Tel: <a href="tel:0100200340" class="contact-info-link">090-080-0760</a></span>
+                                    "Tel: "<a href="tel:0100200340" class="contact-info-link">"090-080-0760"</a></span>
                 <span class="green-text contact-info">
-                                    Email: <a href="mailto:info@company.com"
+                                    "Email: "<a href="mailto:info@company.com"
                                               class="contact-info-link">{ email }</a></span>
               </div>
 
