@@ -39,12 +39,7 @@ pub fn inner_text<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStr
         }
         acc
     })
-    .map(|text| {
-        (
-            text.chars().count(),
-            quote! { write!(__out__, "{}", #text)?; },
-        )
-    })
+    .map(|text| (text.chars().count(), quote! { __out__.write_str(#text)?; }))
     .parse_next(input)?;
 
     input.state.info.text_size += text_size;
@@ -89,7 +84,7 @@ pub fn inner_text<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStr
     .parse_next(input)?;
 
     let text_size = text.len();
-    let text_ts = quote! { write!(__out__, "{}", #text)?; };
+    let text_ts = quote! { __out__.write_str(#text)?; };
 
     let bytes_to_delete = text_size - text.chars().count();
     input
