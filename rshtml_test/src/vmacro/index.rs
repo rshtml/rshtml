@@ -1,4 +1,4 @@
-use crate::website::{
+use crate::vmacro::{
     about::about, contact::contact, footer, home::home, layout::layout, navbar::navbar,
     services::services,
 };
@@ -24,9 +24,6 @@ pub fn index() -> impl View {
             { services("Our Services") }
             { about("About our company") }
             { contact("Send a message", email) }
-
-
-            <Contact title="Send a message"/>
         </div>
     };
 

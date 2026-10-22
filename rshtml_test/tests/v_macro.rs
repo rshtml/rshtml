@@ -9,7 +9,7 @@ fn render_view(view: ViewFn<impl Fn(&mut dyn rshtml::Write) -> fmt::Result>) -> 
 
 #[test]
 fn test_simple_element() {
-    let view = v! { <div>Hello</div> };
+    let view = v! { "<div> Hello </div>" };
     assert_eq!(render_view(view), "<div> Hello </div>");
 }
 
@@ -17,8 +17,8 @@ fn test_simple_element() {
 fn test_nested_elements() {
     let view = v! {
         <ul>
-            <li>Item 1</li>
-            <li>Item 2</li>
+            <li>" Item 1 "</li>
+            <li>"Item 2"</li>
         </ul>
     };
 
@@ -29,29 +29,29 @@ fn test_nested_elements() {
 
 #[test]
 fn test_attributes() {
-    let view = v! { <div class="container" id="main">Content</div> };
+    let view = v! { <div class="container" id="main">"Content"</div> };
     let output = render_view(view);
-    assert!(output.contains(r#"class= "container""#));
-    assert!(output.contains(r#"id= "main""#));
+    assert!(output.contains(r#"class="container""#));
+    assert!(output.contains(r#"id="main""#));
 }
 
 #[test]
 fn test_expression() {
     let name = "World";
     let count = 42;
-    let view = v! { <p>Hello {name}, count is {count}</p> };
-    assert_eq!(render_view(view), "<p> Hello World , count is 42 </p>");
+    let view = v! { <p>"Hello " {name} ", count is " {count}</p> };
+    assert_eq!(render_view(view), "<p>Hello World, count is 42</p>");
 }
 
 #[test]
 fn test_self_closing() {
     let view = v! { <br /><input type="text" /><hr/> };
-    assert_eq!(render_view(view), "<br/> <input type= \"text\" /> <hr/>");
+    assert_eq!(render_view(view), "<br/><input type=\"text\"/><hr/>");
 }
 
 #[test]
 fn test_html_entities() {
-    let view = v! { <span>&copy; 2024 &nbsp; &#123;</span> };
+    let view = v! { <span>"&copy; 2024 &nbsp; &#123;"</span> };
     let output = render_view(view);
 
     assert!(output.contains("&nbsp;"));
@@ -72,10 +72,10 @@ fn test_control_flow() {
 #[test]
 fn test_dynamic_attribute() {
     let active = "active";
-    let view = v! { <button class={active}>Click</button> };
+    let view = v! { <button class={active}>"Click"</button> };
     let output = render_view(view);
     println!("{output}");
-    assert!(output.contains(r#"class= "active""#));
+    assert!(output.contains(r#"class="active""#));
 }
 
 #[test]
@@ -117,7 +117,7 @@ fn test_let_and_fn() {
         ],
     };
 
-    let user_info = v!(<p>name: {user.name}</p>);
+    let user_info = v!(<p>"name: " {user.name}</p>);
 
     let res = v! {
          <div class="user-info"> {user_info} </div>
@@ -162,11 +162,11 @@ fn dynamic_class_attribute() {
 
     let view = v!(
       <section id="faq" class="prose lg:prose-xl">
-        <h1 class="font-bold text-3xl">Frequently asked questions</h1>
+        <h1 class="font-bold text-3xl">"Frequently asked questions"</h1>
         <div class={COLLAPSE}>
           <input type="radio" name="my-accordion-1" />
-          <div class={COLLAPSE_TITLE}>{hello}, I forgot my password. What should I do?</div>
-          <div class={COLLAPSE_CONTENT}>Click on "Forgot Password" on the login page and follow the instructions sent to your email.</div>
+          <div class={COLLAPSE_TITLE}>{hello} ", I forgot my password. What should I do?"</div>
+          <div class={COLLAPSE_CONTENT}>"Click on \"Forgot Password\" on the login page and follow the instructions sent to your email."</div>
         </div>
     );
 

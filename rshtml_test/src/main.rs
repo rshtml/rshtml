@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-mod website;
+mod vmacro;
 
 use actix_web::Responder;
 use axum::routing::get;
@@ -44,7 +44,7 @@ async fn axum_server() {
 
 /// This method works with the `v` macro.
 async fn axum_index() -> impl IntoResponse {
-    v!({ website::index::index() })
+    v!({ vmacro::index::index() })
 }
 
 /// This method works with `View` macro and `.rs.html` files.
@@ -86,7 +86,7 @@ async fn actix_server() {
 
 /// This method works with the `v` macro.
 async fn actix_index() -> impl Responder {
-    v!({ website::index::index() })
+    v!({ vmacro::index::index() })
 }
 
 /// This method works with `View` macro and `.rs.html` files.

@@ -14,7 +14,7 @@ pub fn navbar(sections: &[(&str, &str)]) -> impl View {
         <div class="row navbar-row">
         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 navbar-container">
 
-          <a href="javascript:void(0)" class="navbar-brand" id="go-to-top">RSHTML</a>
+          <a href="javascript:void(0)" class="navbar-brand" id="go-to-top">"RSHTML"</a>
           <nav class="navbar navbar-full">
 
             <div class="collapse navbar-toggleable-md" id="tmNavbar">
@@ -28,7 +28,7 @@ pub fn navbar(sections: &[(&str, &str)]) -> impl View {
            </nav>
 
           <button class="navbar-toggler hidden-lg-up" type="button" data-toggle="collapse" data-target="#tmNavbar">
-            &#9776;
+            "&#9776;"
           </button>
         </div>
       </div>

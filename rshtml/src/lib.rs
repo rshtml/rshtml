@@ -29,7 +29,7 @@
 //!
 //! fn main() -> fmt::Result {
 //!   let template = "RsHtml";
-//!   let hello = v!(<p>Hello {template}</p>);
+//!   let hello = v!(<p>"Hello " {template}</p>);
 //!
 //!   let mut out = String::with_capacity(hello.text_size());
 //!

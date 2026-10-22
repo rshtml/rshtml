@@ -1,7 +1,7 @@
 #![allow(unused_imports, dead_code)]
 
 mod snippets;
-mod website;
+mod vmacro;
 
 use rshtml::{View, functions::*};
 use serde::Serialize;

@@ -13,7 +13,7 @@ fn v_macro_try() {
     let x = 5;
     let mut users = Vec::new();
     for i in 0..10 {
-        users.push(v!(move <User age={i} />));
+        users.push(v!(<User age={i} />));
     }
 
     let s = String::from("heyy");
@@ -39,11 +39,11 @@ fn v_macro_try() {
 
         {&users}
 
-        <div>fsdf sd</div>
+        <div>"fsdf sd"</div>
         {3+5}
 
-        {users.iter().map(|_user| v!(aa <User/>)).collect::<Vec<_>>()}
-        {users.iter().map(|_user| v!(bb <User/>)).collect::<Vec<_>>()}
+        {users.iter().map(|_user| v!("aa "<User/>)).collect::<Vec<_>>()}
+        {users.iter().map(|_user| v!("bb "<User/>)).collect::<Vec<_>>()}
         {
             if x == 5 {
                  v!(< Card/>).boxed()
@@ -65,7 +65,7 @@ fn card() -> impl View {
     let x = 5;
     let s = String::from("oooo");
 
-    v!(this is x: {x}, this is s: {s})
+    v!("this is x: " {x} ", this is s: " {s})
 }
 
 fn bar() -> Box<dyn View> {
@@ -73,14 +73,14 @@ fn bar() -> Box<dyn View> {
     let s = String::from("oooo");
 
     if x == 5 {
-        v!(this is x: {x}, this is s: {s}).boxed()
+        v!("this is x: " {x}", this is s: " {s}).boxed()
     } else {
-        v!(oooo).boxed()
+        v!("oooo").boxed()
     }
 }
 
 fn side_bar(a: impl View) -> impl View {
-    v!({a} is a crazy)
+    v!({a} " is a crazy")
 }
 
 fn nonono() -> impl View {
