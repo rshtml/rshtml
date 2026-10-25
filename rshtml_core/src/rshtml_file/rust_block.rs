@@ -1,6 +1,6 @@
 use super::Input;
-use proc_macro2::TokenStream;
-use quote::quote;
+use crate::context::Op;
+use std::ops::Range;
 use syn::parse_str;
 use winnow::{
     ModalResult, Parser,
@@ -10,55 +10,49 @@ use winnow::{
     token::{any, none_of, take_while},
 };
 
-pub fn rust_block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
-    let start = input.input;
+pub fn rust_block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     let checkpoint = input.checkpoint();
 
-    block.parse_next(input)?;
+    let (rust_block, span) = block.parse_next(input)?;
 
-    let len = start.len() - input.len();
-    let rust_block = &start[..len];
+    if let Err(e) = parse_str::<syn::Block>(rust_block) {
+        let span = e.span();
+        let start = span.start();
 
-    let output = match parse_str::<syn::Block>(rust_block) {
-        Ok(block) => {
-            let stmts = &block.stmts;
-            quote! { #(#stmts)* }
-        }
-        Err(e) => {
-            let span = e.span();
-            let start = span.start();
+        let offset = rust_block
+            .split_inclusive('\n')
+            .take(start.line - 1)
+            .map(|line| line.len())
+            .sum::<usize>()
+            + start.column;
+        input.reset(&checkpoint);
 
-            let offset = rust_block
-                .split_inclusive('\n')
-                .take(start.line - 1)
-                .map(|line| line.len())
-                .sum::<usize>()
-                + start.column;
-            input.reset(&checkpoint);
+        let _ = input.next_slice(offset);
 
-            let _ = input.next_slice(offset);
+        let error_msg = Box::leak(e.to_string().into_boxed_str());
 
-            let error_msg = Box::leak(e.to_string().into_boxed_str());
+        return Err(ErrMode::Cut(ContextError::new().add_context(
+            input,
+            &checkpoint,
+            StrContext::Expected(StrContextValue::Description(error_msg)),
+        )));
+    }
 
-            return Err(ErrMode::Cut(ContextError::new().add_context(
-                input,
-                &checkpoint,
-                StrContext::Expected(StrContextValue::Description(error_msg)),
-            )));
-        }
-    };
+    input.state.ops.push(Op::RustCode(span));
 
-    Ok(output)
+    Ok(())
 }
 
-fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
-    (
+fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(&'a str, Range<usize>)> {
+    let ((_, block_span, _), rust_block) = (
         "{",
-        block_content,
+        block_content.span(),
         cut_err("}").context(StrContext::Expected(StrContextValue::CharLiteral('}'))),
     )
-        .void()
-        .parse_next(input)
+        .with_taken()
+        .parse_next(input)?;
+
+    Ok((rust_block, block_span))
 }
 
 fn block_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {

@@ -3,7 +3,7 @@
 use proc_macro::TokenStream;
 use rshtml_core::{Compiler, v_macro};
 use std::path::Path;
-use syn::{Data, DeriveInput, Fields, LitBool, LitStr, Token, parse_macro_input};
+use syn::{DeriveInput, LitBool, LitStr, Token, parse_macro_input};
 
 #[proc_macro_derive(View, attributes(view))]
 pub fn view_derive(input: TokenStream) -> TokenStream {
@@ -11,7 +11,6 @@ pub fn view_derive(input: TokenStream) -> TokenStream {
 
     let struct_name = input.ident;
     let struct_generics = input.generics;
-    let struct_fields = get_struct_fields(&input.data);
 
     let (template_path, extract) = match parse_template_path_from_attrs(&input.attrs) {
         Ok(rshtml_config) => {
@@ -35,7 +34,7 @@ pub fn view_derive(input: TokenStream) -> TokenStream {
         }
     };
 
-    let mut compiler = Compiler::new(struct_name, struct_generics, struct_fields, extract);
+    let mut compiler = Compiler::new(struct_name, struct_generics, extract);
     let path = Path::new(&template_path);
 
     TokenStream::from(compiler.compile(path))
@@ -101,26 +100,6 @@ fn to_snake_case(s: &str) -> String {
     }
 
     result
-}
-
-fn get_struct_fields(data: &Data) -> Vec<String> {
-    match data {
-        Data::Struct(data_struct) => match &data_struct.fields {
-            Fields::Named(fields_named) => fields_named
-                .named
-                .iter()
-                .filter_map(|f| f.ident.as_ref().map(|id| id.to_string()))
-                .collect(),
-            Fields::Unnamed(fields_unnamed) => fields_unnamed
-                .unnamed
-                .iter()
-                .enumerate()
-                .map(|(index, _field)| index.to_string())
-                .collect(),
-            _ => Vec::new(),
-        },
-        _ => Vec::new(),
-    }
 }
 
 #[proc_macro]

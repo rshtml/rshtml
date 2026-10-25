@@ -1,7 +1,7 @@
-use crate::{debug, position::Position};
 use std::{
     collections::HashSet,
     hash::{Hash, Hasher},
+    ops::Range,
     path::{Path, PathBuf},
 };
 
@@ -10,7 +10,7 @@ pub struct UseDirective {
     pub name: String,
     pub path: PathBuf,
     pub fn_name: String,
-    pub position: Position,
+    pub span: Range<usize>,
 }
 
 impl PartialEq for UseDirective {
@@ -27,38 +27,42 @@ impl Hash for UseDirective {
 
 #[derive(Debug, Default, Clone)]
 pub struct Info {
-    pub text_size: usize,
     pub fn_name: String,
-    pub template_params: Vec<(String, String)>,
     pub use_directives: HashSet<UseDirective>,
+    pub full_path: PathBuf,
+}
 
-    pub debug: debug::Debug,
+#[derive(Debug)]
+pub enum Op {
+    TemplateParams(Range<usize>),
+    TemplateParam((Range<usize>, Range<usize>)), // remove self from name
+    RustCode(Range<usize>),
+    Text(Range<usize>), //@@ ->  @ must do
+    OpenBrace(Range<usize>),
+    CloseBrace(Range<usize>),
+    ChildContent(Range<usize>),
+    ContinueOrBreak(Range<usize>),
+    ExprSimple(Range<usize>, bool),
+    ExprParen(Range<usize>, bool),
+    ComponentStartName(Range<usize>), // missing use directive control
+    ComponentEnd,
+    ComponentBodyStart,
+    ComponentAttribute(Range<usize>, Option<Range<usize>>),
 }
 
 #[derive(Debug)]
 pub struct Context<'a> {
     pub info: Info,
-    pub struct_fields: &'a [String],
+    pub ops: Vec<Op>,
     pub base_dir: &'a Path,
-    pub path: &'a Path,
-    pub source: &'a str,
-    pub last_use_directive_point: usize,
 }
 
 impl<'a> Context<'a> {
-    pub fn new(
-        path: &'a Path,
-        source: &'a str,
-        base_dir: &'a Path,
-        struct_fields: &'a [String],
-    ) -> Self {
+    pub fn new(base_dir: &'a Path) -> Self {
         Context {
             info: Info::default(),
-            struct_fields,
             base_dir,
-            path,
-            source,
-            last_use_directive_point: 0,
+            ops: Vec::new(),
         }
     }
 }

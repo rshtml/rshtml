@@ -1,7 +1,7 @@
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use std::{path::Path, str::FromStr};
-use syn::{Ident, Member, parse_str};
+use syn::Ident;
 
 pub fn extract_component_name(path: &Path) -> Option<String> {
     let filename = path.file_name().and_then(|n| n.to_str())?;
@@ -81,20 +81,4 @@ pub fn params_to_fn_call_ts(params: &mut [(&str, &str)]) -> TokenStream {
     });
 
     quote! { #(#args),* }
-}
-
-pub fn get_struct_field(expr: &str) -> Option<String> {
-    let rest = expr
-        .trim()
-        .trim_start_matches('&')
-        .trim()
-        .strip_prefix("self.")?;
-
-    let candidate = rest.split('.').next().unwrap_or(rest);
-
-    if parse_str::<Member>(candidate).is_ok() {
-        Some(candidate.to_string())
-    } else {
-        None
-    }
 }

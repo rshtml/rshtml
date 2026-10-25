@@ -1,16 +1,21 @@
-use crate::rshtml_file::{Input, template::rust_identifier};
-use proc_macro2::TokenStream;
-use quote::quote;
+use crate::{
+    context::Op,
+    rshtml_file::{Input, template::rust_identifier},
+};
 use winnow::{
     ModalResult, Parser,
     combinator::{alt, not, peek},
 };
 
-pub fn child_content_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
-    (
+pub fn child_content_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
+    let span = (
         "child_content",
         alt(("()".void(), peek(not(rust_identifier)).void())),
     )
-        .map(|(_, _)| quote! {child_content(__out__)?;})
-        .parse_next(input)
+        .span()
+        .parse_next(input)?;
+
+    input.state.ops.push(Op::ChildContent(span));
+
+    Ok(())
 }

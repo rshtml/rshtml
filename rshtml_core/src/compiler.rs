@@ -1,10 +1,10 @@
 use crate::{
     context::UseDirective,
     diagnostic::Diagnostic,
-    extract_file,
-    rshtml_file::{self, utils::params_to_fn_call_ts},
+    position::Position,
+    rshtml_file::{self},
 };
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{format_ident, quote, quote_spanned};
 use std::{
     collections::{HashMap, HashSet},
@@ -18,15 +18,13 @@ struct CompileOutput {
     fn_signs: TokenStream,
     fn_bodies: TokenStream,
     include_strs: TokenStream,
+    root_fn_call: Option<TokenStream>,
     text_sizes: usize,
-    fn_name: String,
-    template_params: Vec<(String, String)>,
 }
 
 pub struct Compiler {
     struct_name: Ident,
     struct_generics: Generics,
-    struct_fields: Vec<String>,
     base_dir: PathBuf,
     path_stack: Vec<PathBuf>,
     visited_paths: HashMap<PathBuf, (HashSet<UseDirective>, String)>,
@@ -35,16 +33,10 @@ pub struct Compiler {
 }
 
 impl Compiler {
-    pub fn new(
-        struct_name: Ident,
-        struct_generics: Generics,
-        struct_fields: Vec<String>,
-        extract: bool,
-    ) -> Self {
+    pub fn new(struct_name: Ident, struct_generics: Generics, extract: bool) -> Self {
         Compiler {
             struct_name,
             struct_generics,
-            struct_fields,
             base_dir: PathBuf::new(),
             path_stack: Vec::new(),
             visited_paths: HashMap::new(),
@@ -56,7 +48,7 @@ impl Compiler {
     pub fn compile(&mut self, path: &Path) -> TokenStream {
         self.base_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
 
-        let compile_output = match self.compile_rshtml_files(path) {
+        let compile_output = match self.compile_rshtml_files(path, true) {
             Ok(compile_output) => compile_output,
             Err(err) => {
                 let error_message = format!(
@@ -89,16 +81,17 @@ impl Compiler {
         let fn_bodies = compile_output.fn_bodies;
         let include_strs = compile_output.include_strs;
         let text_sizes = compile_output.text_sizes;
+        let root_fn_call = compile_output.root_fn_call.unwrap_or(TokenStream::new());
 
-        let root_fn_name = Ident::new(&compile_output.fn_name, Span::call_site());
-        let root_fn_args = params_to_fn_call_ts(
-            &mut compile_output
-                .template_params
-                .iter()
-                .map(|(a, b)| (a.as_str(), b.as_str()))
-                .collect::<Vec<(&str, &str)>>(),
-        );
-        let root_fn_call = quote! {Self::#root_fn_name(__out__, |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {Ok(())}, #root_fn_args)?;};
+        // let root_fn_name = Ident::new(&compile_output.fn_name, Span::call_site());
+        // let root_fn_args = params_to_fn_call_ts(
+        //     &mut compile_output
+        //         .template_params
+        //         .iter()
+        //         .map(|(a, b)| (a.as_str(), b.as_str()))
+        //         .collect::<Vec<(&str, &str)>>(),
+        // );
+        // let root_fn_call = quote! {Self::#root_fn_name(__out__, |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {Ok(())}, #root_fn_args)?;};
 
         let (impl_generics, type_generics, where_clause) = self.struct_generics.split_for_impl();
         let struct_name = self.struct_name.to_owned();
@@ -159,42 +152,61 @@ impl Compiler {
         }
     }
 
-    fn compile_rshtml_files(&mut self, path: &Path) -> Result<CompileOutput, String> {
+    fn compile_rshtml_files(
+        &mut self,
+        path: &Path,
+        is_root: bool,
+    ) -> Result<CompileOutput, String> {
         self.path_stack.push(path.to_path_buf());
 
         let mut compile_output = if !self.visited_paths.contains_key(path) {
-            let (fn_signs, fn_bodies, include_strs, info, source) =
-                rshtml_file::compile(path, &self.base_dir, &self.struct_fields, self.extract)?;
+            let (ops, info, source) = rshtml_file::parse(path, &self.base_dir)?;
+
+            if cfg!(debug_assertions) && self.extract {
+                rshtml_file::extract(path, &source, &ops)?;
+            }
+
+            let (fn_signs, fn_bodies, include_strs, root_fn_call, text_size) =
+                rshtml_file::codegen(
+                    &info.full_path,
+                    &info.fn_name,
+                    &info.use_directives,
+                    ops,
+                    &source,
+                    is_root,
+                )?;
+
+            // let (fn_signs, fn_bodies, include_strs, info, source) =
+            //     rshtml_file::compile(path, &self.base_dir, &self.struct_fields, self.extract)?;
 
             self.visited_paths
                 .entry(path.to_path_buf())
                 .or_insert((info.use_directives, source));
 
-            if cfg!(debug_assertions) && self.extract {
-                let extract_source = format!(
-                    "{1} {0}",
-                    " Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
-                    String::from_utf8_lossy(&info.debug.source)
-                );
+            // if cfg!(debug_assertions) && self.extract {
+            //     let extract_source = format!(
+            //         "{1} {0}",
+            //         " Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
+            //         String::from_utf8_lossy(&info.debug.source)
+            //     );
 
-                match extract_file::create(path, &extract_source) {
-                    Ok(extract_file_path) => {
-                        self.extract_files
-                            .push((info.fn_name.to_owned(), extract_file_path));
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to create extract file:({}) : {}", path.display(), e);
-                    }
-                }
-            }
+            //     match extract_file::create(path, &extract_source) {
+            //         Ok(extract_file_path) => {
+            //             self.extract_files
+            //                 .push((info.fn_name.to_owned(), extract_file_path));
+            //         }
+            //         Err(e) => {
+            //             eprintln!("Failed to create extract file:({}) : {}", path.display(), e);
+            //         }
+            //     }
+            // }
 
             CompileOutput {
                 fn_signs,
                 fn_bodies,
                 include_strs,
-                text_sizes: info.text_size,
-                fn_name: info.fn_name,
-                template_params: info.template_params,
+                root_fn_call,
+                text_sizes: text_size,
             }
         } else {
             CompileOutput::default()
@@ -208,16 +220,18 @@ impl Compiler {
 
         for use_directive in &visited.0 {
             if self.path_stack.iter().any(|p| p == &use_directive.path) {
+                let position: Position = (visited.1.as_str(), &use_directive.span).into();
                 return Err(Diagnostic(&visited.1).message(
                     path,
-                    &use_directive.position,
+                    // &use_directive.position,
+                    &position,
                     "in use directive",
                     "circular dependency detected",
                     1,
                 ));
             }
 
-            let output = self.compile_rshtml_files(&use_directive.path)?;
+            let output = self.compile_rshtml_files(&use_directive.path, false)?;
 
             compile_output.fn_bodies.extend(output.fn_bodies);
             compile_output.fn_signs.extend(output.fn_signs);
