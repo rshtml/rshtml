@@ -65,7 +65,7 @@ impl Debug {
                 }
                 Op::OpenBrace(range) => self.source_replace(extract(range), range.start),
                 Op::CloseBrace(range) => self.source_replace(extract(range), range.start),
-                Op::ComponentAttribute(_, value_opt) if let Some(range) = value_opt => {
+                Op::ComponentAttribute(_, Some(range)) => {
                     let expr = format!("&{};", extract(range));
                     self.source_replace(&expr, range.start);
                 }

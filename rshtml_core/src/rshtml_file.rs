@@ -136,29 +136,34 @@ pub fn codegen(
     ),
     String,
 > {
-    struct ComponentFrame<'a> {
-        name: &'a str,
-        attrs: BTreeMap<&'a str, TokenStream>,
-        current_attr_name: Option<&'a str>,
-        in_body: bool,
-    }
-
-    impl<'a> ComponentFrame<'a> {
-        fn flush_view_fn_attr(&mut self, current: &mut TokenStream) {
-            if let Some(prev_name) = self.current_attr_name.take() {
-                let value = mem::take(current);
-                let value = quote! {
-                    ::rshtml::ViewFn::new((|__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result { #value Ok(()) }, 0))
-                };
-                self.attrs.insert(prev_name, value);
-            }
-        }
-    }
-
     let full_path_str = path.to_string_lossy();
 
     let mut params: Vec<(&str, &str)> = Vec::new();
     let mut text_size = 0;
+
+    fn flush_view_fn_attr<'a>(
+        current_attr_name: &mut Option<&'a str>,
+        attrs: &mut BTreeMap<&'a str, TokenStream>,
+        current: &mut TokenStream,
+    ) {
+        if let Some(prev_name) = current_attr_name.take() {
+            let value = mem::take(current);
+            let value = quote! {
+                ::rshtml::ViewFn::new((|__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result { #value Ok(()) }, 0))
+            };
+            attrs.insert(prev_name, value);
+        }
+    }
+
+    enum Scope<'a> {
+        Code(TokenStream),
+        Component {
+            name: &'a str,
+            attrs: BTreeMap<&'a str, TokenStream>,
+            current_attr_name: Option<&'a str>,
+            in_body: bool,
+        },
+    }
 
     let mut current = TokenStream::new();
     let mut stack: Vec<TokenStream> = Vec::new();
@@ -169,9 +174,11 @@ pub fn codegen(
             Op::TemplateParam(range) => {
                 codegen::template_param(source, range, &mut params);
             }
-            Op::OpenBrace(_) => stack.push(mem::take(&mut current)),
+            Op::OpenBrace(_) => stack.push(Scope::Code(mem::take(&mut current))),
             Op::CloseBrace(_) => {
-                let mut parent = stack.pop().ok_or("Unmatched closing brace '}'")?;
+                let Some(Scope::Code(mut parent)) = stack.pop() else {
+                    return Err("Unmatched closing brace '}'".to_string());
+                };
                 parent.extend(quote! { { #current } });
                 current = parent;
             }
@@ -201,57 +208,80 @@ pub fn codegen(
                 current.extend(ts);
             }
             Op::ComponentStartName(range) => {
-                let name = &source[range.start..range.end];
-                stack.push(mem::take(&mut current));
-                comp_stack.push(ComponentFrame {
-                    name,
+                stack.push(Scope::Code(mem::take(&mut current)));
+                stack.push(Scope::Component {
+                    name: &source[range],
                     attrs: BTreeMap::new(),
                     current_attr_name: None,
                     in_body: false,
                 });
             }
             Op::ComponentAttribute(name_range, val_range_opt) => {
-                let frame = comp_stack.last_mut().ok_or("Invalid Component")?;
+                let Some(Scope::Component {
+                    attrs,
+                    current_attr_name,
+                    ..
+                }) = stack.last_mut()
+                else {
+                    return Err("Invalid Component".to_string());
+                };
 
-                frame.flush_view_fn_attr(&mut current);
+                flush_view_fn_attr(current_attr_name, attrs, &mut current);
 
                 let attr_name = &source[name_range];
-
                 match val_range_opt {
                     Some(val_range) => {
-                        let val_str = &source[val_range];
-                        let ts = TokenStream::from_str(val_str).map_err(|e| e.to_string())?;
-                        frame.attrs.insert(attr_name, ts);
+                        let ts =
+                            TokenStream::from_str(&source[val_range]).map_err(|e| e.to_string())?;
+                        attrs.insert(attr_name, ts);
                     }
                     None => {
-                        frame.current_attr_name = Some(attr_name);
+                        *current_attr_name = Some(attr_name);
                     }
                 }
             }
             Op::ComponentBodyStart => {
-                let frame = comp_stack.last_mut().ok_or("Invalid Component")?;
-                frame.flush_view_fn_attr(&mut current);
-                frame.in_body = true;
+                let Some(Scope::Component {
+                    attrs,
+                    current_attr_name,
+                    in_body,
+                    ..
+                }) = stack.last_mut()
+                else {
+                    return Err("Invalid Component".to_string());
+                };
+                flush_view_fn_attr(current_attr_name, attrs, &mut current);
+                *in_body = true;
             }
             Op::ComponentEnd => {
-                let mut comp = comp_stack.pop().ok_or("Unmatched closing component tag")?;
-                let mut parent = stack.pop().ok_or("Unmatched closing component tag")?;
+                let Some(Scope::Component {
+                    name,
+                    mut attrs,
+                    mut current_attr_name,
+                    in_body,
+                }) = stack.pop()
+                else {
+                    return Err("Unmatched closing component tag".to_string());
+                };
+                let Some(Scope::Code(mut parent)) = stack.pop() else {
+                    return Err("Unmatched closing component tag".to_string());
+                };
 
-                if !comp.in_body {
-                    comp.flush_view_fn_attr(&mut current);
+                if !in_body {
+                    flush_view_fn_attr(&mut current_attr_name, &mut attrs, &mut current);
                 }
 
                 let child_content = quote! {let child_content = |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {#current  Ok(())};};
 
                 let use_directive = use_directives
                     .iter()
-                    .find(|use_directive| use_directive.name == comp.name)
+                    .find(|use_directive| use_directive.name == name)
                     .ok_or(format!(
                         "attempt to use a missing component: component `{}` is used but not found",
-                        comp.name
+                        name
                     ))?;
 
-                let values = comp.attrs.values();
+                let values = attrs.values();
                 let args = quote! { #(#values),* };
                 let comp_fn_name = Ident::new(&use_directive.fn_name, Span::call_site());
                 let fn_call = quote! {Self::#comp_fn_name(__out__, child_content, #args)?;};
