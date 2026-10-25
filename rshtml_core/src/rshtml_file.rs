@@ -166,8 +166,7 @@ pub fn codegen(
     }
 
     let mut current = TokenStream::new();
-    let mut stack: Vec<TokenStream> = Vec::new();
-    let mut comp_stack: Vec<ComponentFrame> = Vec::new();
+    let mut stack: Vec<Scope> = Vec::new();
 
     for op in ops {
         match op {
