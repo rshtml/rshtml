@@ -83,16 +83,6 @@ impl Compiler {
         let text_sizes = compile_output.text_sizes;
         let root_fn_call = compile_output.root_fn_call.unwrap_or(TokenStream::new());
 
-        // let root_fn_name = Ident::new(&compile_output.fn_name, Span::call_site());
-        // let root_fn_args = params_to_fn_call_ts(
-        //     &mut compile_output
-        //         .template_params
-        //         .iter()
-        //         .map(|(a, b)| (a.as_str(), b.as_str()))
-        //         .collect::<Vec<(&str, &str)>>(),
-        // );
-        // let root_fn_call = quote! {Self::#root_fn_name(__out__, |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {Ok(())}, #root_fn_args)?;};
-
         let (impl_generics, type_generics, where_clause) = self.struct_generics.split_for_impl();
         let struct_name = self.struct_name.to_owned();
 
@@ -163,7 +153,15 @@ impl Compiler {
             let (ops, info, source) = rshtml_file::parse(path, &self.base_dir)?;
 
             if cfg!(debug_assertions) && self.extract {
-                rshtml_file::extract(path, &source, &ops)?;
+                match rshtml_file::extract(path, &source, &ops) {
+                    Ok(extract_file_path) => {
+                        self.extract_files
+                            .push((info.fn_name.to_owned(), extract_file_path));
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to create extract file:({}) : {}", path.display(), e);
+                    }
+                }
             }
 
             let (fn_signs, fn_bodies, include_strs, root_fn_call, text_size) =
@@ -176,30 +174,9 @@ impl Compiler {
                     is_root,
                 )?;
 
-            // let (fn_signs, fn_bodies, include_strs, info, source) =
-            //     rshtml_file::compile(path, &self.base_dir, &self.struct_fields, self.extract)?;
-
             self.visited_paths
                 .entry(path.to_path_buf())
                 .or_insert((info.use_directives, source));
-
-            // if cfg!(debug_assertions) && self.extract {
-            //     let extract_source = format!(
-            //         "{1} {0}",
-            //         " Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
-            //         String::from_utf8_lossy(&info.debug.source)
-            //     );
-
-            //     match extract_file::create(path, &extract_source) {
-            //         Ok(extract_file_path) => {
-            //             self.extract_files
-            //                 .push((info.fn_name.to_owned(), extract_file_path));
-            //         }
-            //         Err(e) => {
-            //             eprintln!("Failed to create extract file:({}) : {}", path.display(), e);
-            //         }
-            //     }
-            // }
 
             CompileOutput {
                 fn_signs,

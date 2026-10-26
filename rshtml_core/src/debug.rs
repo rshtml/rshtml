@@ -21,11 +21,11 @@ impl Debug {
             match op {
                 Op::ExprSimple(range, _) => {
                     let expr = format!("&{};", extract(range));
-                    self.source_replace_insert(expr.as_str(), range.start);
+                    self.source_replace_insert(expr.as_str(), range.start - 1);
                 }
                 Op::ExprParen(range, _) => {
                     let expr = format!("&{};", extract(range));
-                    self.source_replace(&expr, range.start);
+                    self.source_replace(&expr, range.start - 1);
                 }
                 Op::RustCode(range) => {
                     self.source_replace(extract(range), range.start);
@@ -41,6 +41,14 @@ impl Debug {
                 Op::TemplateParams(range) => {
                     self.source_replace(extract(range), range.start);
                     params_range = Some(range);
+                }
+                Op::TemplateParam((range, _)) => {
+                    let name = extract(range);
+                    if name.starts_with("self")
+                        && name[4..].starts_with(|c: char| c.is_whitespace())
+                    {
+                        self.source_replace("    ", range.start);
+                    }
                 }
                 Op::Text(range) => {
                     let text = extract(range);
@@ -66,8 +74,15 @@ impl Debug {
                 Op::OpenBrace(range) => self.source_replace(extract(range), range.start),
                 Op::CloseBrace(range) => self.source_replace(extract(range), range.start),
                 Op::ComponentAttribute(_, Some(range)) => {
+                    if !source[..range.start]
+                        .trim_end_matches(|c: char| c.is_whitespace() || c == '(' || c == '#')
+                        .ends_with('@')
+                    {
+                        continue;
+                    }
+
                     let expr = format!("&{};", extract(range));
-                    self.source_replace(&expr, range.start);
+                    self.source_replace_insert(&expr, range.start - 1);
                 }
                 _ => {}
             }

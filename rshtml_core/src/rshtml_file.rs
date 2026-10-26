@@ -161,7 +161,6 @@ pub fn codegen(
             name: &'a str,
             attrs: BTreeMap<&'a str, TokenStream>,
             current_attr_name: Option<&'a str>,
-            in_body: bool,
         },
     }
 
@@ -212,7 +211,6 @@ pub fn codegen(
                     name: &source[range],
                     attrs: BTreeMap::new(),
                     current_attr_name: None,
-                    in_body: false,
                 });
             }
             Op::ComponentAttribute(name_range, val_range_opt) => {
@@ -243,21 +241,18 @@ pub fn codegen(
                 let Some(Scope::Component {
                     attrs,
                     current_attr_name,
-                    in_body,
                     ..
                 }) = stack.last_mut()
                 else {
                     return Err("Invalid Component".to_string());
                 };
                 flush_view_fn_attr(current_attr_name, attrs, &mut current);
-                *in_body = true;
             }
             Op::ComponentEnd => {
                 let Some(Scope::Component {
                     name,
                     mut attrs,
                     mut current_attr_name,
-                    in_body,
                 }) = stack.pop()
                 else {
                     return Err("Unmatched closing component tag".to_string());
@@ -266,9 +261,7 @@ pub fn codegen(
                     return Err("Unmatched closing component tag".to_string());
                 };
 
-                if !in_body {
-                    flush_view_fn_attr(&mut current_attr_name, &mut attrs, &mut current);
-                }
+                flush_view_fn_attr(&mut current_attr_name, &mut attrs, &mut current);
 
                 let child_content = quote! {let child_content = |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {#current  Ok(())};};
 

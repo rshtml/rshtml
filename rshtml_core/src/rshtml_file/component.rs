@@ -27,7 +27,6 @@ pub fn component<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
         alt((
             self_close,
             (
-                // cut_err(">").expected(">"),
                 close,
                 template_content,
                 cut_err("</").expected("</"),
