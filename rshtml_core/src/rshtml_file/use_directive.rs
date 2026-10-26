@@ -18,11 +18,8 @@ pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 
     let (name, path, span) = (
         "use",
-        alt((
-            (multispace1, cut_err(string_line).expected("path")),
-            (multispace0, string_line),
-        ))
-        .map(|(_, sl)| sl),
+        alt(((multispace1, cut_err(string_line).expected("path")), (multispace0, string_line)))
+            .map(|(_, sl)| sl),
         multispace0,
         opt((
             "as",
@@ -46,9 +43,8 @@ pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 
             let path = PathBuf::from(path_str);
 
-            let name = name_opt
-                .map(|(_, _, name)| name.to_string())
-                .or(extract_component_name(&path));
+            let name =
+                name_opt.map(|(_, _, name)| name.to_string()).or(extract_component_name(&path));
 
             (name, path, span)
         })

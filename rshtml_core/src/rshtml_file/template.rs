@@ -22,11 +22,7 @@ pub fn template<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     (
         opt("\u{FEFF}"),
         multispace0,
-        opt((
-            peek(('@', multispace0, '(')),
-            template_params.label("template parameters"),
-        ))
-        .void(),
+        opt((peek(('@', multispace0, '(')), template_params.label("template parameters"))).void(),
         template_content,
         eof.expected("end of file"),
     )
@@ -42,9 +38,7 @@ pub fn inner_template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalRes
     let span = '{'.span().parse_next(input)?;
     input.state.ops.push(Op::OpenBrace(span));
 
-    repeat(0.., alt((inner_text.label("html text"), block)))
-        .map(|()| ())
-        .parse_next(input)?;
+    repeat(0.., alt((inner_text.label("html text"), block))).map(|()| ()).parse_next(input)?;
 
     let span = cut_err('}'.span()).expected("}").parse_next(input)?;
     input.state.ops.push(Op::CloseBrace(span));

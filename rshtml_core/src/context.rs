@@ -48,6 +48,7 @@ pub enum Op {
     ComponentEnd,
     ComponentBodyStart,
     ComponentAttribute(Range<usize>, Option<Range<usize>>),
+    ComponentAttributeEnd,
 }
 
 #[derive(Debug)]
@@ -59,10 +60,6 @@ pub struct Context<'a> {
 
 impl<'a> Context<'a> {
     pub fn new(base_dir: &'a Path) -> Self {
-        Context {
-            info: Info::default(),
-            base_dir,
-            ops: Vec::new(),
-        }
+        Context { info: Info::default(), base_dir, ops: Vec::new() }
     }
 }

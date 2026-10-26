@@ -7,10 +7,7 @@ pub struct IoWriter<W> {
 
 impl<W: io::Write> IoWriter<W> {
     pub fn new(writer: W) -> Self {
-        Self {
-            writer,
-            error: None,
-        }
+        Self { writer, error: None }
     }
 
     pub fn into_inner(self) -> W {

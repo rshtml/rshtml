@@ -8,9 +8,7 @@ use winnow::{
 };
 
 pub fn template_params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
-    ("@", multispace0, params, opt((multispace0, ';')))
-        .void()
-        .parse_next(input)
+    ("@", multispace0, params, opt((multispace0, ';'))).void().parse_next(input)
 }
 
 fn params<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
@@ -47,9 +45,7 @@ fn param<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
             ':',
             multispace0,
             cut_err(
-                param_type
-                    .with_span()
-                    .verify(|(pt, _)| syn::parse_str::<syn::Type>(pt).is_ok()),
+                param_type.with_span().verify(|(pt, _)| syn::parse_str::<syn::Type>(pt).is_ok()),
             )
             .expected("type"),
             multispace0,
@@ -58,63 +54,36 @@ fn param<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
         .map(|(_, name_span, _, _, (_, _, (_, ty_span), _))| (name_span, ty_span))
         .parse_next(input)?;
 
-    input
-        .state
-        .ops
-        .push(Op::TemplateParam((name_span, ty_span)));
+    input.state.ops.push(Op::TemplateParam((name_span, ty_span)));
 
     Ok(())
 }
 
 fn param_type<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
-    repeat(
-        1..,
-        alt((
-            param_type_nested,
-            any.verify(|c: &char| !"([{<,)".contains(*c)).void(),
-        )),
-    )
-    .fold(|| (), |_, _| ())
-    .take()
-    .parse_next(input)
+    repeat(1.., alt((param_type_nested, any.verify(|c: &char| !"([{<,)".contains(*c)).void())))
+        .fold(|| (), |_, _| ())
+        .take()
+        .parse_next(input)
 }
 
 fn param_type_nested<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     alt((
         (
             "(".void(),
-            repeat(
-                0..,
-                alt((
-                    param_type_nested.void(),
-                    any.verify(|c: &char| *c != ')').void(),
-                )),
-            )
-            .fold(|| (), |_, _| ()),
+            repeat(0.., alt((param_type_nested.void(), any.verify(|c: &char| *c != ')').void())))
+                .fold(|| (), |_, _| ()),
             ")".void(),
         ),
         (
             "[".void(),
-            repeat(
-                0..,
-                alt((
-                    param_type_nested.void(),
-                    any.verify(|c: &char| *c != ']').void(),
-                )),
-            )
-            .fold(|| (), |_, _| ()),
+            repeat(0.., alt((param_type_nested.void(), any.verify(|c: &char| *c != ']').void())))
+                .fold(|| (), |_, _| ()),
             "]".void(),
         ),
         (
             "{".void(),
-            repeat(
-                0..,
-                alt((
-                    param_type_nested.void(),
-                    any.verify(|c: &char| *c != '}').void(),
-                )),
-            )
-            .fold(|| (), |_, _| ()),
+            repeat(0.., alt((param_type_nested.void(), any.verify(|c: &char| *c != '}').void())))
+                .fold(|| (), |_, _| ()),
             "}".void(),
         ),
         (

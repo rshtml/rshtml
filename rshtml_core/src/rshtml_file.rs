@@ -56,10 +56,7 @@ pub fn parse(path: &Path, base_dir: &Path) -> Result<(Vec<Op>, Info, String), St
     ctx.info.fn_name = generate_fn_name(path);
     ctx.info.full_path = full_path;
 
-    let mut input = Input {
-        input: LocatingSlice::new(&source),
-        state: &mut ctx,
-    };
+    let mut input = Input { input: LocatingSlice::new(&source), state: &mut ctx };
 
     if let Err(e) = template(&mut input) {
         let err = e.into_inner().unwrap();
@@ -126,34 +123,11 @@ pub fn codegen(
     ops: Vec<Op>,
     source: &str,
     is_root: bool,
-) -> Result<
-    (
-        TokenStream,
-        TokenStream,
-        TokenStream,
-        Option<TokenStream>,
-        usize,
-    ),
-    String,
-> {
+) -> Result<(TokenStream, TokenStream, TokenStream, Option<TokenStream>, usize), String> {
     let full_path_str = path.to_string_lossy();
 
     let mut params: Vec<(&str, &str)> = Vec::new();
     let mut text_size = 0;
-
-    fn flush_view_fn_attr<'a>(
-        current_attr_name: &mut Option<&'a str>,
-        attrs: &mut BTreeMap<&'a str, TokenStream>,
-        current: &mut TokenStream,
-    ) {
-        if let Some(prev_name) = current_attr_name.take() {
-            let value = mem::take(current);
-            let value = quote! {
-                ::rshtml::ViewFn::new((|__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result { #value Ok(()) }, 0))
-            };
-            attrs.insert(prev_name, value);
-        }
-    }
 
     enum Scope<'a> {
         Code(TokenStream),
@@ -214,16 +188,10 @@ pub fn codegen(
                 });
             }
             Op::ComponentAttribute(name_range, val_range_opt) => {
-                let Some(Scope::Component {
-                    attrs,
-                    current_attr_name,
-                    ..
-                }) = stack.last_mut()
+                let Some(Scope::Component { attrs, current_attr_name, .. }) = stack.last_mut()
                 else {
                     return Err("Invalid Component".to_string());
                 };
-
-                flush_view_fn_attr(current_attr_name, attrs, &mut current);
 
                 let attr_name = &source[name_range];
                 match val_range_opt {
@@ -237,31 +205,27 @@ pub fn codegen(
                     }
                 }
             }
-            Op::ComponentBodyStart => {
-                let Some(Scope::Component {
-                    attrs,
-                    current_attr_name,
-                    ..
-                }) = stack.last_mut()
+            Op::ComponentAttributeEnd => {
+                let Some(Scope::Component { attrs, current_attr_name, .. }) = stack.last_mut()
                 else {
                     return Err("Invalid Component".to_string());
                 };
-                flush_view_fn_attr(current_attr_name, attrs, &mut current);
+
+                if let Some(prev_name) = current_attr_name.take() {
+                    let value = mem::take(&mut current);
+                    let value = quote! {
+                        ::rshtml::ViewFn::new((|__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result { #value Ok(()) }, 0))
+                    };
+                    attrs.insert(prev_name, value);
+                }
             }
             Op::ComponentEnd => {
-                let Some(Scope::Component {
-                    name,
-                    mut attrs,
-                    mut current_attr_name,
-                }) = stack.pop()
-                else {
+                let Some(Scope::Component { name, attrs, .. }) = stack.pop() else {
                     return Err("Unmatched closing component tag".to_string());
                 };
                 let Some(Scope::Code(mut parent)) = stack.pop() else {
                     return Err("Unmatched closing component tag".to_string());
                 };
-
-                flush_view_fn_attr(&mut current_attr_name, &mut attrs, &mut current);
 
                 let child_content = quote! {let child_content = |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {#current  Ok(())};};
 
@@ -326,13 +290,11 @@ pub fn codegen(
 }
 
 fn read_template(path: &Path) -> Result<(PathBuf, String), String> {
-    let base_dir = match env::var("CARGO_MANIFEST_DIR")
-        .map(PathBuf::from)
-        .or_else(|_| env::current_dir())
-    {
-        Ok(base_dir) => base_dir,
-        Err(e) => return Err(format!("Failed to get current directory: {}", e)),
-    };
+    let base_dir =
+        match env::var("CARGO_MANIFEST_DIR").map(PathBuf::from).or_else(|_| env::current_dir()) {
+            Ok(base_dir) => base_dir,
+            Err(e) => return Err(format!("Failed to get current directory: {}", e)),
+        };
 
     let full_path = base_dir.join(path);
 

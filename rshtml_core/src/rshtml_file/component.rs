@@ -12,7 +12,7 @@ use syn::{Ident, parse_str};
 use winnow::{
     ModalResult, Parser,
     ascii::{alpha1, alphanumeric1, float, multispace0, multispace1},
-    combinator::{alt, cut_err, repeat},
+    combinator::{alt, cut_err, opt, peek, repeat},
     error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
     prelude::*,
 };
@@ -61,16 +61,19 @@ fn attributes<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 }
 
 fn attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
-    let (name, _, _, _, value) = (
-        attribute_name,
-        multispace0,
-        "=",
-        multispace0,
-        attribute_value,
-    )
-        .parse_next(input)?;
+    let (name, _, _, _) = (attribute_name, multispace0, "=", multispace0).parse_next(input)?;
 
-    input.state.ops.push(Op::ComponentAttribute(name, value));
+    if let Some(value) = opt(attribute_value).parse_next(input)? {
+        input.state.ops.push(Op::ComponentAttribute(name, value));
+        return Ok(());
+    }
+
+    input.state.ops.push(Op::ComponentAttribute(name, None));
+
+    cut_err(peek('{')).expected("{").parse_next(input)?;
+    inner_template_content.parse_next(input)?;
+
+    input.state.ops.push(Op::ComponentAttributeEnd);
 
     Ok(())
 }
@@ -100,33 +103,13 @@ fn attribute_name<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Range<us
 }
 
 fn attribute_value<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Option<Range<usize>>> {
-    let checkpoint = input.checkpoint();
-
-    let value_result = alt((
+    alt((
         alt(("true", "false")).span().map(Some),
         float::<_, f64, _>.span().map(Some),
         string_line.span().map(Some),
-        (
-            "@",
-            alt((parse_simple_expr_paren, parse_simple_expr)).span(),
-        )
-            .map(|(_, expr)| Some(expr)),
-        inner_template_content.map(|_| None),
+        ("@", alt((parse_simple_expr_paren, parse_simple_expr)).span()).map(|(_, expr)| Some(expr)),
     ))
-    .parse_next(input);
-
-    match value_result {
-        Ok(value) => Ok(value),
-        Err(e) => {
-            input.reset(&checkpoint);
-            let error_msg = Box::leak(e.to_string().into_boxed_str());
-            Err(ErrMode::Cut(ContextError::new().add_context(
-                input,
-                &checkpoint,
-                StrContext::Expected(StrContextValue::Description(error_msg)),
-            )))
-        }
-    }
+    .parse_next(input)
 }
 
 pub fn tag_identifier<'a, 'ctx>(input: &mut Input<'a, 'ctx>, is_start: bool) -> ModalResult<()> {

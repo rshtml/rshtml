@@ -36,7 +36,7 @@ impl Debug {
                 }
                 Op::ContinueOrBreak(range) => {
                     let continue_or_break = format!("{};", extract(range));
-                    self.source_replace(&continue_or_break, range.start);
+                    self.source_replace_insert(&continue_or_break, range.start);
                 }
                 Op::TemplateParams(range) => {
                     self.source_replace(extract(range), range.start);

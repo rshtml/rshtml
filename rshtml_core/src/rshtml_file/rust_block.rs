@@ -72,9 +72,7 @@ fn block_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 }
 
 fn line_comment<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
-    ("//", take_while(0.., |c| c != '\n'))
-        .void()
-        .parse_next(input)
+    ("//", take_while(0.., |c| c != '\n')).void().parse_next(input)
 }
 
 fn block_comment<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
@@ -106,11 +104,5 @@ fn string_literal<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 }
 
 fn char_literal<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
-    (
-        '\'',
-        alt((("\\", any).void(), none_of(['"', '\\']).void())),
-        '\'',
-    )
-        .void()
-        .parse_next(input)
+    ('\'', alt((("\\", any).void(), none_of(['"', '\\']).void())), '\'').void().parse_next(input)
 }

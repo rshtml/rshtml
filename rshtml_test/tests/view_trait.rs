@@ -16,10 +16,7 @@ impl View for Home {
 fn view_trait() {
     let mut out = String::with_capacity(24);
 
-    let home = Home {
-        title: "home title".to_owned(),
-        count: 7,
-    };
+    let home = Home { title: "home title".to_owned(), count: 7 };
 
     home.render(&mut out).unwrap();
 
@@ -28,10 +25,7 @@ fn view_trait() {
 
 #[test]
 fn view_trait_with_v() {
-    let home = Home {
-        title: "home title".to_owned(),
-        count: 7,
-    };
+    let home = Home { title: "home title".to_owned(), count: 7 };
 
     let hello = String::from("Hello");
     let greetings = v!(<p>{hello}</p>);

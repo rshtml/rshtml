@@ -70,13 +70,9 @@ fn stmt<'a, 'ctx>(keyword: &'static str, input: &mut Input<'a, 'ctx>) -> ModalRe
 }
 
 fn stmt_head<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
-    (multispace1, take_till(1.., ['{', '@', '}']), multispace0)
-        .void()
-        .parse_next(input)
+    (multispace1, take_till(1.., ['{', '@', '}']), multispace0).void().parse_next(input)
 }
 
 fn must_inner_template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
-    (cut_err(peek('{')).expected("{"), inner_template_content)
-        .void()
-        .parse_next(input)
+    (cut_err(peek('{')).expected("{"), inner_template_content).void().parse_next(input)
 }

@@ -107,14 +107,7 @@ fn test_let_and_fn() {
 
     let user = User {
         name: "John".to_owned(),
-        cards: vec![
-            Card {
-                title: "card1".to_owned(),
-            },
-            Card {
-                title: "card2".to_owned(),
-            },
-        ],
+        cards: vec![Card { title: "card1".to_owned() }, Card { title: "card2".to_owned() }],
     };
 
     let user_info = v!(<p>"name: " {user.name}</p>);
@@ -138,10 +131,7 @@ fn cards(title: &str, cards: &[Card]) -> impl View {
         card_views.push(v!(<div class="card">{&card.title}</div>));
     }
 
-    let card_views = cards
-        .iter()
-        .map(|card| v!(<div class="card">{&card.title}</div>))
-        .view_iter();
+    let card_views = cards.iter().map(|card| v!(<div class="card">{&card.title}</div>)).view_iter();
 
     v! {
         { title }

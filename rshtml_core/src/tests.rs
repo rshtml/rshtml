@@ -5,10 +5,7 @@ use syn::{Generics, Ident};
 
 #[test]
 fn test_compiler() {
-    let paths = [
-        Path::new("views/rshtml_macro.rs.html"),
-        Path::new("views/home.rs.html"),
-    ];
+    let paths = [Path::new("views/rshtml_macro.rs.html"), Path::new("views/home.rs.html")];
     let ident = Ident::new("RsHtmlMacro", Span::call_site());
 
     let mut compiler = Compiler::new(ident, Generics::default(), false);
@@ -22,10 +19,7 @@ fn test_compiler() {
 
 #[test]
 fn test_rshtml_file() {
-    let paths = [
-        Path::new("views/rshtml_macro.rs.html"),
-        Path::new("views/home.rs.html"),
-    ];
+    let paths = [Path::new("views/rshtml_macro.rs.html"), Path::new("views/home.rs.html")];
 
     let base_dir = PathBuf::from("views");
 

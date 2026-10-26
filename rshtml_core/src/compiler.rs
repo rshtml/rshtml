@@ -155,8 +155,7 @@ impl Compiler {
             if cfg!(debug_assertions) && self.extract {
                 match rshtml_file::extract(path, &source, &ops) {
                     Ok(extract_file_path) => {
-                        self.extract_files
-                            .push((info.fn_name.to_owned(), extract_file_path));
+                        self.extract_files.push((info.fn_name.to_owned(), extract_file_path));
                     }
                     Err(e) => {
                         eprintln!("Failed to create extract file:({}) : {}", path.display(), e);
@@ -174,26 +173,14 @@ impl Compiler {
                     is_root,
                 )?;
 
-            self.visited_paths
-                .entry(path.to_path_buf())
-                .or_insert((info.use_directives, source));
+            self.visited_paths.entry(path.to_path_buf()).or_insert((info.use_directives, source));
 
-            CompileOutput {
-                fn_signs,
-                fn_bodies,
-                include_strs,
-                root_fn_call,
-                text_sizes: text_size,
-            }
+            CompileOutput { fn_signs, fn_bodies, include_strs, root_fn_call, text_sizes: text_size }
         } else {
             CompileOutput::default()
         };
 
-        let visited = self
-            .visited_paths
-            .get_mut(path)
-            .map(mem::take)
-            .unwrap_or_default();
+        let visited = self.visited_paths.get_mut(path).map(mem::take).unwrap_or_default();
 
         for use_directive in &visited.0 {
             if self.path_stack.iter().any(|p| p == &use_directive.path) {
