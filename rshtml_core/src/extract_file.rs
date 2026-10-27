@@ -5,7 +5,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
-pub fn create(path: &Path, generated_code: &[u8]) -> io::Result<PathBuf> {
+pub fn create(path: &Path, generate: impl FnOnce() -> Vec<u8>) -> io::Result<PathBuf> {
     static MANIFEST_DIR: OnceLock<PathBuf> = OnceLock::new();
     let manifest_dir = match MANIFEST_DIR.get() {
         Some(dir) => dir,
@@ -56,7 +56,18 @@ pub fn create(path: &Path, generated_code: &[u8]) -> io::Result<PathBuf> {
         target_path.set_extension("");
     }
 
-    if fs::read(&target_path).ok().as_deref() != Some(generated_code) {
+    if let (Ok(src_meta), Ok(tgt_meta)) = (fs::metadata(&absolute_path), fs::metadata(&target_path))
+    {
+        if let (Ok(src_time), Ok(tgt_time)) = (src_meta.modified(), tgt_meta.modified()) {
+            if src_time <= tgt_time {
+                return Ok(target_path);
+            }
+        }
+    }
+
+    let generated_code = generate();
+
+    if fs::read(&target_path).ok().as_deref() != Some(&generated_code) {
         let parent = target_path.parent().ok_or_else(|| {
             io::Error::new(io::ErrorKind::InvalidData, "The file path is not valid")
         })?;

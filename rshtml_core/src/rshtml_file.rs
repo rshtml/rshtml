@@ -96,21 +96,25 @@ pub fn parse(path: &Path, base_dir: &Path) -> Result<(Vec<Op>, Info, String), St
 }
 
 pub fn extract(path: &Path, source: &str, ops: &[Op]) -> Result<PathBuf, String> {
-    let mut debug_extract = debug::Debug::new(
-        source
-            .as_bytes()
-            .iter()
-            .map(|&b| if b == b'\n' { b'\n' } else { b' ' })
-            .collect::<Vec<u8>>(),
-    );
+    let generate = || {
+        let mut debug_extract = debug::Debug::new(
+            source
+                .as_bytes()
+                .iter()
+                .map(|&b| if b == b'\n' { b'\n' } else { b' ' })
+                .collect::<Vec<u8>>(),
+        );
 
-    debug_extract.process(source, ops);
+        debug_extract.process(source, ops);
 
-    debug_extract.cleaned_source.extend_from_slice(
-        b"  Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
-    );
+        debug_extract.cleaned_source.extend_from_slice(
+            b"  Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
+        );
 
-    extract_file::create(path, &debug_extract.cleaned_source)
+        debug_extract.cleaned_source
+    };
+
+    extract_file::create(path, generate)
         .map_err(|e| format!("Failed to create extract file:({}) : {}", path.display(), e))
 }
 
