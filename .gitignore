@@ -22,8 +22,6 @@
 *.tmp
 *.log
 
-rustfmt.toml
-
 # Dependency directories
 /node_modules/
 .cargo/
