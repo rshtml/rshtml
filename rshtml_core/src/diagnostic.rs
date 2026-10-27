@@ -32,16 +32,10 @@ impl<'a> Diagnostic<'a> {
         };
 
         let lp = " ".repeat(left_pad - line.to_string().len());
-        let source_snippet = source_snippet
-            .trim_matches(|c| c == ' ' || c == '\t')
-            .to_string();
+        let source_snippet = source_snippet.trim_matches(|c| c == ' ' || c == '\t').to_string();
         let source = format!("{lp}{line} | {source_snippet}\n");
 
-        let title = if !title.is_empty() {
-            format!("{title}\n")
-        } else {
-            String::new()
-        };
+        let title = if !title.is_empty() { format!("{title}\n") } else { String::new() };
 
         let lp = " ".repeat(left_pad);
         format!("{lp} --> {file_info}\n{title}{lp} |\n{source}{info}{lp} |",)

@@ -18,11 +18,7 @@ fn v_macro_try() {
 
     let s = String::from("heyy");
 
-    let content = if x == 5 {
-        v!(<Card/>).boxed()
-    } else {
-        v!(<SideBar title={&s}/>).boxed()
-    };
+    let content = if x == 5 { v!(<Card/>).boxed() } else { v!(<SideBar title={&s}/>).boxed() };
 
     let res = v!(
         {card()}
@@ -72,11 +68,7 @@ fn bar() -> Box<dyn View> {
     let x = 5;
     let s = String::from("oooo");
 
-    if x == 5 {
-        v!("this is x: " {x}", this is s: " {s}).boxed()
-    } else {
-        v!("oooo").boxed()
-    }
+    if x == 5 { v!("this is x: " {x}", this is s: " {s}).boxed() } else { v!("oooo").boxed() }
 }
 
 fn side_bar(a: impl View) -> impl View {

@@ -34,10 +34,7 @@ async fn axum_server() {
         .nest_service("/js", ServeDir::new("views/js"));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
-    println!(
-        "✅ Server started at http://{}",
-        listener.local_addr().unwrap()
-    );
+    println!("✅ Server started at http://{}", listener.local_addr().unwrap());
 
     axum::serve(listener, app).await.unwrap();
 }

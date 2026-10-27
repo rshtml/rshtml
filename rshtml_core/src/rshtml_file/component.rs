@@ -1,105 +1,95 @@
 use super::{
     Input,
-    simple_expr::simple_expr,
-    simple_expr_paren::simple_expr_paren,
-    template::{inner_template_content, string_line, template_content},
+    template::{component_tag_identifier, inner_template_content, string_line, template_content},
 };
-use crate::extensions::ParserDiagnostic;
-use proc_macro2::{Span, TokenStream};
-use quote::{ToTokens, quote};
-use std::{collections::BTreeMap, str::FromStr};
+use crate::{
+    context::Op,
+    extensions::ParserDiagnostic,
+    rshtml_file::{simple_expr::parse_simple_expr, simple_expr_paren::parse_simple_expr_paren},
+};
+use std::ops::Range;
 use syn::{Ident, parse_str};
 use winnow::{
     ModalResult, Parser,
     ascii::{alpha1, alphanumeric1, float, multispace0, multispace1},
-    combinator::{alt, cut_err, opt, repeat},
+    combinator::{alt, cut_err, opt, peek, repeat},
     error::{AddContext, ContextError, ErrMode, StrContext, StrContextValue},
     prelude::*,
-    token::{any, take_while},
 };
 
-pub fn component<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
-    let checkpoint = input.checkpoint();
-    let mut ts = TokenStream::new();
-
-    let (_, _, tag_name, attributes, _, body) = (
+pub fn component<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
+    (
         "<",
         multispace0,
-        component_tag_identifier,
+        |input: &mut Input<'a, 'ctx>| tag_identifier(input, true),
         attributes,
         multispace0,
         alt((
-            "/>".map(|_| TokenStream::new()),
+            self_close,
             (
-                cut_err(">").expected(">"),
+                close,
                 template_content,
                 cut_err("</").expected("</"),
                 multispace0,
-                cut_err(component_tag_identifier).expected("tag identifier"),
+                cut_err(|input: &mut Input<'a, 'ctx>| tag_identifier(input, false))
+                    .expected("tag identifier"),
                 multispace0,
                 cut_err(">").expected(">"),
             )
-                .map(|(_, content, _, _, _, _, _)| content),
+                .void(),
         )),
     )
         .parse_next(input)?;
 
-    let use_directive_opt = input
-        .state
-        .info
-        .use_directives
-        .iter()
-        .find(|use_directive| use_directive.name == tag_name);
-
-    let Some(use_directive) = use_directive_opt else {
-        input.reset(&checkpoint);
-        let error_msg = Box::leak(
-            format!(
-                "attempt to use a missing component: component `{tag_name}` is used but not found"
-            )
-            .into_boxed_str(),
-        );
-
-        return Err(ErrMode::Cut(ContextError::new().add_context(
-            input,
-            &checkpoint,
-            StrContext::Expected(StrContextValue::Description(error_msg)),
-        )));
-    };
-
-    let fn_name = Ident::new(&use_directive.fn_name, Span::call_site());
-
-    ts.extend(quote! {let child_content = |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {#body  Ok(())};});
-
-    let values = attributes.values();
-    let args = quote! { #(#values),* };
-
-    ts.extend(quote! {Self::#fn_name(__out__, child_content, #args)?;});
-
-    Ok(quote! {{ #ts }})
+    Ok(())
 }
 
-fn attributes<'a, 'ctx>(
-    input: &mut Input<'a, 'ctx>,
-) -> ModalResult<BTreeMap<&'a str, TokenStream>> {
-    repeat(0.., (multispace1, attribute))
-        .fold(BTreeMap::new, |mut acc, (_, (name, value))| {
-            acc.insert(name, value);
-            acc
-        })
-        .parse_next(input)
+fn close<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
+    cut_err(">").expected(">").parse_next(input)?;
+    input.state.ops.push(Op::ComponentBodyStart);
+    Ok(())
 }
 
-fn attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(&'a str, TokenStream)> {
+fn self_close<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
+    "/>".parse_next(input)?;
+    input.state.ops.push(Op::ComponentEnd);
+    Ok(())
+}
+
+fn attributes<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
+    repeat(0.., (multispace1, attribute)).parse_next(input)
+}
+
+fn attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
+    let (name, _, _, _) = (attribute_name, multispace0, "=", multispace0).parse_next(input)?;
+
+    if let Some(value) = opt(attribute_value).parse_next(input)? {
+        input.state.ops.push(Op::ComponentAttribute(name, value));
+        return Ok(());
+    }
+
+    input.state.ops.push(Op::ComponentAttribute(name, None));
+
+    cut_err(peek('{')).expected("{").parse_next(input)?;
+    inner_template_content.parse_next(input)?;
+
+    input.state.ops.push(Op::ComponentAttributeEnd);
+
+    Ok(())
+}
+
+fn attribute_name<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Range<usize>> {
     let checkpoint = input.checkpoint();
 
-    let (name, value) = (
-        attribute_name,
-        opt(((multispace0, "=", multispace0), attribute_value).map(|(_, value)| value)),
+    let (attribute_name, span) = (
+        alt((alpha1.void(), "_".void())),
+        repeat(0.., alt((alphanumeric1.void(), "_".void()))).fold(|| (), |_, _| ()),
     )
+        .take()
+        .with_span()
         .parse_next(input)?;
 
-    parse_str::<Ident>(name).map_err(|e| {
+    parse_str::<Ident>(attribute_name).map_err(|e| {
         input.reset(&checkpoint);
         let error_msg = Box::leak(e.to_string().into_boxed_str());
         ErrMode::Cut(ContextError::new().add_context(
@@ -109,92 +99,27 @@ fn attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(&'a str, Tok
         ))
     })?;
 
-    let value = value.unwrap_or(true.to_token_stream());
-
-    Ok((name, value))
+    Ok(span)
 }
 
-fn attribute_name<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
-    let start = input.input;
-
-    (
-        alt((alpha1.void(), "_".void())),
-        repeat(0.., alt((alphanumeric1.void(), "_".void()))).fold(|| (), |_, _| ()),
-    )
-        .parse_next(input)?;
-
-    let consumed = start.len() - input.input.len();
-    Ok(&start[..consumed])
-}
-
-fn attribute_value<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
-    let checkpoint = input.checkpoint();
-
-    let value_result = alt((
-        alt(("true", "false")).map(TokenStream::from_str),
-        float.map(|value: f64| Ok(value.to_token_stream())),
-        string_line.map(TokenStream::from_str),
-        #[cfg(not(debug_assertions))]
-        ("@", alt((simple_expr_paren, simple_expr))).map(|(_, value)| Ok(value.0)),
-        #[cfg(debug_assertions)]
-        exprs_in_attribute.map(Ok),
-        inner_template_content.map(|value| Ok(quote!{ ::rshtml::ViewFn::new((|__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {#value Ok(())}, 0)) })),
+fn attribute_value<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Option<Range<usize>>> {
+    alt((
+        alt(("true", "false")).span().map(Some),
+        float::<_, f64, _>.span().map(Some),
+        string_line.span().map(Some),
+        ("@", alt((parse_simple_expr_paren, parse_simple_expr)).span()).map(|(_, expr)| Some(expr)),
     ))
-    .parse_next(input)?;
-
-    match value_result {
-        Ok(value) => Ok(value),
-        Err(e) => {
-            input.reset(&checkpoint);
-            let error_msg = Box::leak(e.to_string().into_boxed_str());
-            Err(ErrMode::Cut(ContextError::new().add_context(
-                input,
-                &checkpoint,
-                StrContext::Expected(StrContextValue::Description(error_msg)),
-            )))
-        }
-    }
+    .parse_next(input)
 }
 
-#[cfg(debug_assertions)]
-fn exprs_in_attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
-    use crate::debug::Snippet;
+pub fn tag_identifier<'a, 'ctx>(input: &mut Input<'a, 'ctx>, is_start: bool) -> ModalResult<()> {
+    let span = component_tag_identifier.span().parse_next(input)?;
 
-    let (_, (value, is_paren, span)) = (
-        "@",
-        alt((
-            simple_expr_paren
-                .with_span()
-                .map(|(value, span)| (value, true, span)),
-            simple_expr
-                .with_span()
-                .map(|(value, span)| (value, false, span)),
-        )),
-    )
-        .parse_next(input)?;
-
-    let text = input.state.source[span.to_owned()].to_owned();
-
-    let snippet = if is_paren {
-        Snippet::ExprParen(span, text)
+    if is_start {
+        input.state.ops.push(Op::ComponentStartName(span));
     } else {
-        Snippet::ExprSimple(span, text)
-    };
-    input.state.info.debug.push(snippet);
+        input.state.ops.push(Op::ComponentEnd);
+    }
 
-    Ok(value.0)
-}
-
-pub fn component_tag_identifier<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
-    let start = input.input;
-
-    (
-        any.verify(|c: &char| c.is_ascii_uppercase()),
-        take_while(0.., |c: char| c.is_ascii_alphanumeric()),
-    )
-        .parse_next(input)?;
-
-    let consumed = start.len() - input.len();
-
-    Ok(&start[..consumed])
+    Ok(())
 }

@@ -1,5 +1,6 @@
 mod break_directive;
 mod child_content_directive;
+mod codegen;
 mod component;
 mod continue_directive;
 mod inner_text;
@@ -14,38 +15,32 @@ mod use_directive;
 pub mod utils;
 
 use crate::{
-    context::{Context, Info},
+    context::{Context, Info, Op, UseDirective},
     debug,
     diagnostic::Diagnostic,
+    extract_file,
     position::Position,
+    rshtml_file::utils::params_to_fn_call_ts,
 };
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use std::{
-    env, fs,
+    collections::{BTreeMap, HashSet},
+    env, fs, mem,
     path::{Path, PathBuf},
+    str::FromStr,
 };
 use syn::Ident;
 use template::template;
 use utils::{generate_fn_name, params_to_ts};
-#[cfg(debug_assertions)]
-use winnow::LocatingSlice;
 use winnow::{
-    Stateful,
+    LocatingSlice, Stateful,
     error::{StrContext, StrContextValue},
 };
 
-#[cfg(not(debug_assertions))]
-pub type Input<'a, 'ctx> = Stateful<&'a str, &'a mut Context<'ctx>>;
-#[cfg(debug_assertions)]
-pub type Input<'a, 'ctx> = Stateful<LocatingSlice<&'a str>, &'a mut Context<'ctx>>;
+pub type Input<'a, 'ctx> = Stateful<LocatingSlice<&'a str>, &'ctx mut Context<'a>>;
 
-pub fn compile(
-    path: &Path,
-    base_dir: &Path,
-    struct_fields: &[String],
-    extract: bool,
-) -> Result<(TokenStream, TokenStream, TokenStream, Info, String), String> {
+pub fn parse(path: &Path, base_dir: &Path) -> Result<(Vec<Op>, Info, String), String> {
     let (full_path, mut source) = match read_template(path) {
         Ok((full_path, source)) => (full_path, source),
         Err(msg) => {
@@ -57,90 +52,227 @@ pub fn compile(
         source.drain(..3);
     }
 
-    let source_len = source.len();
+    let mut ctx = Context::new(base_dir);
+    ctx.info.fn_name = generate_fn_name(path);
+    ctx.info.full_path = full_path;
 
-    let (body, info, use_directive_scope_len) = {
-        let mut ctx = Context::new(path, &source, base_dir, struct_fields);
+    let mut input = Input { input: LocatingSlice::new(&source), state: &mut ctx };
 
-        ctx.info.fn_name = generate_fn_name(path);
+    if let Err(e) = template(&mut input) {
+        let err = e.into_inner().unwrap();
 
-        if cfg!(debug_assertions) && extract {
-            ctx.info.debug = debug::Debug::new(
-                source
-                    .as_bytes()
-                    .iter()
-                    .map(|&b| if b == b'\n' { b'\n' } else { b' ' })
-                    .collect::<Vec<u8>>(),
-            );
-        }
+        let mut labels = Vec::new();
+        let mut expecteds = Vec::new();
 
-        #[cfg(not(debug_assertions))]
-        let mut input = Input {
-            input: &source,
-            state: &mut ctx,
-        };
-        #[cfg(debug_assertions)]
-        let mut input = Input {
-            input: LocatingSlice::new(&source),
-            state: &mut ctx,
-        };
-
-        let body = match template(&mut input) {
-            Ok(res) => res,
-            Err(e) => {
-                let err = e.into_inner().unwrap();
-
-                let mut labels = Vec::new();
-                let mut expecteds = Vec::new();
-
-                for context in err.context() {
-                    match context {
-                        StrContext::Label(l) => labels.push(l.to_string()),
-                        StrContext::Expected(e) => match e {
-                            StrContextValue::Description(desc) => expecteds.push(desc.to_string()),
-                            other => expecteds.push(format!("expected {}", other)),
-                        },
-                        _ => {}
-                    }
-                }
-
-                let label = if !labels.is_empty() {
-                    labels.reverse();
-                    format!("in {}:", labels.join(" > "))
-                } else {
-                    String::new()
-                };
-
-                expecteds.reverse();
-                let expected = expecteds.join(" or ");
-
-                let offset = source.len().saturating_sub(input.input.len());
-                let position: Position = (source.as_str(), offset).into();
-                let diag = Diagnostic(&source).message(path, &position, &label, &expected, 1);
-
-                return Err(diag);
+        for context in err.context() {
+            match context {
+                StrContext::Label(l) => labels.push(l.to_string()),
+                StrContext::Expected(e) => match e {
+                    StrContextValue::Description(desc) => expecteds.push(desc.to_string()),
+                    other => expecteds.push(format!("expected {}", other)),
+                },
+                _ => {}
             }
-        };
-
-        if cfg!(debug_assertions) && extract {
-            ctx.info.debug.extract();
         }
 
-        (body, ctx.info, source_len - ctx.last_use_directive_point)
+        let label = if !labels.is_empty() {
+            labels.reverse();
+            format!("in {}:", labels.join(" > "))
+        } else {
+            String::new()
+        };
+
+        expecteds.reverse();
+        let expected = expecteds.join(" or ");
+
+        let offset = source.len().saturating_sub(input.input.len());
+        let position: Position = (source.as_str(), offset).into();
+        let diag = Diagnostic(&source).message(path, &position, &label, &expected, 1);
+
+        return Err(diag);
+    }
+
+    Ok((ctx.ops, ctx.info, source))
+}
+
+pub fn extract(path: &Path, source: &str, ops: &[Op]) -> Result<PathBuf, String> {
+    let generate = || {
+        let mut debug_extract = debug::Debug::new(
+            source
+                .as_bytes()
+                .iter()
+                .map(|&b| if b == b'\n' { b'\n' } else { b' ' })
+                .collect::<Vec<u8>>(),
+        );
+
+        debug_extract.process(source, ops);
+
+        debug_extract.cleaned_source.extend_from_slice(
+            b"  Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
+        );
+
+        debug_extract.cleaned_source
     };
 
-    let full_path_str = full_path.to_string_lossy();
+    extract_file::create(path, generate)
+        .map_err(|e| format!("Failed to create extract file:({}) : {}", path.display(), e))
+}
 
-    let mut params: Vec<(&str, &str)> = info
-        .template_params
-        .iter()
-        .map(|(a, b)| (a.as_str(), b.as_str()))
-        .collect();
+pub fn codegen(
+    path: &Path,
+    fn_name: &str,
+    use_directives: &HashSet<UseDirective>,
+    ops: Vec<Op>,
+    source: &str,
+    is_root: bool,
+) -> Result<(TokenStream, TokenStream, TokenStream, Option<TokenStream>, usize), String> {
+    let full_path_str = path.to_string_lossy();
+
+    let mut params: Vec<(&str, &str)> = Vec::new();
+    let mut text_size = 0;
+
+    enum Scope<'a> {
+        Code(TokenStream),
+        Component {
+            name: &'a str,
+            attrs: BTreeMap<&'a str, TokenStream>,
+            current_attr_name: Option<&'a str>,
+        },
+    }
+
+    let mut current = TokenStream::new();
+    let mut stack: Vec<Scope> = Vec::new();
+
+    for op in ops {
+        match op {
+            Op::TemplateParam(range) => {
+                codegen::template_param(source, range, &mut params);
+            }
+            Op::OpenBrace(_) => stack.push(Scope::Code(mem::take(&mut current))),
+            Op::CloseBrace(_) => {
+                let Some(Scope::Code(mut parent)) = stack.pop() else {
+                    return Err("Unmatched closing brace '}'".to_string());
+                };
+                parent.extend(quote! { { #current } });
+                current = parent;
+            }
+            Op::RustCode(range) => {
+                let ts = codegen::rust_code(source, range)?;
+                current.extend(ts);
+            }
+            Op::Text(range) => {
+                let (ts, size) = codegen::text(source, range);
+                text_size += size;
+                current.extend(ts);
+            }
+            Op::ChildContent(_) => {
+                let ts = codegen::child_content();
+                current.extend(ts);
+            }
+            Op::ContinueOrBreak(range) => {
+                let ts = codegen::continue_or_break(source, range);
+                current.extend(ts);
+            }
+            Op::ExprSimple(range, is_escaped) => {
+                let ts = codegen::expr_simple_or_paren(source, range, is_escaped, path)?;
+                current.extend(ts);
+            }
+            Op::ExprParen(range, is_escaped) => {
+                let ts = codegen::expr_simple_or_paren(source, range, is_escaped, path)?;
+                current.extend(ts);
+            }
+            Op::ComponentStartName(range) => {
+                stack.push(Scope::Code(mem::take(&mut current)));
+                stack.push(Scope::Component {
+                    name: &source[range],
+                    attrs: BTreeMap::new(),
+                    current_attr_name: None,
+                });
+            }
+            Op::ComponentAttribute(name_range, val_range_opt) => {
+                let Some(Scope::Component { attrs, current_attr_name, .. }) = stack.last_mut()
+                else {
+                    return Err("Invalid Component".to_string());
+                };
+
+                let attr_name = &source[name_range];
+                match val_range_opt {
+                    Some(val_range) => {
+                        let ts =
+                            TokenStream::from_str(&source[val_range]).map_err(|e| e.to_string())?;
+                        attrs.insert(attr_name, ts);
+                    }
+                    None => {
+                        *current_attr_name = Some(attr_name);
+                    }
+                }
+            }
+            Op::ComponentAttributeEnd => {
+                let Some(Scope::Component { attrs, current_attr_name, .. }) = stack.last_mut()
+                else {
+                    return Err("Invalid Component".to_string());
+                };
+
+                if let Some(prev_name) = current_attr_name.take() {
+                    let value = mem::take(&mut current);
+                    let value = quote! {
+                        ::rshtml::ViewFn::new((|__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result { #value Ok(()) }, 0))
+                    };
+                    attrs.insert(prev_name, value);
+                }
+            }
+            Op::ComponentEnd => {
+                let Some(Scope::Component { name, attrs, .. }) = stack.pop() else {
+                    return Err("Unmatched closing component tag".to_string());
+                };
+                let Some(Scope::Code(mut parent)) = stack.pop() else {
+                    return Err("Unmatched closing component tag".to_string());
+                };
+
+                let child_content = quote! {let child_content = |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {#current  Ok(())};};
+
+                let use_directive = use_directives
+                    .iter()
+                    .find(|use_directive| use_directive.name == name)
+                    .ok_or(format!(
+                        "attempt to use a missing component: component `{}` is used but not found",
+                        name
+                    ))?;
+
+                let values = attrs.values();
+                let args = quote! { #(#values),* };
+                let comp_fn_name = Ident::new(&use_directive.fn_name, Span::call_site());
+                let fn_call = quote! {Self::#comp_fn_name(__out__, child_content, #args)?;};
+
+                parent.extend(quote! {
+                    {
+                        #child_content
+                        #fn_call
+                    }
+                });
+
+                current = parent;
+            }
+            _ => {}
+        }
+    }
+
+    if !stack.is_empty() {
+        return Err("Unclosed opening brace '{'".to_string());
+    }
+
+    let body = current;
 
     let args = params_to_ts(&mut params);
-    let fn_name = Ident::new(&info.fn_name, Span::call_site());
+    let fn_name = Ident::new(fn_name, Span::call_site());
 
-    source.truncate(use_directive_scope_len);
+    let mut root_fn = None;
+    if is_root {
+        let root_fn_name = &fn_name;
+        let root_fn_args = params_to_fn_call_ts(&mut params);
+        let root_fn_call = quote! {Self::#root_fn_name(__out__, |__out__: &mut dyn ::rshtml::Write| -> ::std::fmt::Result {Ok(())}, #root_fn_args)?;};
+        root_fn = Some(root_fn_call);
+    }
 
     Ok((
         quote! {
@@ -154,19 +286,17 @@ pub fn compile(
                 #args) -> ::std::fmt::Result {#body Ok(())}
         },
         quote! { let _ = include_str!(#full_path_str); },
-        info,
-        source,
+        root_fn,
+        text_size,
     ))
 }
 
-pub fn read_template(path: &Path) -> Result<(PathBuf, String), String> {
-    let base_dir = match env::var("CARGO_MANIFEST_DIR")
-        .map(PathBuf::from)
-        .or_else(|_| env::current_dir())
-    {
-        Ok(base_dir) => base_dir,
-        Err(e) => return Err(format!("Failed to get current directory: {}", e)),
-    };
+fn read_template(path: &Path) -> Result<(PathBuf, String), String> {
+    let base_dir =
+        match env::var("CARGO_MANIFEST_DIR").map(PathBuf::from).or_else(|_| env::current_dir()) {
+            Ok(base_dir) => base_dir,
+            Err(e) => return Err(format!("Failed to get current directory: {}", e)),
+        };
 
     let full_path = base_dir.join(path);
 

@@ -51,10 +51,7 @@ pub fn compile(input: TokenStream) -> TokenStream {
             (expr_defs, body, text_size)
         }
         Err(e) => {
-            let span = tokens
-                .first()
-                .map(|tt| tt.span())
-                .unwrap_or_else(Span::call_site);
+            let span = tokens.first().map(|tt| tt.span()).unwrap_or_else(Span::call_site);
 
             let err = e.into_inner().unwrap();
             let msg = err
@@ -153,9 +150,7 @@ fn expr(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, TokenStream)> {
 
 fn text(input: &mut &[TokenTree]) -> ModalResult<String> {
     any.verify_map(|tt: TokenTree| match tt {
-        TokenTree::Literal(lit) => syn::parse2::<syn::LitStr>(quote!(#lit))
-            .ok()
-            .map(|s| s.value()),
+        TokenTree::Literal(lit) => syn::parse2::<syn::LitStr>(quote!(#lit)).ok().map(|s| s.value()),
         _ => None,
     })
     .parse_next(input)
@@ -164,10 +159,7 @@ fn text(input: &mut &[TokenTree]) -> ModalResult<String> {
 fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
     let close_tag =
         (slash, cut_err((tag_name, gt)).label("unclosed tag")).map(|(slash, (tag_name, gt))| {
-            (
-                TokenStream::new(),
-                vec![Node::Text(format!("<{slash}{tag_name}{gt}"))],
-            )
+            (TokenStream::new(), vec![Node::Text(format!("<{slash}{tag_name}{gt}"))])
         });
 
     let open_or_self_close_tag = (
@@ -195,32 +187,17 @@ fn tag(input: &mut &[TokenTree]) -> ModalResult<(TokenStream, Vec<Node>)> {
     let doctype = (
         exclamation,
         cut_err((
-            ident
-                .verify(|i| i.to_string().to_lowercase() == "doctype")
-                .expected("DOCTYPE"),
-            ident
-                .verify(|i| i.to_string().to_lowercase() == "html")
-                .expected("html"),
+            ident.verify(|i| i.to_string().to_lowercase() == "doctype").expected("DOCTYPE"),
+            ident.verify(|i| i.to_string().to_lowercase() == "html").expected("html"),
             gt,
         ))
         .label("invalid <!DOCTYPE html>"),
     )
         .map(|(exclamation, (ident, ident2, gt))| {
-            (
-                TokenStream::new(),
-                vec![Node::Text(format!("<{exclamation}{ident} {ident2}{gt}"))],
-            )
+            (TokenStream::new(), vec![Node::Text(format!("<{exclamation}{ident} {ident2}{gt}"))])
         });
 
-    (
-        lt,
-        cut_err(alt((
-            open_or_self_close_tag,
-            close_tag,
-            doctype,
-            fail.expected("tag name"),
-        ))),
-    )
+    (lt, cut_err(alt((open_or_self_close_tag, close_tag, doctype, fail.expected("tag name")))))
         .map(|(_, res)| res)
         .parse_next(input)
 }
@@ -247,11 +224,7 @@ fn tag_name(input: &mut &[TokenTree]) -> ModalResult<String> {
     let number = any.verify_map(|tt: TokenTree| match tt {
         TokenTree::Literal(l) => {
             let s = l.to_string();
-            if s.chars().next().is_some_and(|c| c.is_ascii_digit()) {
-                Some(s)
-            } else {
-                None
-            }
+            if s.chars().next().is_some_and(|c| c.is_ascii_digit()) { Some(s) } else { None }
         }
         _ => None,
     });
@@ -388,9 +361,7 @@ fn ident(input: &mut &[TokenTree]) -> ModalResult<TokenStream> {
         TokenTree::Ident(i) => Some(quote! {#i}),
         _ => None,
     })
-    .context(StrContext::Expected(StrContextValue::StringLiteral(
-        "identifier",
-    )))
+    .context(StrContext::Expected(StrContextValue::StringLiteral("identifier")))
     .parse_next(input)
 }
 

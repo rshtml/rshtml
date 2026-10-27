@@ -1,11 +1,9 @@
-use super::{
-    Input, component::component_tag_identifier, template::string_line, utils::generate_fn_name,
-};
+use super::{Input, template::string_line, utils::generate_fn_name};
 use crate::{
-    context::UseDirective, extensions::ParserDiagnostic, position::Position,
-    rshtml_file::utils::extract_component_name,
+    context::UseDirective,
+    extensions::ParserDiagnostic,
+    rshtml_file::{template::component_tag_identifier, utils::extract_component_name},
 };
-use proc_macro2::TokenStream;
 use std::path::PathBuf;
 use winnow::{
     ModalResult, Parser,
@@ -15,22 +13,13 @@ use winnow::{
     stream::Stream,
 };
 
-pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
+pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     let checkpoint = input.checkpoint();
 
-    let position: Position = (
-        input.state.source,
-        input.state.source.len().saturating_sub(input.input.len()),
-    )
-        .into();
-
-    let (name, path) = (
+    let (name, path, span) = (
         "use",
-        alt((
-            (multispace1, cut_err(string_line).expected("path")),
-            (multispace0, string_line),
-        ))
-        .map(|(_, sl)| sl),
+        alt(((multispace1, cut_err(string_line).expected("path")), (multispace0, string_line)))
+            .map(|(_, sl)| sl),
         multispace0,
         opt((
             "as",
@@ -39,7 +28,8 @@ pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Token
         )),
         opt(';'),
     )
-        .map(|(_, path_str, _, name_opt, _)| {
+        .with_span()
+        .map(|((_, path_str, _, name_opt, _), span)| {
             let mut path_str = if path_str.starts_with('\'') {
                 path_str.trim_matches('\'')
             } else {
@@ -53,11 +43,10 @@ pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Token
 
             let path = PathBuf::from(path_str);
 
-            let name = name_opt
-                .map(|(_, _, name)| name.to_string())
-                .or(extract_component_name(&path));
+            let name =
+                name_opt.map(|(_, _, name)| name.to_string()).or(extract_component_name(&path));
 
-            (name, path)
+            (name, path, span)
         })
         .parse_next(input)?;
 
@@ -77,14 +66,12 @@ pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Token
     let path_with_base = input.state.base_dir.join(&path);
     let fn_name = generate_fn_name(&path_with_base);
 
-    input.state.last_use_directive_point = input.input.len();
-
     input.state.info.use_directives.insert(UseDirective {
         name,
         path: path_with_base,
         fn_name,
-        position,
+        span,
     });
 
-    Ok(TokenStream::new())
+    Ok(())
 }

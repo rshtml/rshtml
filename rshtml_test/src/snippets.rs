@@ -22,10 +22,7 @@ pub fn test_if_else() {
         count: i32,
     }
 
-    let page = IfElsePage {
-        is_ok: true,
-        count: 10,
-    };
+    let page = IfElsePage { is_ok: true, count: 10 };
 
     let mut out = String::with_capacity(page.text_size());
     page.render(&mut out).unwrap();
@@ -40,9 +37,7 @@ pub fn test_for() {
         users: Vec<String>,
     }
 
-    let page = ForPage {
-        users: vec!["Alice".to_string(), "Bob".to_string()],
-    };
+    let page = ForPage { users: vec!["Alice".to_string(), "Bob".to_string()] };
 
     let mut out = String::with_capacity(page.text_size());
     page.render(&mut out).unwrap();
@@ -100,10 +95,7 @@ pub fn test_parentheses_expression() {
         data: String,
     }
 
-    let page = ParenthesesExpressionPage {
-        value: 10,
-        data: "Hello".to_string(),
-    };
+    let page = ParenthesesExpressionPage { value: 10, data: "Hello".to_string() };
 
     let mut out = String::with_capacity(page.text_size());
     page.render(&mut out).unwrap();
@@ -144,14 +136,7 @@ pub fn test_component() {
         title: "Component".to_string(),
         data: "Hello".to_string(),
         for_escape: "'<script/>'".to_string(),
-        items: vec![
-            Item {
-                name: "Jack".to_string(),
-            },
-            Item {
-                name: "John".to_string(),
-            },
-        ],
+        items: vec![Item { name: "Jack".to_string() }, Item { name: "John".to_string() }],
     };
 
     page.value = 11;
@@ -205,9 +190,7 @@ pub fn test_escaping() {
         my_var: String,
     }
 
-    let page = EscapingPage {
-        my_var: "<p>This is <strong>bold</strong> text.</p>".to_string(),
-    };
+    let page = EscapingPage { my_var: "<p>This is <strong>bold</strong> text.</p>".to_string() };
 
     let mut out = String::with_capacity(page.text_size());
     page.render(&mut out).unwrap();

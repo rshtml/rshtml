@@ -18,10 +18,7 @@ pub fn time<T: Display + ?Sized>(value: &T) -> RsDateTime {
 
     let ndt_result: Result<NaiveDateTime, _> = value_str.parse();
     if let Ok(ndt) = ndt_result {
-        return RsDateTime(
-            DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc),
-            default_format,
-        );
+        return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc), default_format);
     }
 
     let nd_result: Result<NaiveDate, _> = value_str.parse();

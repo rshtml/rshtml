@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{ops::Range, path::Path};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct Position(pub (usize, usize), pub (usize, usize), pub (usize, usize)); // start: (line, col), end: (line, col), (start_byte, end_byte)
@@ -29,6 +29,12 @@ impl From<(&str, usize, usize)> for Position {
         let end_loc = apply_offset_to_pos(range_slice, start_loc.0, start_loc.1);
 
         Position(start_loc, end_loc, (start_byte, end_byte))
+    }
+}
+
+impl From<(&str, &Range<usize>)> for Position {
+    fn from((text, span): (&str, &Range<usize>)) -> Self {
+        Self::from((text, span.start, span.end))
     }
 }
 

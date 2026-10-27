@@ -46,22 +46,10 @@ mod tests {
     #[test]
     fn test_macro() {
         let users = vec![
-            User {
-                name: "abc".to_string(),
-                age: 10,
-            },
-            User {
-                name: "def".to_string(),
-                age: 11,
-            },
-            User {
-                name: "hjk".to_string(),
-                age: 12,
-            },
-            User {
-                name: "lmo".to_string(),
-                age: 13,
-            },
+            User { name: "abc".to_string(), age: 10 },
+            User { name: "def".to_string(), age: 11 },
+            User { name: "hjk".to_string(), age: 12 },
+            User { name: "lmo".to_string(), age: 13 },
         ];
 
         let homepage = HomePage {

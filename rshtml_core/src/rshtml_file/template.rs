@@ -4,14 +4,13 @@ use super::{
     template_params::template_params, text::text, use_directive::use_directive,
 };
 use crate::{
+    context::Op,
     extensions::ParserDiagnostic,
     rshtml_file::{
         break_directive::break_directive, child_content_directive::child_content_directive,
         continue_directive::continue_directive,
     },
 };
-use proc_macro2::TokenStream;
-use quote::quote;
 use winnow::{
     ModalResult, Parser,
     ascii::multispace0,
@@ -19,15 +18,11 @@ use winnow::{
     token::{any, none_of, one_of, take_while},
 };
 
-pub fn template<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
+pub fn template<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     (
         opt("\u{FEFF}"),
         multispace0,
-        opt((
-            peek(('@', multispace0, '(')),
-            template_params.label("template parameters"),
-        ))
-        .void(),
+        opt((peek(('@', multispace0, '(')), template_params.label("template parameters"))).void(),
         template_content,
         eof.expected("end of file"),
     )
@@ -35,68 +30,23 @@ pub fn template<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStrea
         .parse_next(input)
 }
 
-pub fn template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
-    repeat(0.., alt((text.label("html text"), block)))
-        .fold(TokenStream::new, |mut acc, ts| {
-            acc.extend(ts);
-            acc
-        })
-        .parse_next(input)
+pub fn template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
+    repeat(0.., alt((text.label("html text"), block))).parse_next(input)
 }
 
-#[cfg(not(debug_assertions))]
-pub fn inner_template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
-    (
-        '{',
-        repeat(0.., alt((inner_text.label("html text"), block))).fold(
-            TokenStream::new,
-            |mut acc, ts| {
-                acc.extend(ts);
-                acc
-            },
-        ),
-        cut_err('}').expected("}"),
-    )
-        .map(|(_, content, _)| {
-            let ts = quote! {{#content}};
-            ts
-        })
-        .parse_next(input)
+pub fn inner_template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
+    let span = '{'.span().parse_next(input)?;
+    input.state.ops.push(Op::OpenBrace(span));
+
+    repeat(0.., alt((inner_text.label("html text"), block))).map(|()| ()).parse_next(input)?;
+
+    let span = cut_err('}'.span()).expected("}").parse_next(input)?;
+    input.state.ops.push(Op::CloseBrace(span));
+
+    Ok(())
 }
 
-#[cfg(debug_assertions)]
-pub fn inner_template_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
-    use crate::debug::Snippet;
-
-    let (open_brace_span, close_brace_span, ts) = (
-        '{'.with_span(),
-        repeat(0.., alt((inner_text.label("html text"), block))).fold(
-            TokenStream::new,
-            |mut acc, ts| {
-                acc.extend(ts);
-                acc
-            },
-        ),
-        cut_err('}').with_span().expected("}"),
-    )
-        .map(|((_, open_brace_span), content, (_, close_brace_span))| {
-            let ts = quote! {{#content}};
-            (open_brace_span, close_brace_span, ts)
-        })
-        .parse_next(input)?;
-
-    input
-        .state
-        .info
-        .debug
-        .push(Snippet::Stmt(open_brace_span, "{".to_string()))
-        .push(Snippet::Stmt(close_brace_span, "}".to_string()));
-
-    Ok(ts)
-}
-
-#[cfg(not(debug_assertions))]
-pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
+pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     alt((
         component.label("component"),
         (
@@ -109,89 +59,27 @@ pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> 
                 child_content_directive.label("child content"),
                 continue_directive.label("continue"),
                 break_directive.label("break"),
-                simple_expr_paren
-                    .map(|(_, x)| x)
-                    .label("parenthesized expression"),
-                simple_expr.map(|(_, x)| x).label("expression"),
+                simple_expr_paren.label("parenthesized expression"),
+                simple_expr.label("expression"),
                 cut_err(fail).expected("a valid directive or an expression after '@'"),
             )),
         )
-            .map(|(_, _, ts)| ts),
+            .void(),
         fail.expected("a valid directive or an expression or a component"),
     ))
     .parse_next(input)
 }
 
-#[cfg(debug_assertions)]
-pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<TokenStream> {
-    use crate::debug::Snippet;
-    use std::ops::Range;
-
-    let extract = |span: Range<usize>| input.state.source[span.start..span.end].to_owned();
-
-    let (ts, snippet) = alt((
-        component.map(|ts| (ts, Snippet::None)).label("component"),
-        (
-            '@',
-            multispace0,
-            alt((
-                use_directive
-                    .map(|ts| (ts, Snippet::None))
-                    .label("use directive"),
-                rust_block
-                    .with_span()
-                    .map(|(ts, span)| (ts, Snippet::Block(span.to_owned(), extract(span))))
-                    .label("code block"),
-                rust_stmt.map(|ts| (ts, Snippet::None)).label("statement"),
-                child_content_directive
-                    .with_span()
-                    .map(|(ts, span)| (ts, Snippet::ChildContent(span.to_owned(), extract(span))))
-                    .label("child content"),
-                continue_directive
-                    .with_span()
-                    .map(|(ts, span)| (ts, Snippet::Continue(span.to_owned(), extract(span))))
-                    .label("continue"),
-                break_directive
-                    .with_span()
-                    .map(|(ts, span)| (ts, Snippet::Break(span.to_owned(), extract(span))))
-                    .label("break"),
-                simple_expr_paren
-                    .with_span()
-                    .map(|((_, x), span)| (x, Snippet::ExprParen(span.to_owned(), extract(span))))
-                    .label("parenthesized expression"),
-                simple_expr
-                    .with_span()
-                    .map(|((_, x), span)| (x, Snippet::ExprSimple(span.to_owned(), extract(span))))
-                    .label("expression"),
-                cut_err(fail).expected("a valid directive or an expression after '@'"),
-            )),
-        )
-            .map(|(_, _, ts)| ts),
-        fail.expected("a valid directive or an expression or a component"),
-    ))
-    .parse_next(input)?;
-
-    input.state.info.debug.push(snippet);
-
-    Ok(ts)
-}
-
 pub fn rust_identifier<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
-    let start = input.input;
-
     (
         one_of(|c: char| c.is_alphabetic() || c == '_'),
         take_while(0.., |c: char| c.is_alphanumeric() || c == '_'),
     )
-        .parse_next(input)?;
-
-    let consumed = start.len() - input.input.len();
-    Ok(&start[..consumed])
+        .take()
+        .parse_next(input)
 }
 
 pub fn string_line<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
-    let start = input.input;
-
     alt((
         (
             '"',
@@ -207,8 +95,15 @@ pub fn string_line<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str
         ),
     ))
     .void()
-    .parse_next(input)?;
+    .take()
+    .parse_next(input)
+}
 
-    let parsed_len = start.len() - input.input.len();
-    Ok(&start[..parsed_len])
+pub fn component_tag_identifier<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
+    (
+        any.verify(|c: &char| c.is_ascii_uppercase()),
+        take_while(0.., |c: char| c.is_ascii_alphanumeric()),
+    )
+        .take()
+        .parse_next(input)
 }

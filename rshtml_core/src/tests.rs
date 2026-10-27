@@ -5,13 +5,10 @@ use syn::{Generics, Ident};
 
 #[test]
 fn test_compiler() {
-    let paths = [
-        Path::new("views/rshtml_macro.rs.html"),
-        Path::new("views/home.rs.html"),
-    ];
+    let paths = [Path::new("views/rshtml_macro.rs.html"), Path::new("views/home.rs.html")];
     let ident = Ident::new("RsHtmlMacro", Span::call_site());
 
-    let mut compiler = Compiler::new(ident, Generics::default(), vec!["user".to_owned()], false);
+    let mut compiler = Compiler::new(ident, Generics::default(), false);
 
     let result: TokenStream = compiler.compile(paths[0]);
     let res = result.to_string();
@@ -22,28 +19,40 @@ fn test_compiler() {
 
 #[test]
 fn test_rshtml_file() {
-    let paths = [
-        Path::new("views/rshtml_macro.rs.html"),
-        Path::new("views/home.rs.html"),
-    ];
+    let paths = [Path::new("views/rshtml_macro.rs.html"), Path::new("views/home.rs.html")];
 
     let base_dir = PathBuf::from("views");
-    let struct_fields = vec!["user".to_owned()];
 
-    let result = rshtml_file::compile(paths[0], &base_dir, &struct_fields, false);
+    let parse_result = rshtml_file::parse(paths[0], &base_dir);
 
     assert!(
-        result.is_ok(),
-        "\nRsHtml file compile failed!\n{}",
-        result.err().map(|e| e.to_string()).unwrap_or_default()
+        parse_result.is_ok(),
+        "\nRsHtml file parse failed!\n{}",
+        parse_result.err().unwrap_or_default()
     );
 
-    let (fn_sign, fn_body, include_str, info, source) = result.unwrap();
+    let (ops, info, source) = parse_result.unwrap();
+
+    let codegen_result = rshtml_file::codegen(
+        &info.full_path,
+        &info.fn_name,
+        &info.use_directives,
+        ops,
+        &source,
+        true,
+    );
+
+    assert!(
+        codegen_result.is_ok(),
+        "\nRsHtml file codegen failed!\n{}",
+        codegen_result.err().unwrap_or_default()
+    );
+
+    let (fn_sign, fn_body, include_str, _root_fn, text_size) = codegen_result.unwrap();
 
     println!("--- FUNCTION SIGNATURE ---\n{}\n", fn_sign);
     println!("--- FUNCTION BODY ---\n{}\n", fn_body);
     println!("--- INCLUDE STR ---\n{}\n", include_str);
-    println!("--- CONTEXT (Text Size: {})\n", info.text_size);
-    println!("--- CONTEXT (Template Params: {:?})", info.template_params);
+    println!("--- CONTEXT (Text Size: {})\n", text_size);
     println!("--- SOURCE LENGTH: {}", source.len());
 }
