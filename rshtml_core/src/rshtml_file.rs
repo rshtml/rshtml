@@ -106,13 +106,11 @@ pub fn extract(path: &Path, source: &str, ops: &[Op]) -> Result<PathBuf, String>
 
     debug_extract.process(source, ops);
 
-    let extract_source = format!(
-        "{1} {0}",
-        " Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
-        String::from_utf8_lossy(&debug_extract.cleaned_source)
+    debug_extract.cleaned_source.extend_from_slice(
+        b"  Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
     );
 
-    extract_file::create(path, &extract_source)
+    extract_file::create(path, &debug_extract.cleaned_source)
         .map_err(|e| format!("Failed to create extract file:({}) : {}", path.display(), e))
 }
 
