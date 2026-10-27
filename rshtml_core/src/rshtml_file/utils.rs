@@ -20,11 +20,8 @@ pub fn escape_or_raw(expr_ts: TokenStream, is_escaped: bool, message: &str) -> T
 pub fn generate_fn_name(path: &Path) -> String {
     let component_name = extract_component_name(path).unwrap_or_default();
 
-    let hash = path
-        .as_os_str()
-        .as_encoded_bytes()
-        .iter()
-        .fold(5381u64, |h, &c| h.wrapping_mul(33).wrapping_add(c as u64));
+    let hash =
+        path.as_os_str().as_encoded_bytes().iter().fold(5381u64, |h, &c| h.wrapping_mul(33).wrapping_add(c as u64));
 
     format!("{component_name}_{hash:016x}")
 }

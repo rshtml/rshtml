@@ -75,11 +75,8 @@ impl SimpleExpressionPage {
 
 #[test]
 pub fn test_simple_expression() {
-    let page = SimpleExpressionPage {
-        value: 10,
-        data: Some("Hello".to_string()),
-        for_escape: "'<script/>'".to_string(),
-    };
+    let page =
+        SimpleExpressionPage { value: 10, data: Some("Hello".to_string()), for_escape: "'<script/>'".to_string() };
 
     let mut out = String::with_capacity(page.text_size());
     page.render(&mut out).unwrap();
@@ -154,9 +151,7 @@ pub fn test_continue_break() {
         users: Vec<String>,
     }
 
-    let page = ContinueBreakPage {
-        users: vec!["Alice".to_string(), "Bob".to_string(), "John".to_string()],
-    };
+    let page = ContinueBreakPage { users: vec!["Alice".to_string(), "Bob".to_string(), "John".to_string()] };
 
     let mut out = String::with_capacity(page.text_size());
     page.render(&mut out).unwrap();

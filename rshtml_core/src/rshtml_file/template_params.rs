@@ -32,22 +32,14 @@ fn param<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     let (name_span, ty_span) = (
         multispace0,
         cut_err((opt(("self", multispace1)), rust_identifier).span()).expected("identifier"),
-        cut_err(peek(alt((
-            ':'.void(),
-            ','.void(),
-            ')'.void(),
-            any.verify(|c: &char| c.is_whitespace()).void(),
-        ))))
-        .void()
-        .expected("identifier"),
+        cut_err(peek(alt((':'.void(), ','.void(), ')'.void(), any.verify(|c: &char| c.is_whitespace()).void()))))
+            .void()
+            .expected("identifier"),
         multispace0,
         (
             ':',
             multispace0,
-            cut_err(
-                param_type.with_span().verify(|(pt, _)| syn::parse_str::<syn::Type>(pt).is_ok()),
-            )
-            .expected("type"),
+            cut_err(param_type.with_span().verify(|(pt, _)| syn::parse_str::<syn::Type>(pt).is_ok())).expected("type"),
             multispace0,
         ),
     )
@@ -90,12 +82,7 @@ fn param_type_nested<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
             "<".void(),
             repeat(
                 0..,
-                alt((
-                    param_type_nested.void(),
-                    "->".void(),
-                    "=>".void(),
-                    any.verify(|c: &char| *c != '>').void(),
-                )),
+                alt((param_type_nested.void(), "->".void(), "=>".void(), any.verify(|c: &char| *c != '>').void())),
             )
             .fold(|| (), |_, _| ()),
             ">".void(),

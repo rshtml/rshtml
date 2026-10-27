@@ -25,13 +25,7 @@ pub fn rust_stmt<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
                 ),
             )
             .map(|()| ()),
-            opt((
-                multispace0,
-                peek(("else", multispace0, "{")),
-                else_stmt,
-                multispace0,
-                must_inner_template_content,
-            )),
+            opt((multispace0, peek(("else", multispace0, "{")), else_stmt, multispace0, must_inner_template_content)),
         )
             .void(),
         |input: &mut Input<'a, 'ctx>| stmt("for", input),
@@ -51,8 +45,7 @@ fn else_stmt<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 fn stmt<'a, 'ctx>(keyword: &'static str, input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     let checkpoint = input.checkpoint();
 
-    let (_, (head, span)) =
-        (multispace0, (keyword, stmt_head).take().with_span()).parse_next(input)?;
+    let (_, (head, span)) = (multispace0, (keyword, stmt_head).take().with_span()).parse_next(input)?;
 
     if let Err(e) = parse_str::<syn::Expr>(&format!("{} {{}}", head)) {
         let error_msg = Box::leak(e.to_string().into_boxed_str());

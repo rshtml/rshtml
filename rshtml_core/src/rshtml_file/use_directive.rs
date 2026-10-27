@@ -18,24 +18,16 @@ pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 
     let (name, path, span) = (
         "use",
-        alt(((multispace1, cut_err(string_line).expected("path")), (multispace0, string_line)))
-            .map(|(_, sl)| sl),
+        alt(((multispace1, cut_err(string_line).expected("path")), (multispace0, string_line))).map(|(_, sl)| sl),
         multispace0,
-        opt((
-            "as",
-            multispace0,
-            cut_err(component_tag_identifier).expected("component tag identfier"),
-        )),
+        opt(("as", multispace0, cut_err(component_tag_identifier).expected("component tag identfier"))),
         opt(';'),
     )
         .with_span()
         .map(|((_, path_str, _, name_opt, _), span)| {
-            let mut path_str = if path_str.starts_with('\'') {
-                path_str.trim_matches('\'')
-            } else {
-                path_str.trim_matches('"')
-            }
-            .to_string();
+            let mut path_str =
+                if path_str.starts_with('\'') { path_str.trim_matches('\'') } else { path_str.trim_matches('"') }
+                    .to_string();
 
             if !path_str.ends_with(".rs.html") {
                 path_str.push_str(".rs.html");
@@ -43,8 +35,7 @@ pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 
             let path = PathBuf::from(path_str);
 
-            let name =
-                name_opt.map(|(_, _, name)| name.to_string()).or(extract_component_name(&path));
+            let name = name_opt.map(|(_, _, name)| name.to_string()).or(extract_component_name(&path));
 
             (name, path, span)
         })
@@ -66,12 +57,7 @@ pub fn use_directive<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     let path_with_base = input.state.base_dir.join(&path);
     let fn_name = generate_fn_name(&path_with_base);
 
-    input.state.info.use_directives.insert(UseDirective {
-        name,
-        path: path_with_base,
-        fn_name,
-        span,
-    });
+    input.state.info.use_directives.insert(UseDirective { name, path: path_with_base, fn_name, span });
 
     Ok(())
 }

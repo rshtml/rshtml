@@ -4,11 +4,7 @@ use quote::quote;
 use std::{ops::Range, path::Path};
 use syn::{Expr, parse_str};
 
-pub fn template_param<'a>(
-    source: &'a str,
-    range: (Range<usize>, Range<usize>),
-    params: &mut Vec<(&'a str, &'a str)>,
-) {
+pub fn template_param<'a>(source: &'a str, range: (Range<usize>, Range<usize>), params: &mut Vec<(&'a str, &'a str)>) {
     let name = &source[range.0];
     let ty = &source[range.1];
 
@@ -58,15 +54,8 @@ pub fn expr_simple_or_paren(
         1,
     );
 
-    let expression = parse_str::<Expr>(expr).map_err(|e| {
-        Diagnostic(source).message(
-            path,
-            &position,
-            "invalid expression",
-            &e.to_string(),
-            expr.len(),
-        )
-    })?;
+    let expression = parse_str::<Expr>(expr)
+        .map_err(|e| Diagnostic(source).message(path, &position, "invalid expression", &e.to_string(), expr.len()))?;
 
     let expr_ts = escape_or_raw(quote!(#expression), is_escaped, &message);
 

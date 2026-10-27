@@ -5,14 +5,7 @@ use std::path::Path;
 pub struct Diagnostic<'a>(pub &'a str);
 
 impl<'a> Diagnostic<'a> {
-    pub fn message(
-        &self,
-        path: &Path,
-        position: &Position,
-        title: &str,
-        info: &str,
-        name_len: usize,
-    ) -> String {
+    pub fn message(&self, path: &Path, position: &Position, title: &str, info: &str, name_len: usize) -> String {
         let Some(source_snippet) = self.source_first_line(position) else {
             return String::new();
         };

@@ -31,8 +31,7 @@ pub fn component<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
                 template_content,
                 cut_err("</").expected("</"),
                 multispace0,
-                cut_err(|input: &mut Input<'a, 'ctx>| tag_identifier(input, false))
-                    .expected("tag identifier"),
+                cut_err(|input: &mut Input<'a, 'ctx>| tag_identifier(input, false)).expected("tag identifier"),
                 multispace0,
                 cut_err(">").expected(">"),
             )
@@ -81,13 +80,11 @@ fn attribute<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 fn attribute_name<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<Range<usize>> {
     let checkpoint = input.checkpoint();
 
-    let (attribute_name, span) = (
-        alt((alpha1.void(), "_".void())),
-        repeat(0.., alt((alphanumeric1.void(), "_".void()))).fold(|| (), |_, _| ()),
-    )
-        .take()
-        .with_span()
-        .parse_next(input)?;
+    let (attribute_name, span) =
+        (alt((alpha1.void(), "_".void())), repeat(0.., alt((alphanumeric1.void(), "_".void()))).fold(|| (), |_, _| ()))
+            .take()
+            .with_span()
+            .parse_next(input)?;
 
     parse_str::<Ident>(attribute_name).map_err(|e| {
         input.reset(&checkpoint);

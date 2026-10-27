@@ -57,8 +57,7 @@ impl Compiler {
                     path.display()
                 );
 
-                let (impl_generics, type_generics, where_clause) =
-                    self.struct_generics.split_for_impl();
+                let (impl_generics, type_generics, where_clause) = self.struct_generics.split_for_impl();
                 let struct_name = self.struct_name.to_owned();
 
                 return quote_spanned! { self.struct_name.span() =>
@@ -142,11 +141,7 @@ impl Compiler {
         }
     }
 
-    fn compile_rshtml_files(
-        &mut self,
-        path: &Path,
-        is_root: bool,
-    ) -> Result<CompileOutput, String> {
+    fn compile_rshtml_files(&mut self, path: &Path, is_root: bool) -> Result<CompileOutput, String> {
         self.path_stack.push(path.to_path_buf());
 
         let mut compile_output = if !self.visited_paths.contains_key(path) {
@@ -164,14 +159,7 @@ impl Compiler {
             }
 
             let (fn_signs, fn_bodies, include_strs, root_fn_call, text_size) =
-                rshtml_file::codegen(
-                    &info.full_path,
-                    &info.fn_name,
-                    &info.use_directives,
-                    ops,
-                    &source,
-                    is_root,
-                )?;
+                rshtml_file::codegen(&info.full_path, &info.fn_name, &info.use_directives, ops, &source, is_root)?;
 
             self.visited_paths.entry(path.to_path_buf()).or_insert((info.use_directives, source));
 

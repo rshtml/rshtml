@@ -19,9 +19,7 @@ pub fn simple_expr<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     Ok(())
 }
 
-pub fn parse_simple_expr<'a, 'ctx>(
-    input: &mut Input<'a, 'ctx>,
-) -> ModalResult<(Range<usize>, bool)> {
+pub fn parse_simple_expr<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(Range<usize>, bool)> {
     not((
         multispace0,
         alt(("{", "(", "if", "for", "use", "child_content")),
@@ -31,11 +29,7 @@ pub fn parse_simple_expr<'a, 'ctx>(
 
     let (is_not_escaped_opt, span) = (
         opt("#"),
-        (
-            repeat(0.., "&").fold(|| (), |_, _| ()),
-            rust_identifier,
-            repeat(0.., chain_segment).fold(|| (), |_, _| ()),
-        )
+        (repeat(0.., "&").fold(|| (), |_, _| ()), rust_identifier, repeat(0.., chain_segment).fold(|| (), |_, _| ()))
             .span(),
     )
         .parse_next(input)?;
@@ -68,12 +62,7 @@ fn nested_content<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 }
 
 fn expression_boundary<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
-    alt((
-        ("<", alt(("/", winnow::ascii::alpha1))).void(),
-        "@".void(),
-        "{".void(),
-        winnow::ascii::line_ending.void(),
-    ))
-    .void()
-    .parse_next(input)
+    alt((("<", alt(("/", winnow::ascii::alpha1))).void(), "@".void(), "{".void(), winnow::ascii::line_ending.void()))
+        .void()
+        .parse_next(input)
 }

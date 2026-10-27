@@ -1,6 +1,5 @@
 use crate::vmacro::{
-    about::about, contact::contact, footer, home::home, layout::layout, navbar::navbar,
-    services::services,
+    about::about, contact::contact, footer, home::home, layout::layout, navbar::navbar, services::services,
 };
 use chrono::Utc;
 use footer::footer;

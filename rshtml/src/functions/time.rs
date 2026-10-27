@@ -24,10 +24,7 @@ pub fn time<T: Display + ?Sized>(value: &T) -> RsDateTime {
     let nd_result: Result<NaiveDate, _> = value_str.parse();
     if let Ok(nd) = nd_result {
         let naive_datetime = nd.and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
-        return RsDateTime(
-            DateTime::<Utc>::from_naive_utc_and_offset(naive_datetime, Utc),
-            default_format,
-        );
+        return RsDateTime(DateTime::<Utc>::from_naive_utc_and_offset(naive_datetime, Utc), default_format);
     }
 
     eprintln!("DEBUG: Time Error: {err_str}");

@@ -25,28 +25,13 @@ fn test_rshtml_file() {
 
     let parse_result = rshtml_file::parse(paths[0], &base_dir);
 
-    assert!(
-        parse_result.is_ok(),
-        "\nRsHtml file parse failed!\n{}",
-        parse_result.err().unwrap_or_default()
-    );
+    assert!(parse_result.is_ok(), "\nRsHtml file parse failed!\n{}", parse_result.err().unwrap_or_default());
 
     let (ops, info, source) = parse_result.unwrap();
 
-    let codegen_result = rshtml_file::codegen(
-        &info.full_path,
-        &info.fn_name,
-        &info.use_directives,
-        ops,
-        &source,
-        true,
-    );
+    let codegen_result = rshtml_file::codegen(&info.full_path, &info.fn_name, &info.use_directives, ops, &source, true);
 
-    assert!(
-        codegen_result.is_ok(),
-        "\nRsHtml file codegen failed!\n{}",
-        codegen_result.err().unwrap_or_default()
-    );
+    assert!(codegen_result.is_ok(), "\nRsHtml file codegen failed!\n{}", codegen_result.err().unwrap_or_default());
 
     let (fn_sign, fn_body, include_str, _root_fn, text_size) = codegen_result.unwrap();
 

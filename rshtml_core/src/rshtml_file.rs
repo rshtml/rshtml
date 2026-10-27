@@ -98,18 +98,14 @@ pub fn parse(path: &Path, base_dir: &Path) -> Result<(Vec<Op>, Info, String), St
 pub fn extract(path: &Path, source: &str, ops: &[Op]) -> Result<PathBuf, String> {
     let generate = || {
         let mut debug_extract = debug::Debug::new(
-            source
-                .as_bytes()
-                .iter()
-                .map(|&b| if b == b'\n' { b'\n' } else { b' ' })
-                .collect::<Vec<u8>>(),
+            source.as_bytes().iter().map(|&b| if b == b'\n' { b'\n' } else { b' ' }).collect::<Vec<u8>>(),
         );
 
         debug_extract.process(source, ops);
 
-        debug_extract.cleaned_source.extend_from_slice(
-            b"  Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;",
-        );
+        debug_extract
+            .cleaned_source
+            .extend_from_slice(b"  Ok(()) } use super::*;use ::rshtml::{Render, View};use std::fmt::Display;");
 
         debug_extract.cleaned_source
     };
@@ -133,11 +129,7 @@ pub fn codegen(
 
     enum Scope<'a> {
         Code(TokenStream),
-        Component {
-            name: &'a str,
-            attrs: BTreeMap<&'a str, TokenStream>,
-            current_attr_name: Option<&'a str>,
-        },
+        Component { name: &'a str, attrs: BTreeMap<&'a str, TokenStream>, current_attr_name: Option<&'a str> },
     }
 
     let mut current = TokenStream::new();
@@ -183,23 +175,17 @@ pub fn codegen(
             }
             Op::ComponentStartName(range) => {
                 stack.push(Scope::Code(mem::take(&mut current)));
-                stack.push(Scope::Component {
-                    name: &source[range],
-                    attrs: BTreeMap::new(),
-                    current_attr_name: None,
-                });
+                stack.push(Scope::Component { name: &source[range], attrs: BTreeMap::new(), current_attr_name: None });
             }
             Op::ComponentAttribute(name_range, val_range_opt) => {
-                let Some(Scope::Component { attrs, current_attr_name, .. }) = stack.last_mut()
-                else {
+                let Some(Scope::Component { attrs, current_attr_name, .. }) = stack.last_mut() else {
                     return Err("Invalid Component".to_string());
                 };
 
                 let attr_name = &source[name_range];
                 match val_range_opt {
                     Some(val_range) => {
-                        let ts =
-                            TokenStream::from_str(&source[val_range]).map_err(|e| e.to_string())?;
+                        let ts = TokenStream::from_str(&source[val_range]).map_err(|e| e.to_string())?;
                         attrs.insert(attr_name, ts);
                     }
                     None => {
@@ -208,8 +194,7 @@ pub fn codegen(
                 }
             }
             Op::ComponentAttributeEnd => {
-                let Some(Scope::Component { attrs, current_attr_name, .. }) = stack.last_mut()
-                else {
+                let Some(Scope::Component { attrs, current_attr_name, .. }) = stack.last_mut() else {
                     return Err("Invalid Component".to_string());
                 };
 
@@ -234,10 +219,7 @@ pub fn codegen(
                 let use_directive = use_directives
                     .iter()
                     .find(|use_directive| use_directive.name == name)
-                    .ok_or(format!(
-                        "attempt to use a missing component: component `{}` is used but not found",
-                        name
-                    ))?;
+                    .ok_or(format!("attempt to use a missing component: component `{}` is used but not found", name))?;
 
                 let values = attrs.values();
                 let args = quote! { #(#values),* };
@@ -292,11 +274,10 @@ pub fn codegen(
 }
 
 fn read_template(path: &Path) -> Result<(PathBuf, String), String> {
-    let base_dir =
-        match env::var("CARGO_MANIFEST_DIR").map(PathBuf::from).or_else(|_| env::current_dir()) {
-            Ok(base_dir) => base_dir,
-            Err(e) => return Err(format!("Failed to get current directory: {}", e)),
-        };
+    let base_dir = match env::var("CARGO_MANIFEST_DIR").map(PathBuf::from).or_else(|_| env::current_dir()) {
+        Ok(base_dir) => base_dir,
+        Err(e) => return Err(format!("Failed to get current directory: {}", e)),
+    };
 
     let full_path = base_dir.join(path);
 

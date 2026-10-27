@@ -11,8 +11,7 @@ pub fn create(path: &Path, generate: impl FnOnce() -> Vec<u8>) -> io::Result<Pat
         Some(dir) => dir,
         None => {
             let dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
-            let canonical = fs::canonicalize(&dir)
-                .map_err(|e| io::Error::new(e.kind(), format!("{dir:?}: {e}")))?;
+            let canonical = fs::canonicalize(&dir).map_err(|e| io::Error::new(e.kind(), format!("{dir:?}: {e}")))?;
             MANIFEST_DIR.get_or_init(|| canonical)
         }
     };
@@ -66,9 +65,9 @@ pub fn create(path: &Path, generate: impl FnOnce() -> Vec<u8>) -> io::Result<Pat
     let generated_code = generate();
 
     if fs::read(&target_path).ok().as_deref() != Some(&generated_code) {
-        let parent = target_path.parent().ok_or_else(|| {
-            io::Error::new(io::ErrorKind::InvalidData, "The file path is not valid")
-        })?;
+        let parent = target_path
+            .parent()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "The file path is not valid"))?;
         fs::create_dir_all(parent)?;
         fs::write(&target_path, generated_code)?;
     }

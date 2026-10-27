@@ -18,18 +18,13 @@ pub fn simple_expr_paren<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(
 
     Ok(())
 }
-pub fn parse_simple_expr_paren<'a, 'ctx>(
-    input: &mut Input<'a, 'ctx>,
-) -> ModalResult<(Range<usize>, bool)> {
+pub fn parse_simple_expr_paren<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(Range<usize>, bool)> {
     let checkpoint = input.checkpoint();
 
     let (is_not_escaped_opt, _, (expr, span), _) = (
         opt('#'),
         '(',
-        repeat(0.., alt((nested_expression, any.verify(|c| *c != ')').void())))
-            .map(|()| ())
-            .take()
-            .with_span(),
+        repeat(0.., alt((nested_expression, any.verify(|c| *c != ')').void()))).map(|()| ()).take().with_span(),
         ')',
     )
         .parse_next(input)?;
@@ -51,24 +46,9 @@ pub fn parse_simple_expr_paren<'a, 'ctx>(
 
 fn nested_expression<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
     alt((
-        (
-            '(',
-            repeat(0.., alt((nested_expression, any.verify(|c| *c != ')').void())))
-                .fold(|| (), |_, _| ()),
-            ')',
-        ),
-        (
-            '[',
-            repeat(0.., alt((nested_expression, any.verify(|c| *c != ']').void())))
-                .fold(|| (), |_, _| ()),
-            ']',
-        ),
-        (
-            '{',
-            repeat(0.., alt((nested_expression, any.verify(|c| *c != '}').void())))
-                .fold(|| (), |_, _| ()),
-            '}',
-        ),
+        ('(', repeat(0.., alt((nested_expression, any.verify(|c| *c != ')').void()))).fold(|| (), |_, _| ()), ')'),
+        ('[', repeat(0.., alt((nested_expression, any.verify(|c| *c != ']').void()))).fold(|| (), |_, _| ()), ']'),
+        ('{', repeat(0.., alt((nested_expression, any.verify(|c| *c != '}').void()))).fold(|| (), |_, _| ()), '}'),
     ))
     .void()
     .parse_next(input)

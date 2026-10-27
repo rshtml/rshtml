@@ -19,12 +19,8 @@ pub fn rust_block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
         let span = e.span();
         let start = span.start();
 
-        let offset = rust_block
-            .split_inclusive('\n')
-            .take(start.line - 1)
-            .map(|line| line.len())
-            .sum::<usize>()
-            + start.column;
+        let offset =
+            rust_block.split_inclusive('\n').take(start.line - 1).map(|line| line.len()).sum::<usize>() + start.column;
         input.reset(&checkpoint);
 
         let _ = input.next_slice(offset);
@@ -44,13 +40,10 @@ pub fn rust_block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 }
 
 fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<(&'a str, Range<usize>)> {
-    let ((_, block_span, _), rust_block) = (
-        "{",
-        block_content.span(),
-        cut_err("}").context(StrContext::Expected(StrContextValue::CharLiteral('}'))),
-    )
-        .with_taken()
-        .parse_next(input)?;
+    let ((_, block_span, _), rust_block) =
+        ("{", block_content.span(), cut_err("}").context(StrContext::Expected(StrContextValue::CharLiteral('}'))))
+            .with_taken()
+            .parse_next(input)?;
 
     Ok((rust_block, block_span))
 }
@@ -94,11 +87,7 @@ fn block_comment<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 }
 
 fn string_literal<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
-    (
-        '"',
-        repeat(0.., alt((("\\", any).void(), none_of(['"', '\\']).void()))).map(|_: Vec<()>| ()),
-        '"',
-    )
+    ('"', repeat(0.., alt((("\\", any).void(), none_of(['"', '\\']).void()))).map(|_: Vec<()>| ()), '"')
         .void()
         .parse_next(input)
 }

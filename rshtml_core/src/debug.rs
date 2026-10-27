@@ -44,9 +44,7 @@ impl Debug {
                 }
                 Op::TemplateParam((range, _)) => {
                     let name = extract(range);
-                    if name.starts_with("self")
-                        && name[4..].starts_with(|c: char| c.is_whitespace())
-                    {
+                    if name.starts_with("self") && name[4..].starts_with(|c: char| c.is_whitespace()) {
                         self.source_replace("    ", range.start);
                     }
                 }
@@ -101,9 +99,7 @@ impl Debug {
             self.cleaned_source = out;
         } else {
             let mut out = Vec::with_capacity(self.cleaned_source.len() + 64);
-            out.extend_from_slice(
-                b"fn render(child_content: impl ::rshtml::View)->::std::fmt::Result{",
-            );
+            out.extend_from_slice(b"fn render(child_content: impl ::rshtml::View)->::std::fmt::Result{");
             out.extend_from_slice(&self.cleaned_source);
             self.cleaned_source = out;
         }

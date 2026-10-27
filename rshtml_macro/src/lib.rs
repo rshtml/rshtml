@@ -18,8 +18,7 @@ pub fn view_derive(input: TokenStream) -> TokenStream {
                 (path, rshtml_config.extract)
             } else {
                 let struct_name_str = struct_name.to_string();
-                let mut template_file = if let Some(stripped) = struct_name_str.strip_suffix("Page")
-                {
+                let mut template_file = if let Some(stripped) = struct_name_str.strip_suffix("Page") {
                     format!("{stripped}.rs.html")
                 } else {
                     format!("{struct_name_str}.rs.html")

@@ -1,7 +1,7 @@
 use super::{
-    Input, component::component, inner_text::inner_text, rust_block::rust_block,
-    rust_stmt::rust_stmt, simple_expr::simple_expr, simple_expr_paren::simple_expr_paren,
-    template_params::template_params, text::text, use_directive::use_directive,
+    Input, component::component, inner_text::inner_text, rust_block::rust_block, rust_stmt::rust_stmt,
+    simple_expr::simple_expr, simple_expr_paren::simple_expr_paren, template_params::template_params, text::text,
+    use_directive::use_directive,
 };
 use crate::{
     context::Op,
@@ -71,28 +71,15 @@ pub fn block<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<()> {
 }
 
 pub fn rust_identifier<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
-    (
-        one_of(|c: char| c.is_alphabetic() || c == '_'),
-        take_while(0.., |c: char| c.is_alphanumeric() || c == '_'),
-    )
+    (one_of(|c: char| c.is_alphabetic() || c == '_'), take_while(0.., |c: char| c.is_alphanumeric() || c == '_'))
         .take()
         .parse_next(input)
 }
 
 pub fn string_line<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
     alt((
-        (
-            '"',
-            repeat(0.., alt((("\\", any).void(), none_of(['"', '\\']).void())))
-                .map(|_: Vec<()>| ()),
-            '"',
-        ),
-        (
-            '\'',
-            repeat(0.., alt((("\\", any).void(), none_of(['\'', '\\']).void())))
-                .map(|_: Vec<()>| ()),
-            '\'',
-        ),
+        ('"', repeat(0.., alt((("\\", any).void(), none_of(['"', '\\']).void()))).map(|_: Vec<()>| ()), '"'),
+        ('\'', repeat(0.., alt((("\\", any).void(), none_of(['\'', '\\']).void()))).map(|_: Vec<()>| ()), '\''),
     ))
     .void()
     .take()
@@ -100,10 +87,7 @@ pub fn string_line<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str
 }
 
 pub fn component_tag_identifier<'a, 'ctx>(input: &mut Input<'a, 'ctx>) -> ModalResult<&'a str> {
-    (
-        any.verify(|c: &char| c.is_ascii_uppercase()),
-        take_while(0.., |c: char| c.is_ascii_alphanumeric()),
-    )
+    (any.verify(|c: &char| c.is_ascii_uppercase()), take_while(0.., |c: char| c.is_ascii_alphanumeric()))
         .take()
         .parse_next(input)
 }
