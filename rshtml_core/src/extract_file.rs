@@ -57,12 +57,10 @@ pub fn create(path: &Path, generate: impl FnOnce() -> Vec<u8>) -> io::Result<Pat
     }
 
     if let (Ok(src_meta), Ok(tgt_meta)) = (fs::metadata(&absolute_path), fs::metadata(&target_path))
+        && let (Ok(src_time), Ok(tgt_time)) = (src_meta.modified(), tgt_meta.modified())
+        && src_time <= tgt_time
     {
-        if let (Ok(src_time), Ok(tgt_time)) = (src_meta.modified(), tgt_meta.modified()) {
-            if src_time <= tgt_time {
-                return Ok(target_path);
-            }
-        }
+        return Ok(target_path);
     }
 
     let generated_code = generate();

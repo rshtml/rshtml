@@ -212,3 +212,45 @@ impl Compiler {
         Ok(compile_output)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Compiler;
+    use std::time::Instant;
+    use syn::{Generics, parse_quote};
+
+    #[test]
+    fn benchmark_compiler_speed() {
+        let template_path = Path::new("../rshtml_test/views/index.rs.html");
+
+        if !template_path.exists() {
+            eprintln!("invalid path: {template_path:?}");
+            return;
+        }
+
+        let struct_name: Ident = parse_quote!(TestView);
+        let generics = Generics::default();
+
+        let extract = true;
+
+        let mut compiler = Compiler::new(struct_name.clone(), generics.clone(), extract);
+
+        let start = Instant::now();
+        let _ts = compiler.compile(template_path);
+        let cold_time = start.elapsed();
+
+        let iterations = 49;
+        let start_loop = Instant::now();
+        for _ in 0..iterations {
+            let mut c = Compiler::new(struct_name.clone(), generics.clone(), extract);
+            let _ = c.compile(template_path);
+        }
+        let avg_time = start_loop.elapsed() / iterations;
+
+        eprintln!("\n================ RESULTS ================");
+        eprintln!("⏱️  First Run (Cold Run)   : {:?}", cold_time);
+        eprintln!("🚀 Avg of 49 loop (RAM)  : {:?}", avg_time);
+        eprintln!("==========================================\n");
+    }
+}
