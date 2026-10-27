@@ -6,12 +6,10 @@
 //! # RsHtml: A Template Engine for Seamless HTML and Rust Integration.
 //!
 //! RsHtml is a powerful template engine that transforms your HTML templates
-//! into highly efficient Rust code at compile time, allowing you to seamlessly use
-//! Rust logic and expressions together with HTML to harness the full power of Rust
-//! for dynamic content generation. It is designed to help you build flexible and
-//! maintainable web applications.
-//!
-//! ![Demo](https://raw.githubusercontent.com/rshtml/rshtml/master/v_macro.gif)
+//! into highly efficient Rust code at compile time, allowing you
+//! to seamlessly use Rust logic and expressions together with HTML
+//! to harness the full power of Rust for dynamic content generation.
+//! It is designed to help you build flexible and maintainable web applications.
 //!
 //! ## Quick Start
 //!
@@ -19,26 +17,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! rshtml = "0.7.0" # Use the latest version
-//! ```
-//!
-//! **v! macro, to write HTML within Rust:**
-//! ```rust
-//! use rshtml::{View, v};
-//! use std::fmt;
-//!
-//! fn main() -> fmt::Result {
-//!   let template = "RsHtml";
-//!   let hello = v!(<p>"Hello " {template}</p>);
-//!
-//!   let mut out = String::with_capacity(hello.text_size());
-//!
-//!   hello.render(&mut out)?;
-//!
-//!   print!("{out}");
-//!
-//!   Ok(())
-//! }
+//! rshtml = "0.8.0" # Use the latest version
 //! ```
 //!
 //! **For the `.rs.html` file:**
@@ -68,8 +47,6 @@
 //! }
 //! ```
 //!
-//! The `View` macro implements the `View` trait for the struct, making it usable with the `v!` macro.
-//!
 //! **`views/home.rs.html`:**
 //!
 //! ```ignore
@@ -90,6 +67,27 @@
 //!
 //! </div>
 //! ```
+//!
+//! **v! macro, to write HTML within Rust:**
+//! ```rust
+//! use rshtml::{View, v};
+//! use std::fmt;
+//!
+//! fn main() -> fmt::Result {
+//!   let template = "RsHtml";
+//!   let hello = v!(<p>"Hello " {template}</p>);
+//!
+//!   let mut out = String::with_capacity(hello.text_size());
+//!
+//!   hello.render(&mut out)?;
+//!
+//!   print!("{out}");
+//!
+//!   Ok(())
+//! }
+//! ```
+//! The `View` macro implements the `View` trait for the struct, making it usable with the `v!` macro.
+//!
 
 /// Utility functions for use directly in RsHtml templates.
 ///

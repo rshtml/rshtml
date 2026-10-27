@@ -1,32 +1,44 @@
 [![Crates.io Version](https://img.shields.io/crates/v/rshtml.svg)](https://crates.io/crates/rshtml)
 [![Docs.rs Documentation](https://docs.rs/rshtml/badge.svg)](https://docs.rs/rshtml)
 [![Full Documentation](https://img.shields.io/badge/book-rshtml.github.io-blue.svg)](https://rshtml.github.io/)
----
+
 # RsHtml
 
-RsHtml is a compile-time, type-safe, lightweight, and flexible template engine for Rust. It aims to seamlessly integrate Rust code with HTML content. It allows developers to write dynamic templates that embed Rust expressions and makes it easier to generate HTML content programmatically. It generates efficient Rust code for template rendering at compile time.
-
-![RsHtml](v_macro.gif)
+RsHtml is a compile-time, type-safe, lightweight, and flexible template engine for Rust. It aims to seamlessly integrate Rust code with HTML content. It allows developers to write dynamic templates that embed Rust expressions and makes it easier to generate HTML content programmatically, generating efficient Rust code for template rendering at compile time.
 
 #### Documentation and Editor Support
 
 - See the [Documentation](https://rshtml.github.io/) for a full list of features and the [Editor Support](https://rshtml.github.io/#-editor-support) section for editor integration details. A minimal working website example is also available in the [`rshtml_test` crate](https://github.com/rshtml/rshtml/blob/master/rshtml_test/src/main.rs).
 
+## Installation
+
+To use `RsHtml` in your Rust project, run the following command:
+```sh
+cargo add rshtml
+```
+
+Or add it directly to your `Cargo.toml`:
+
+```toml
+[dependencies]
+rshtml = "0.8.0"
+```
+
 ## Usage
 
 RsHtml supports both external `.rs.html` template files via the `#[derive(View)]` macro and inline HTML templates inside Rust code via the `v!` macro.
 
-### View derive macro
-Processes `.rs.html` templates from the `views` directory or the file in the `specified folder` and implements the `View` trait.
+### `View` derive macro
+Processes `.rs.html` templates from the `views` directory or the file in the specified folder and implements the `View` trait.
 
 - Embeds Rust expressions and blocks directly into HTML templates using the `@` prefix or HTML-like component syntax (e.g., `<Component/>`).
 - Supports conditional rendering (`@if`, `else`), loops (`@for`, `@while`).
 - Supports Rust code blocks (`@{}`), various Rust expression syntaxes (e.g., `@expression`, `@(expression)`), and a broad range of other Rust syntax.
 - Provides helper functions (e.g., `@time()`).
 
-### v! macro
+### `v!` macro
 - Allows writing Rust blocks inside HTML (`<div>{ code() }</div>`) and embedding the resulting expressions into the template.
-- Generates a type that implements the View trait and can render types that implement either the View or Display trait.
+- Generates a type that implements the `View` trait and can render types that implement either the `View` or `Display` trait.
 
 ---
 
@@ -71,7 +83,7 @@ content: &Content, info: impl View)
 use rshtml::{v, View, Write};
 
 fn info(user: &User) -> impl View {
-    let user_info = v!(<p>name: {user.name}</p>);
+    let user_info = v!(<p>"name: " {user.name}</p>);
 
     v! {
          <div class="user-info"> {user_info} </div>
@@ -81,7 +93,7 @@ fn info(user: &User) -> impl View {
 fn cards(cards: &[Card]) -> impl View {
     let mut card_views = Vec::new();
     for card in cards {
-        card_views.push(v!(<div class="card">title: {&card.title}</div>));
+        card_views.push(v!(<div class="card">"title: " {&card.title}</div>));
     }
 
     v! {
@@ -136,20 +148,51 @@ struct Content {
 
 impl View for Content {
     fn render(&self, out: &mut dyn Write) -> fmt::Result {
-        v!(<p>Home Page {&self.title}</p>).render(out)
+        v!(<p>"Home Page " {&self.title}</p>).render(out)
     }
 }
 ```
 
-## Installation
+### Axum and Actix integration
 
-To use RsHtml in your Rust project, run `cargo add rshtml` command or add it as a dependency in your `Cargo.toml`:
+To use integrations, enable the corresponding feature (`axum` or `actix-web`) in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rshtml = "0.7.0"
+rshtml = { version = "0.8.0", features = ["axum", "actix-web"] }
+```
+
+#### Axum
+```rust
+async fn axum_handler() -> impl IntoResponse {
+    HomePage {
+        is_logged_in: true,
+        username: String::from("rshtml"),
+        title: "Home Page".to_string(),
+    }
+}
+```
+
+#### Actix Web
+```rust
+async fn actix_handler() -> impl Responder {
+    HomePage {
+        is_logged_in: true,
+        username: String::from("rshtml"),
+        title: "Home Page".to_string(),
+    }
+}
+```
+
+### `io::Write` support
+
+You can render directly to any type that implements `io::Write` by using the `IoWriter` wrapper:
+
+```rust
+let mut io_writer = IoWriter::new(io::stdout());
+homepage.render(&mut io_writer).unwrap();
 ```
 
 ## Contributing
 
-Contributions are welcome! Feel free to open issues or submit pull requests to improve RsHtml.
+Contributions are welcome! Feel free to open issues or submit pull requests to improve `RsHtml`.
