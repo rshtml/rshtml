@@ -10,5 +10,5 @@ rust-version.workspace = true
 proc-macro = true
 
 [dependencies]
-syn = { version = "3.0.9", features = ["full"] }
+syn = { version = "3.0.9", features = ["parsing"] }
 rshtml_core.workspace = true
