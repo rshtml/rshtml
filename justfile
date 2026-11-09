@@ -5,7 +5,7 @@ test:
 
 clippy:
     echo "clippy works.."
-    cargo clippy --all-targets --all-features --workspace -- -D warnings
+    cargo clippy --all-targets --all-features --workspace -- -D warnings -W clippy::all -W clippy::pedantic
 
 fmt:
     echo "fmt works.."
